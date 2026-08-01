@@ -340,7 +340,17 @@ npm run build:android    # prüft, dann eas build --local
 ```
 
 In `app.json` steht deshalb bewusst KEIN `versionCode` — Expo und `app.json`
-zugleich würden auseinanderlaufen.
+zugleich würden auseinanderlaufen. Abfragen lässt er sich mit
+`eas build:version:get -p android`.
+
+Der Keystore (Build Credentials `htsRaCwSyn`) wurde am 2026-08-01 bei Expo
+angelegt. Neu erzeugen muss man ihn nie wieder — und darf es auch nicht: Nach
+der ersten Play-Store-Veröffentlichung akzeptiert Google nur noch Updates, die
+mit demselben Schlüssel signiert sind.
+
+**Lokale Builds tauchen NICHT in `eas build:list` auf.** Die Liste bleibt leer,
+obwohl gebaut wurde — das ist kein Fehler. Bei Expo liegen nur Keystore und
+Versionszähler, nicht die Artefakte.
 
 Den Keystore herunterladen kann man bei Bedarf mit `eas credentials`. Achtung:
 Der Befehl legt `credentials.json` (Passwort und Alias im KLARTEXT) und
@@ -368,8 +378,24 @@ Berechtigung wäre ein späteres OTA-Update über `expo-updates` unmöglich.
 steht:
 
 ```
-python3 -c "import zipfile,re;d=zipfile.ZipFile('build-XXXX.aab').read('base/manifest/AndroidManifest.xml');print(sorted(set(x.decode() for x in re.findall(rb'android\.permission\.[A-Z_]+',d))))"
+python3 -c "import zipfile,re;d=zipfile.ZipFile('build-XXXX.aab').read('base/manifest/AndroidManifest.xml');print(sorted(set(m.group(1).decode() for m in re.finditer(rb'uses-permission.{0,200}?(android\.permission\.[A-Z_]+)',d,re.S))))"
 ```
+
+Erwartete Ausgabe: `['android.permission.INTERNET']` — sonst nichts.
+
+#### Warum dieser Einzeiler anders aussieht als der im Chemie-Projekt
+Der dortige sucht schlicht nach jedem `android.permission.…` im Manifest und
+meldet dadurch **DUMP mit, obwohl die App sie gar nicht anfordert.** Geprüft am
+2026-08-01 an beiden AABs: In Chemie wie in Mathe steht DUMP nicht in einem
+`uses-permission`-Element, sondern als `android:permission`-*Attribut* am
+`androidx.profileinstaller.ProfileInstallReceiver`. Das ist die Umkehrung —
+es legt fest, dass ein *Anrufer* DUMP besitzen muss, um diesen Receiver
+ansprechen zu dürfen. Angefordert wird damit nichts.
+
+Die Fassung oben verlangt deshalb ein vorangehendes `uses-permission`. Ein
+Fehlalarm wäre hier teuer: Wer ihm glaubt, sucht nach einem Problem, das es
+nicht gibt — oder gewöhnt sich an, die Meldung zu ignorieren, und übersieht
+beim nächsten Mal eine echte Berechtigung.
 
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
@@ -391,6 +417,12 @@ Was steht:
 - `utils/bruch.js` — exakte Bruchrechnung mit 128 Prüfungen
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
+- **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
+  mit `@heilpraktikerdk/mathe`, Keystore bei Expo, `npm run build:android`
+  erfolgreich (versionCode 2, signiertes AAB, 51 MB, ~4 Minuten
+  Gradle-Laufzeit). Im AAB steht als einzige angeforderte Berechtigung
+  INTERNET. Damit ist bewiesen, dass die Kette trägt — bevor sie unter
+  Zeitdruck das erste Mal gebraucht wird.
 
 ## Offene Punkte
 - `utils/term.js` — Termdarstellung und Umformungen mit benannten Schritten
@@ -404,11 +436,6 @@ Was steht:
   Leitfarbe Indigo `#4338CA` steht in `utils/konstanten.js` und `app.json`)
 - `docs/` ist noch leer: `datenschutz.html` und `play-store-listing.md` fehlen
   (Vorlagen liegen im Chemie-Projekt)
-- **Android-Keystore noch nicht erzeugt.** Einmalig in einem echten Terminal
-  (die Rückfrage „Generate a new Android Keystore?" braucht eine Eingabe):
-  `npx eas-cli credentials:configure-build -p android -e production`.
-  Danach liegt er bei Expo und wird nie wieder gebraucht — außer man verliert
-  den Zugang zum Konto.
 - GitHub Pages für die Datenschutzerklärung noch nicht aktiviert
   (Repo-Settings → Pages → Branch `main`, Ordner `/docs`). Die URL lautet
   danach `https://stephanhink.github.io/Mathe-begreifen/datenschutz.html`
