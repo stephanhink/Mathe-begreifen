@@ -267,9 +267,30 @@ Zahl raten.
 Für das Termumform-System gilt:
 
 > **Jede Umformung muss den Term wertgleich lassen.** Term vor und nach dem
-> Schritt an 200 zufälligen Stellen numerisch auswerten und vergleichen (mit
-> Toleranz, Definitionslücken übersprungen). Schlägt das fehl, ist die
-> Umformungsregel falsch — egal wie plausibel sie aussah.
+> Schritt an 200 zufälligen Stellen auswerten und vergleichen. Schlägt das
+> fehl, ist die Umformungsregel falsch — egal wie plausibel sie aussah.
+
+Umgesetzt in `tests/term.mjs`. Drei Dinge sind daran wichtig und sollten so
+bleiben:
+
+1. **Verglichen wird exakt, nicht mit Toleranz.** Solange die Termsprache
+   keine Wurzeln kennt, ist jeder Wert an einer rationalen Stelle wieder
+   rational — dann prüft man auf Gleichheit statt auf Ähnlichkeit. (Der
+   ursprüngliche Entwurf sah einen numerischen Vergleich mit Toleranz vor;
+   das wäre schwächer.)
+2. **Jeder Zwischenschritt wird geprüft, nicht nur Anfang und Ende.** Ein
+   Fehler, der sich in der Mitte selbst wieder aufhebt, wäre sonst
+   unsichtbar.
+3. **Verglichen wird nur, wo beide Terme definiert sind.** Sonst könnte die
+   App nichts mehr zusammenfassen: `1/x − 1/x` ist überall 0, wo es
+   definiert ist, aber bei x = 0 ist die linke Seite undefiniert und die
+   rechte nicht. Die Fälle, in denen der Definitionsbereich wirklich nicht
+   wandern darf, stehen als eigene Prüfungen daneben (`x⁰`, `0⁻¹`) — dort
+   kann man sie gezielt treffen, statt auf den Zufall zu hoffen.
+
+Stand 2026-08-01 werden dabei rund 15.800 Stellen tatsächlich verglichen.
+Die Prüfung ist gegengeprüft: Eine absichtlich falsch gebaute Regel wird
+erkannt, und die Meldung nennt Regel, Term vorher/nachher und die Stelle.
 
 ### Zufallsproben brauchen den Gegenfall
 Wo an Zufallszahlen geprüft wird, muss die Fehlermeldung die konkreten Werte
@@ -433,7 +454,11 @@ Stand 2026-08-01: **Gerüst steht, erste Fachlogik fertig.**
 
 Was steht:
 - Expo-Projekt SDK 57, Tab-Leiste, Ordnerstruktur
-- `utils/bruch.js` — exakte Bruchrechnung mit 128 Prüfungen
+- `utils/bruch.js` — exakte Bruchrechnung
+- `utils/term.js` — Terme darstellen, exakt auswerten, umformen mit
+  benannten Schritten. Regeln: neutrale Elemente, Zahlen zusammenrechnen,
+  Potenzgesetz, gleichartige Glieder, ausmultiplizieren, ausklammern
+- Zusammen **219 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -444,7 +469,12 @@ Was steht:
   Zeitdruck das erste Mal gebraucht wird.
 
 ## Offene Punkte
-- `utils/term.js` — Termdarstellung und Umformungen mit benannten Schritten
+- `utils/gleichung.js` — Gleichungen lösen („| beide Seiten − 5"). Baut auf
+  `term.js` auf; eine Aussage über eine Gleichung, nicht über einen Term,
+  gehört deshalb bewusst nicht in `term.js`
+- `utils/term.js` kennt noch keine Wurzeln und keine Bruchterm-Kürzung.
+  Beides braucht vorher eine Antwort auf die Frage, was mit dem
+  Definitionsbereich passiert
 - `utils/lernpfad.js` — Themengraph mit Voraussetzungen; Prüfung: keine
   Zyklen, jedes Thema erreichbar
 - `utils/wissen.js` — Prüfung: kein Info-Knopf zeigt ins Leere, kein

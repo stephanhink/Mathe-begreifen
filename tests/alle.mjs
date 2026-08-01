@@ -6,3 +6,4 @@
 // fehl, sieht man das zuerst und muss nicht raten, woher die
 // Folgefehler kommen.
 import './bruch.mjs';
+import './term.mjs';

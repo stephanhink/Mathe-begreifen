@@ -9,11 +9,13 @@
 //      Distributivität, Umkehrungen. Die decken die Fälle ab, an die
 //      beim Schreiben niemand gedacht hat.
 //
-// Der Zufall ist ein gesteuerter: Der Generator unten startet immer mit
-// demselben Wert. Schlägt eine Prüfung fehl, schlägt sie beim nächsten
-// Lauf wieder fehl — sonst könnte man den Fehler nicht suchen.
+// Der Zufall ist ein gesteuerter (siehe wuerfel.mjs): Der Generator
+// startet immer mit demselben Wert. Schlägt eine Prüfung fehl, schlägt
+// sie beim nächsten Lauf wieder fehl — sonst könnte man den Fehler nicht
+// suchen.
 
 import { pruefung, wahr, zahl, gleich as gleichText, wirft } from './pruefer.mjs';
+import { wuerfel, startwertFuer } from './wuerfel.mjs';
 import {
   ggT,
   kgV,
@@ -39,20 +41,6 @@ import {
   gemischt,
   alsGemischterText,
 } from '../utils/bruch.js';
-
-// Ein winziger Zufallsgenerator mit festem Startwert (xorshift32).
-// Math.random() wäre hier falsch: Eine Prüfung, die mal durchgeht und
-// mal nicht, ist keine Prüfung.
-function wuerfel(startwert = 20260801) {
-  let zustand = startwert;
-  return function naechste(bis) {
-    zustand ^= zustand << 13;
-    zustand ^= zustand >>> 17;
-    zustand ^= zustand << 5;
-    zustand |= 0;
-    return Math.abs(zustand) % bis;
-  };
-}
 
 // Ein zufälliger Bruch mit kleinen Zahlen. Klein bleiben sie, damit die
 // Zwischenergebnisse der Rechenregeln nicht an die 2^53-Grenze stoßen —
@@ -281,17 +269,6 @@ function regel(beschreibung, gilt) {
 
 function probe(a, b, c) {
   return `a = ${alsText(a)}, b = ${alsText(b)}, c = ${alsText(c)}`;
-}
-
-// Jede Regel bekommt ihre eigene Zahlenfolge, damit nicht alle Regeln
-// an denselben 200 Brüchen scheitern oder durchgehen. Abgeleitet wird
-// der Startwert aus dem Namen der Regel — fest und damit wiederholbar.
-function startwertFuer(text) {
-  let wert = 20260801;
-  for (const zeichen of text) {
-    wert = (wert * 31 + zeichen.codePointAt(0)) | 0;
-  }
-  return wert || 1;
 }
 
 pruefung('Rechengesetze (je 200 Zufallsproben)', () => {
