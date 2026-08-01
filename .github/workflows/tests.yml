@@ -1,0 +1,37 @@
+name: Tests
+
+# Läuft bei jedem Push und bei jedem Pull Request. Zweck ist die
+# Rückmeldung: Wenn hier etwas Fehlerhaftes landet, soll das nicht erst
+# beim nächsten Build auffallen — der kann Tage später kommen.
+#
+# Das Tor vor der Veröffentlichung ist ein anderes: Gebaut wird lokal
+# über `npm run build:android`, und dort klemmt `npm test` vor dem
+# eigentlichen Build. Dieser Workflow ersetzt das nicht, er ergänzt es.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          # Ab Node 22.7 erkennt Node die Modul-Syntax von .js-Dateien
+          # selbst. Darauf stützen sich die Prüfungen: Sie importieren
+          # utils/*.js unmittelbar, ohne Transpiler und ohne dass die
+          # package.json auf "type": "module" umgestellt werden müsste.
+          node-version: 22
+
+      # Die Prüfungen brauchen keine Abhängigkeiten — sie vergleichen
+      # reines JavaScript gegen Sollwerte aus dem Tafelwerk. Deshalb
+      # kein npm ci: Das würde eine halbe Minute kosten, ohne etwas
+      # beizutragen.
+      - name: Fachlogik prüfen
+        run: npm test

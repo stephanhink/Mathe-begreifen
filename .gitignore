@@ -1,0 +1,60 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# persönliche Claude-Code-Einstellungen (settings.json gehört ins Repo,
+# settings.local.json ist rechnerspezifisch)
+.claude/settings.local.json
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# Build-Artefakte lokaler EAS-Builds ("eas build --local" legt die fertige
+# Datei im Projektordner ab). Gehören nicht ins Repo — mehrere zehn MB pro
+# Stück, und sie werden ohnehin bei jedem Build neu erzeugt.
+build-*.aab
+build-*.apk
+
+# EAS-Credentials. "eas credentials" legt beim Herunterladen des
+# Keystores diese beiden hier ab: credentials.json enthaelt Passwort und
+# Alias im KLARTEXT, credentials/ den Keystore selbst.
+#
+# Das Repo ist oeffentlich. Wer diese Dateien bekommt, kann Updates
+# signieren, die der Play Store als echt akzeptiert.
+credentials.json
+credentials/
