@@ -306,8 +306,27 @@ in Ordnung ist — ein blockierter Release wegen eines Umgebungsdetails.
   Simulator
 - Commits/Push über GitHub Desktop
 - Xcode nur für den finalen iOS-Build/App-Store-Upload
-- Builds über `.github/workflows/eas-build.yml` (manuell auslösbar, braucht
-  `EXPO_TOKEN` als Repository-Secret)
+- **Gebaut wird lokal** über `npm run build:android` — siehe Veröffentlichung
+
+### `.github/workflows/eas-build.yml` liegt brach — mit Absicht
+Der Workflow ist aus Chemie mitgekommen und wurde dort nie benutzt: kein
+`EXPO_TOKEN` gesetzt, kein einziger Lauf. Die veröffentlichte Chemie-App ist
+vollständig über lokale Builds in den Play Store gekommen. Hier ist es
+genauso gehalten.
+
+Wer ihn dennoch auslösen will, muss zwei Dinge wissen:
+
+1. **Er baut in der Cloud**, nicht lokal (`eas build` ohne `--local`). Das
+   läuft auf Expos Servern und zählt gegen das EAS-Kontingent.
+2. **Er läuft an der Klemme vorbei.** Es gibt keinen `npm test`-Schritt — er
+   kann also ein Artefakt erzeugen, das keine Prüfung gesehen hat. Genau das
+   ist der Grund, warum hier überhaupt lokal gebaut wird. Außerdem ist dort
+   Node 20 gepinnt, während das Projekt 22.7 verlangt.
+
+Wer ihn scharf schalten will, ergänzt vorher `npm test` als Schritt und hebt
+die Node-Version — und hinterlegt `EXPO_TOKEN` als Repository-Secret. Dann
+aber besser als *Robot user* mit projektbezogener Rolle: Ein persönlicher
+Access Token gilt fürs ganze Expo-Konto, also auch für Chemie samt Keystore.
 
 ### Keine Lizenzdatei
 Das Repository hat bewusst **keine** `LICENSE`. Damit gilt das normale
@@ -440,6 +459,8 @@ Was steht:
   (Repo-Settings → Pages → Branch `main`, Ordner `/docs`). Die URL lautet
   danach `https://stephanhink.github.io/Mathe-begreifen/datenschutz.html`
   und wird im Play-Store-Listing verlangt.
-- `EXPO_TOKEN` als Repository-Secret für `.github/workflows/eas-build.yml`
-  noch nicht hinterlegt
 - Google-Play-Konto/Erstveröffentlichung noch nicht eingerichtet
+
+`EXPO_TOKEN` steht hier bewusst NICHT mehr — der Cloud-Build-Workflow bleibt
+ungenutzt, siehe Workflow-Abschnitt. Das ist eine Entscheidung, kein
+Versäumnis.
