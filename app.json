@@ -35,6 +35,11 @@
     "plugins": [
       "expo-status-bar"
     ],
-    "owner": "heilpraktikerdk"
+    "owner": "heilpraktikerdk",
+    "extra": {
+      "eas": {
+        "projectId": "5914b977-07b4-4d70-b19b-31bb7fc8a7be"
+      }
+    }
   }
 }

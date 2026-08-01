@@ -321,9 +321,37 @@ zu verkaufen. Falls ein neues Scaffolding sie wieder anlegt: wieder löschen.
 
 ## Veröffentlichung
 
-`appVersionSource: "remote"` in `eas.json` zählt den versionCode zentral hoch.
-In `app.json` steht deshalb bewusst KEIN `versionCode` — beides zugleich
-würde auseinanderlaufen.
+Das Projekt ist als `@heilpraktikerdk/mathe` mit expo.dev verknüpft
+(`extra.eas.projectId` in `app.json`, Projekt-ID
+`5914b977-07b4-4d70-b19b-31bb7fc8a7be`).
+
+### Lokal bauen, Keystore und Version bei Expo
+Das ist bewusst genau die Aufteilung, die im Chemie-Projekt gut funktioniert
+hat:
+
+| Was | Wo | Warum |
+|---|---|---|
+| Der Build selbst | **lokal** (`eas build --local`) | `npm test` klemmt davor im `&&`. Ein Cloud-Build ließe sich davon nicht aufhalten |
+| Keystore | **bei Expo** (`credentialsSource: "remote"`) | Ein verlorener Keystore bedeutet: nie wieder ein Update für diese App. Bei Expo liegt er sicher und rechnerunabhängig |
+| versionCode | **bei Expo** (`appVersionSource: "remote"`, `autoIncrement: true`) | Zählt zentral hoch, auch wenn von mehreren Rechnern gebaut wird |
+
+```
+npm run build:android    # prüft, dann eas build --local
+```
+
+In `app.json` steht deshalb bewusst KEIN `versionCode` — Expo und `app.json`
+zugleich würden auseinanderlaufen.
+
+Den Keystore herunterladen kann man bei Bedarf mit `eas credentials`. Achtung:
+Der Befehl legt `credentials.json` (Passwort und Alias im KLARTEXT) und
+`credentials/` im Projektordner ab. Beide stehen in `.gitignore` — das Repo
+ist öffentlich, und wer diese Dateien bekommt, kann Updates signieren, die
+der Play Store als echt akzeptiert.
+
+### Voraussetzungen auf dem Rechner
+Für `--local` müssen JDK und Android SDK da sein (Stand 2026-08-01 auf diesem
+Rechner vorhanden: OpenJDK 17.0.17 via Homebrew,
+`ANDROID_HOME=~/Library/Android/sdk`).
 
 ### Berechtigungen sind ausdrücklich blockiert
 React Native bringt für sein Entwickler-Menü Berechtigungen mit, die im
@@ -376,8 +404,11 @@ Was steht:
   Leitfarbe Indigo `#4338CA` steht in `utils/konstanten.js` und `app.json`)
 - `docs/` ist noch leer: `datenschutz.html` und `play-store-listing.md` fehlen
   (Vorlagen liegen im Chemie-Projekt)
-- EAS-Projekt noch nicht mit expo.dev verknüpft (passiert beim ersten
-  `eas build`, trägt dann `extra.eas.projectId` in `app.json` ein)
+- **Android-Keystore noch nicht erzeugt.** Einmalig in einem echten Terminal
+  (die Rückfrage „Generate a new Android Keystore?" braucht eine Eingabe):
+  `npx eas-cli credentials:configure-build -p android -e production`.
+  Danach liegt er bei Expo und wird nie wieder gebraucht — außer man verliert
+  den Zugang zum Konto.
 - GitHub Pages für die Datenschutzerklärung noch nicht aktiviert
   (Repo-Settings → Pages → Branch `main`, Ordner `/docs`). Die URL lautet
   danach `https://stephanhink.github.io/Mathe-begreifen/datenschutz.html`
