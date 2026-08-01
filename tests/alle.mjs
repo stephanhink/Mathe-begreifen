@@ -7,3 +7,4 @@
 // Folgefehler kommen.
 import './bruch.mjs';
 import './term.mjs';
+import './gleichung.mjs';

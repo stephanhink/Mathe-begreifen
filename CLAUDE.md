@@ -52,12 +52,19 @@ Also nicht „Ergebnis: x = 3", sondern:
 3x + 5 = 14
          | beide Seiten − 5
 3x = 9
-         | beide Seiten ÷ 3
+         | beide Seiten : 3
 x = 3
 ```
 
 Das ist die technische Hauptarbeit: ein Termumform-System in `utils/`, das
 exakt mit Brüchen rechnet und Schritte ausgibt, die man vorlesen kann.
+Umgesetzt in `utils/term.js` und `utils/gleichung.js`; `tests/gleichung.mjs`
+prüft genau dieses Beispiel Zeile für Zeile.
+
+> Geteilt wird mit `:`, nicht mit `÷`. Der Doppelpunkt ist die Schreibweise
+> des deutschen Unterrichts, und `term.js` schreibt Bruchterme ohnehin so.
+> (Der ursprüngliche Entwurf hatte hier `÷` stehen — geändert, damit Code
+> und Doku dasselbe sagen.)
 
 ### Getroffene Entscheidungen
 Diese drei Fragen standen zu Projektbeginn offen und sind beantwortet:
@@ -292,6 +299,32 @@ Stand 2026-08-01 werden dabei rund 15.800 Stellen tatsächlich verglichen.
 Die Prüfung ist gegengeprüft: Eine absichtlich falsch gebaute Regel wird
 erkannt, und die Meldung nennt Regel, Term vorher/nachher und die Stelle.
 
+### Die zweite tragende Prüfung: die Lösungsmenge
+Für `gleichung.js` gilt die entsprechende, aber **andere** Aussage:
+
+> **Jede Umformung muss die Lösungsmenge unverändert lassen.** An 200
+> zufälligen Stellen feststellen, ob die Gleichung vor und nach dem Schritt
+> dort erfüllt ist. Die beiden Antworten müssen übereinstimmen.
+
+Wertgleichheit und gleiche Lösungsmenge sind zwei verschiedene Dinge, und
+das eine folgt nicht aus dem anderen — deshalb sind es zwei Dateien und
+zwei Prüfungen. Diese hier fängt den klassischen Fehler: mit etwas
+multiplizieren, das null sein kann. Dabei bleibt jede einzelne Zeile
+„richtig", und trotzdem kommt eine Lösung dazu, die keine ist.
+
+Auch gegengeprüft. Wird das Teilen durch den Koeffizienten absichtlich
+durch „mal x" ersetzt, meldet sie:
+
+```
+Schritt "beide Seiten : −3": "−3x = −3" → "−3x² = −3x"
+bei x = 0: nicht erfüllt wird zu erfüllt
+```
+
+Rund 40.200 verglichene Stellen, dazu 160 zufällige Gleichungen, deren
+Lösung gegen die **ursprüngliche** Gleichung geprüft wird — das ist die
+Probe aus dem Unterricht, und sie fängt einen Fehler auch dann, wenn alle
+folgenden Schritte sauber waren.
+
 ### Zufallsproben brauchen den Gegenfall
 Wo an Zufallszahlen geprüft wird, muss die Fehlermeldung die konkreten Werte
 nennen, mit denen es schiefging (siehe `regel()` in `tests/bruch.mjs`).
@@ -457,8 +490,12 @@ Was steht:
 - `utils/bruch.js` — exakte Bruchrechnung
 - `utils/term.js` — Terme darstellen, exakt auswerten, umformen mit
   benannten Schritten. Regeln: neutrale Elemente, Zahlen zusammenrechnen,
-  Potenzgesetz, gleichartige Glieder, ausmultiplizieren, ausklammern
-- Zusammen **219 Prüfungen**
+  Kehrwert statt Teilen, Potenzgesetz, gleichartige Glieder,
+  ausmultiplizieren, ausklammern
+- `utils/gleichung.js` — lineare Gleichungen lösen, Schritt für Schritt
+  („| beide Seiten − 5"), samt Probe. Erkennt „keine Lösung" und „jede
+  Zahl"; alles andere sagt ausdrücklich, dass es nicht geht
+- Zusammen **299 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -469,12 +506,15 @@ Was steht:
   Zeitdruck das erste Mal gebraucht wird.
 
 ## Offene Punkte
-- `utils/gleichung.js` — Gleichungen lösen („| beide Seiten − 5"). Baut auf
-  `term.js` auf; eine Aussage über eine Gleichung, nicht über einen Term,
-  gehört deshalb bewusst nicht in `term.js`
-- `utils/term.js` kennt noch keine Wurzeln und keine Bruchterm-Kürzung.
-  Beides braucht vorher eine Antwort auf die Frage, was mit dem
-  Definitionsbereich passiert
+- **Wurzeln fehlen in `term.js`** — und daran hängt einiges: quadratische
+  Gleichungen (pq- und abc-Formel) sind ohne sie nicht zu lösen. Vorher
+  braucht es eine Antwort auf die Frage, was mit dem Definitionsbereich
+  passiert (√(x²) ist |x|, nicht x). Dieselbe Frage stellt sich beim
+  Kürzen von Bruchtermen
+- `gleichung.js` kann bisher nur lineare Gleichungen mit einer Variablen.
+  Noch offen: Gleichungssysteme, Ungleichungen (dort dreht sich beim
+  Multiplizieren mit einer negativen Zahl das Zeichen um — eine eigene,
+  prüfbare Regel)
 - `utils/lernpfad.js` — Themengraph mit Voraussetzungen; Prüfung: keine
   Zyklen, jedes Thema erreichbar
 - `utils/wissen.js` — Prüfung: kein Info-Knopf zeigt ins Leere, kein

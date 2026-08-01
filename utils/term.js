@@ -29,6 +29,7 @@ import {
   geteilt,
   hoch,
   negativ,
+  kehrwert,
   istBruch,
   istNull,
   istGanz,
@@ -277,9 +278,13 @@ export function auswerte(term, belegung = {}) {
 // Handy-Display sieht das nach Fehler aus.
 const MINUS = '−';
 
-function zahlText(wert) {
+// Wird auch von gleichung.js gebraucht: "L = { −3 }" muss dasselbe
+// Minuszeichen tragen wie der Term darüber.
+export function zahlAlsText(wert) {
   return bruchAlsText(wert).replace('-', MINUS);
 }
+
+const zahlText = zahlAlsText;
 
 const HOCHGESTELLT = {
   '-': '⁻',
@@ -368,7 +373,11 @@ function produktAlsText(term) {
   // Vor einer Klammer bleibt der Punkt dagegen stehen: 2 · (x + 3).
   // Ohne ihn stünde dort 2(x + 3), und dann müsste man erklären, warum
   // hier ein unsichtbares Mal steht und bei f(x) nicht.
-  const ersterOhnePunkt = rest[0].art === 'variable' || rest[0].art === 'potenz';
+  //
+  // Und vor allem NICHT bei einem Bruch als Koeffizient: "1/2x" liest
+  // sich wie 1/(2x) und meint das Gegenteil. Dort muss der Punkt stehen.
+  const ersterOhnePunkt =
+    istGanz(faktor) && (rest[0].art === 'variable' || rest[0].art === 'potenz');
   if (!ersterOhnePunkt) {
     return `${zahlText(faktor)} · ${restText}`;
   }
@@ -564,6 +573,20 @@ const ZAHLEN_ZUSAMMENRECHNEN = {
     }
 
     return null;
+  },
+};
+
+const KEHRWERT_STATT_TEILEN = {
+  name: 'durch eine Zahl teilen heißt mit dem Kehrwert malnehmen',
+  anwenden(t) {
+    if (t.art !== 'quotient' || t.nenner.art !== 'zahl' || istNull(t.nenner.wert)) {
+      return null;
+    }
+    // Nur bei einer Zahl im Nenner. Steht dort ein Term mit Variablen,
+    // hat er womöglich Nullstellen — dann wäre der Kehrwert an genau
+    // diesen Stellen nicht definiert, und die Umformung würde den
+    // Definitionsbereich verschieben.
+    return produkt(zahl(kehrwert(t.nenner.wert)), t.zaehler);
   },
 };
 
@@ -784,6 +807,7 @@ function laufe(term, regeln) {
 const AUFRAEUMEN = [
   NEUTRALE_ELEMENTE,
   ZAHLEN_ZUSAMMENRECHNEN,
+  KEHRWERT_STATT_TEILEN,
   POTENZGESETZ,
   GLEICHARTIGE_GLIEDER,
 ];

@@ -169,6 +169,38 @@ pruefung('Zusammenfassen', () => {
   gleichText('und bleibt, wie er war', alsText(fertig.term), 'x + y');
 });
 
+pruefung('Durch eine Zahl teilen', () => {
+  // x : 3 wird zu 1/3 · x. Ohne diese Regel bliebe der Bruch stehen und
+  // ließe sich nicht weiterverrechnen — beim Gleichungslösen führte das
+  // zu Zeilen wie "3 · x : 3 = 6" statt "x = 6".
+  gleichText('x : 3', alsText(vereinfache(quotient(x, zahl(3))).term), '1/3 · x');
+  gleichText('6 : 3', alsText(vereinfache(quotient(zahl(6), zahl(3))).term), '2');
+  gleichText('x : 1', alsText(vereinfache(quotient(x, zahl(1))).term), 'x');
+  gleichText(
+    '(2x + 4) : 2',
+    alsText(multipliziereAus(quotient(summe(produkt(zahl(2), x), zahl(4)), zahl(2))).term),
+    'x + 2'
+  );
+
+  // Steht die Variable im Nenner, bleibt der Bruch stehen: Der Kehrwert
+  // wäre an den Nullstellen des Nenners nicht definiert, die Umformung
+  // würde also den Definitionsbereich verschieben.
+  gleichText('x : y bleibt stehen', alsText(vereinfache(quotient(x, y)).term), 'x : y');
+  gleichText('1 : x bleibt stehen', alsText(vereinfache(quotient(zahl(1), x)).term), '1 : x');
+
+  // Eine Null im Nenner wird nicht stillschweigend weggerechnet.
+  gleichText('x : 0 bleibt stehen', alsText(vereinfache(quotient(x, zahl(0))).term), 'x : 0');
+  wirft('und wirft beim Auswerten', () => auswerteExakt(quotient(x, zahl(0)), { x: bruch(1) }));
+});
+
+pruefung('Ein Bruch als Koeffizient klebt nicht am Buchstaben', () => {
+  // "1/2x" liest sich wie 1/(2x) und meint das Gegenteil. Bei einem
+  // Bruch muss der Malpunkt stehen, bei einer ganzen Zahl nicht.
+  gleichText('1/2 · x', alsText(produkt(zahl(bruch(1, 2)), x)), '1/2 · x');
+  gleichText('3x bleibt 3x', alsText(produkt(zahl(3), x)), '3x');
+  gleichText('−1/2 · x', alsText(produkt(zahl(bruch(-1, 2)), x)), '−1/2 · x');
+});
+
 pruefung('Ausmultiplizieren', () => {
   gleichText(
     '2 · (x + 3)',
@@ -300,7 +332,7 @@ function werteAus(term, belegung) {
   try {
     return { wert: auswerteExakt(term, belegung) };
   } catch (fehler) {
-    return /zu groß/.test(fehler.message) ? { zuGross: true } : { undefiniert: true };
+    return fehler.zuGross ? { zuGross: true } : { undefiniert: true };
   }
 }
 

@@ -57,9 +57,15 @@ function pruefeGanz(wert, wo) {
     throw new Error(`${wo}: ${wert} ist keine ganze Zahl`);
   }
   if (!Number.isSafeInteger(wert)) {
-    throw new Error(
+    // Dieser Fehler trägt ein Kennzeichen, weil er etwas anderes bedeutet
+    // als die übrigen: Nicht "das gibt es nicht", sondern "das kann ich
+    // nicht ausrechnen". Wer beides gleich behandelt, antwortet auf eine
+    // Überlauf-Frage mit einem sachlichen Nein — und das wäre geraten.
+    const fehler = new Error(
       `${wo}: ${wert} ist zu groß — jenseits von 2^53 rechnet JavaScript nicht mehr exakt`
     );
+    fehler.zuGross = true;
+    throw fehler;
   }
   return wert;
 }
