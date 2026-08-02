@@ -581,7 +581,15 @@ function produktAlsText(term) {
   // stillschweigend aus dem Rechenweg, weil der Antrieb ihn für einen
   // Leerlauf hielt. Aufgefallen ist das erst der Rundreise-Prüfung in
   // tests/parser.mjs.
-  const stuecke = term.teile.map((t) => geklammert(t, 'produkt'));
+  // Eine negative Zahl bekommt eine Klammer, sobald sie nicht vorn
+  // steht: "−1/3 · (−3/4)" statt "−1/3 · −3/4". Zwei Rechenzeichen
+  // nebeneinander liest niemand gern, und im Heft steht dort auch eine
+  // Klammer.
+  const stuecke = term.teile.map((t, i) =>
+    i > 0 && t.art === 'zahl' && istNegativ(t.wert)
+      ? `(${alsText(t)})`
+      : geklammert(t, 'produkt')
+  );
   const [erster, zweiter] = term.teile;
 
   // 1 · x ist x, (−1) · x ist −x. Das ist keine Rechnung, sondern

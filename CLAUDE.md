@@ -39,6 +39,20 @@ modelliert (`utils/lernpfad.js`), nicht als flache Liste. Jedes Thema kennt
 seine Vorbedingungen; der Lückenfinder läuft den Graphen nach unten, bis er
 festen Boden findet. Diese Struktur nachträglich einzuziehen wäre teuer.
 
+#### Zwei Regeln, die den Lückenfinder ehrlich halten
+1. **Fester Boden heißt: abgefragt und gesessen.** Eine ungefragte
+   Voraussetzung zählt NICHT als fester Boden — nicht gefragt heißt nicht in
+   Ordnung, es heißt unbekannt. Dieser Unterschied ist beim Bauen
+   schiefgegangen: Der Lückenfinder meldete „binomische Formeln" als Lücke,
+   obwohl darunter ein ungefragtes Thema lag, in dem der eigentliche Fehler
+   steckte. Gefunden von der Prüfung, die für jedes Thema einen Schüler
+   simuliert.
+2. **Vermutung und Wissen bleiben getrennt.** Aus „kann die pq-Formel" folgt
+   nicht streng, dass jemand Wurzeln ziehen kann. Die Annahme steuert
+   deshalb nur, WAS ALS NÄCHSTES GEFRAGT wird; im Bericht steht
+   ausschließlich, was tatsächlich abgefragt wurde. Was nicht drankam, wird
+   ausdrücklich als „darüber ist nichts bekannt" ausgewiesen.
+
 ### Die eiserne Regel
 Im Chemie-Projekt gilt: *Die App darf niemals ein Reaktionsprodukt erfinden.*
 Das mathematische Äquivalent lautet:
@@ -218,9 +232,23 @@ Anschluss.
 Erscheint im Text ein Fachbegriff, der nicht im ersten Absatz erklärt und
 nicht unter `mehr` verlinkt ist, ist der Eintrag unfertig.
 
-Bei Mathe ist Punkt 4 noch wichtiger als bei Chemie: **Die `mehr`-Links sind
-faktisch schon der Lernpfad-Graph.** Beim Bauen von `lernpfad.js` prüfen, ob
-`wissen.js` und `lernpfad.js` dieselbe Datenquelle sein sollten.
+Bei Mathe ist Punkt 4 noch wichtiger als bei Chemie: Die `mehr`-Links sind
+faktisch schon ein Teil des Lernpfad-Graphen.
+
+#### `wissen.js` und `lernpfad.js` bleiben getrennt — mit Verbindung
+Das Konzept ließ offen, ob beide eine Datenquelle sein sollten. Beim Bauen
+wurde klar: besser nicht.
+
+`wissen.js` beschreibt **Begriffe** („Was ist ein Bruch?"), `lernpfad.js`
+beschreibt **Fertigkeiten** („einen Bruch kürzen können"). Zu einem Begriff
+gehören mehrere Fertigkeiten — Brüche kürzen, addieren, multiplizieren sind
+drei Dinge, die man einzeln können oder nicht können kann, aber sie teilen
+sich einen Erklärtext. Presste man beides in eine Struktur, müsste eines von
+beiden sich verbiegen: entweder Erklärtexte, die dreimal fast dasselbe sagen,
+oder Fertigkeiten, die man nicht einzeln prüfen kann.
+
+Verbunden sind sie über das Feld `wissen` in `lernpfad.js`. Dass diese
+Verweise nicht ins Leere gehen, prüft `tests/lernpfad.mjs`.
 
 ## Fachliche Leitlinien
 - **Korrektheit vor Vereinfachung.** Wo eine Näherung üblich ist, zusätzlich
@@ -549,7 +577,10 @@ Stand 2026-08-01: **Gerüst steht, erste Fachlogik fertig.**
 
 Was steht:
 - Expo-Projekt SDK 57, Tab-Leiste, Ordnerstruktur
-- **Der erste Screen läuft**: `screens/RechnerScreen.js` (Tab „Gleich.").
+- **Der Lückenfinder läuft** (Tab „Lücken", ganz links): `utils/lernpfad.js`
+  (Themengraph, 22 Themen), `utils/aufgaben.js` (ein Generator je Thema),
+  `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
+- **Der Rechner läuft**: `screens/RechnerScreen.js` (Tab „Gleich.").
   Eingabefeld für Term oder Gleichung, Rechenweg mit benannten Schritten,
   Lösungsmenge, Probe, Info-Knöpfe. Der Screen rechnet nichts — er ruft
   `utils/` auf und stellt dar
@@ -565,7 +596,7 @@ Was steht:
   Schritt für Schritt („| beide Seiten − 5"), samt pq-Formel und Probe.
   Erkennt „keine Lösung" und „jede Zahl"; alles andere sagt ausdrücklich,
   dass es nicht geht
-- Zusammen **646 Prüfungen**
+- Zusammen **1158 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -585,13 +616,13 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- `utils/lernpfad.js` — Themengraph mit Voraussetzungen; Prüfung: keine
-  Zyklen, jedes Thema erreichbar
-- `utils/wissen.js` — Prüfung: kein Info-Knopf zeigt ins Leere, kein
-  `mehr`-Link geht auf eine unbekannte ID
-- `utils/aufgaben.js` — Aufgabengenerator (Grundlage des Lückenfinders)
-- Sechs der sieben Screens (nur der Rechner steht). `BaustelleScreen.js`
-  ist der Platzhalter dafür und verschwindet, wenn der letzte steht
+- Fünf der sieben Screens (Lückenfinder und Rechner stehen).
+  `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
+  letzte steht
+- Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,
+  Geometrie, Stochastik und die ganze Oberstufe — jedes neue Thema braucht
+  einen Eintrag in `lernpfad.js` UND einen Generator in `aufgaben.js`,
+  sonst schlägt die Prüfung fehl
 - App-Icon/Branding noch nicht gestaltet (Standard-Expo-Icons als Platzhalter,
   Leitfarbe Indigo `#4338CA` steht in `utils/konstanten.js` und `app.json`)
 - `docs/` ist noch leer: `datenschutz.html` und `play-store-listing.md` fehlen

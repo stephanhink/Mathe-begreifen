@@ -10,3 +10,10 @@ import './term.mjs';
 import './gleichung.mjs';
 import './parser.mjs';
 import './wissen.mjs';
+
+// Der Lückenfinder und was er braucht. Erst der Graph, dann die
+// Aufgaben, dann die Suche — in dieser Reihenfolge bauen sie
+// aufeinander auf.
+import './lernpfad.mjs';
+import './aufgaben.mjs';
+import './luecken.mjs';
