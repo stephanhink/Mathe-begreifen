@@ -17,10 +17,8 @@
 // Schritt WERTGLEICH lassen, gleichung.js muss die LÖSUNGSMENGE gleich
 // lassen. Das eine folgt nicht aus dem anderen.
 //
-// Umfang: lineare Gleichungen mit einer Variablen. Quadratische
-// Gleichungen fehlen noch, weil pq- und abc-Formel Wurzeln brauchen und
-// term.js die noch nicht kennt (siehe "Offene Punkte" in CLAUDE.md).
-// Was diese Datei nicht kann, sagt sie — sie rät nichts.
+// Umfang: Gleichungen ersten und zweiten Grades mit einer Variablen.
+// Was darüber hinausgeht, sagt die Datei — sie rät nichts.
 
 import {
   bruch,
@@ -42,11 +40,15 @@ import {
   variable,
   summe,
   produkt,
+  potenz,
+  wurzel,
   istTerm,
   variablen,
   auswerteExakt,
+  auswerte,
   alsText as termAlsText,
   zahlAlsText,
+  vereinfache,
   multipliziereAus,
 } from './term.js';
 
@@ -62,9 +64,7 @@ export function gleichung(links, rechts) {
 }
 
 export function istGleichung(wert) {
-  return (
-    typeof wert === 'object' && wert !== null && istTerm(wert.links) && istTerm(wert.rechts)
-  );
+  return typeof wert === 'object' && wert !== null && istTerm(wert.links) && istTerm(wert.rechts);
 }
 
 export function alsText(g) {
@@ -109,139 +109,214 @@ export function istErfuellt(g, belegung) {
 // das Ergebnis gegen die URSPRÜNGLICHE Gleichung, nicht gegen die
 // umgeformte. Ein Fehler in der Umformung fällt damit auf, auch wenn
 // alle folgenden Schritte sauber waren.
-export function probe(g, wert, name = 'x') {
+//
+// Die Lösung darf ein Bruch sein oder ein Term — seit es quadratische
+// Gleichungen gibt, ist sie oft etwas wie −2 + √17 und damit gar kein
+// Bruch. Dann wird numerisch geprüft, und `exakt` sagt das auch: Eine
+// Probe mit gerundeten Zahlen ist ein starkes Indiz, aber kein Beweis,
+// und die App soll das nicht verschweigen.
+export function probe(g, loesung, name = 'x') {
   pruefeGleichung(g, 'probe');
-  const belegung = { [name]: wert };
-  const links = auswerteExakt(g.links, belegung);
-  const rechts = auswerteExakt(g.rechts, belegung);
-  return {
-    links,
-    rechts,
-    stimmt: bruchGleich(links, rechts),
-    text:
-      `${termAlsText(g.links)} = ${zahlAlsText(links)}   |   ` +
-      `${termAlsText(g.rechts)} = ${zahlAlsText(rechts)}`,
-  };
+  const alsTerm = istTerm(loesung) ? loesung : zahl(loesung);
+
+  try {
+    const wert = auswerteExakt(alsTerm);
+    const links = auswerteExakt(g.links, { [name]: wert });
+    const rechts = auswerteExakt(g.rechts, { [name]: wert });
+    return { exakt: true, links, rechts, stimmt: bruchGleich(links, rechts) };
+  } catch (fehler) {
+    if (!fehler.irrational) {
+      throw fehler;
+    }
+  }
+
+  const wert = auswerte(alsTerm);
+  const links = auswerte(g.links, { [name]: wert });
+  const rechts = auswerte(g.rechts, { [name]: wert });
+  const schranke = 1e-9 * Math.max(1, Math.abs(links), Math.abs(rechts));
+  return { exakt: false, links, rechts, stimmt: Math.abs(links - rechts) <= schranke };
+}
+
+// Beide Seiten einer Probe als Text — egal ob exakt oder gerundet.
+export function probeAlsText(p) {
+  return p.exakt ? zahlAlsText(p.links) : String(Math.round(p.links * 1e6) / 1e6);
 }
 
 // ---------------------------------------------------------------------
-// Ist der Term linear?
+// Ist die Gleichung ein Polynom? Und welchen Grades?
 // ---------------------------------------------------------------------
 //
-// Gesucht ist die Darstellung a·x + b. Bestimmt wird sie strukturell,
-// nicht durch Einsetzen: Wer an zwei Stellen misst und daraus auf eine
-// Gerade schließt, wird von x² an genau zwei Punkten belogen.
+// Gesucht sind die Koeffizienten: aus 2x² + 3x − 5 wird [−5, 3, 2],
+// also der Reihe nach die Vorfaktoren von x⁰, x¹, x².
 //
-// Rückgabe ist { a, b } als Brüche — oder null, wenn der Term nicht
-// linear ist. null heißt hier ausdrücklich "kann ich nicht", nicht
-// "ist null".
+// Bestimmt werden sie STRUKTURELL, nicht durch Einsetzen. Wer an drei
+// Stellen misst und daraus auf eine Parabel schließt, wird von x⁴ an
+// genau drei Punkten belogen.
+//
+// Rückgabe ist null, wenn der Term kein Polynom in dieser Variablen ist
+// — null heißt hier ausdrücklich "kann ich nicht", nicht "ist null".
 
-function linearform(term, name) {
+// Höher als vierten Grades wird gar nicht erst gesammelt. Der Grund ist
+// nicht Bequemlichkeit: (x + 1)²⁰ ausmultipliziert hat Koeffizienten
+// jenseits von 2^53, und die Bruchrechnung würde zu Recht abbrechen.
+// Lieber vorher sagen, dass es zu viel wird.
+const HOECHSTER_GRAD = 4;
+
+function koeffizienten(term, name) {
+  // Ein Teilterm ohne jede Variable ist eine Zahl — wenn er sich exakt
+  // ausrechnen lässt. √4 geht, √2 nicht: Ein irrationaler Koeffizient
+  // wäre kein Bruch mehr, und dann trüge diese Datei eine Genauigkeit
+  // vor, die sie nicht hat.
+  if (variablen(term).length === 0) {
+    try {
+      return [auswerteExakt(term)];
+    } catch {
+      return null;
+    }
+  }
+
   switch (term.art) {
-    case 'zahl':
-      return { a: bruch(0), b: term.wert };
-
     case 'variable':
-      return term.name === name ? { a: bruch(1), b: bruch(0) } : null;
+      return term.name === name ? [bruch(0), bruch(1)] : null;
 
     case 'summe': {
-      let a = bruch(0);
-      let b = bruch(0);
+      let ergebnis = [bruch(0)];
       for (const teil of term.teile) {
-        const f = linearform(teil, name);
-        if (f === null) {
+        const k = koeffizienten(teil, name);
+        if (k === null) {
           return null;
         }
-        a = plus(a, f.a);
-        b = plus(b, f.b);
+        ergebnis = addiere(ergebnis, k);
       }
-      return { a, b };
+      return ergebnis;
     }
 
     case 'produkt': {
-      let ergebnis = { a: bruch(0), b: bruch(1) };
+      let ergebnis = [bruch(1)];
       for (const teil of term.teile) {
-        const f = linearform(teil, name);
-        if (f === null) {
+        const k = koeffizienten(teil, name);
+        if (k === null) {
           return null;
         }
-        // (a₁x + b₁)(a₂x + b₂) ist nur dann wieder linear, wenn
-        // höchstens ein Faktor die Variable enthält. Sonst entsteht x².
-        if (!istNull(ergebnis.a) && !istNull(f.a)) {
+        ergebnis = falte(ergebnis, k);
+        if (ergebnis === null) {
           return null;
         }
-        ergebnis = {
-          a: plus(mal(ergebnis.a, f.b), mal(ergebnis.b, f.a)),
-          b: mal(ergebnis.b, f.b),
-        };
       }
       return ergebnis;
     }
 
     case 'potenz': {
-      const e = linearform(term.exponent, name);
-      if (e === null || !istNull(e.a) || !istGanz(e.b)) {
+      const e = koeffizienten(term.exponent, name);
+      if (e === null || e.length > 1 || !istGanz(e[0]) || istNegativ(e[0])) {
+        // Ein negativer Exponent hieße: die Variable steht im Nenner.
+        // Das ist kein Polynom, und der Definitionsbereich hat ein Loch.
         return null;
       }
-      const n = e.b.z;
-      const basis = linearform(term.basis, name);
+      const n = e[0].z;
+      const basis = koeffizienten(term.basis, name);
       if (basis === null) {
         return null;
       }
-      if (n === 1) {
-        return basis;
-      }
       // x⁰ ist NICHT einfach 1: An der Stelle x = 0 ist 0⁰ nicht
       // definiert. Die Gleichung x⁰ = 1 hat deshalb nicht alle Zahlen
-      // als Lösung, sondern alle außer null. Diese Feinheit sauber
-      // mitzuführen wäre möglich, aber die Datei würde sie zu leicht
-      // wieder verlieren — also wird abgelehnt statt geraten. Dieselbe
-      // Haltung wie bei x⁰ in term.js.
-      if (!istNull(basis.a)) {
-        return null;
+      // als Lösung, sondern alle außer null. Statt diese Feinheit
+      // mitzuschleppen, wird abgelehnt — dieselbe Haltung wie in term.js.
+      if (n === 0) {
+        return basis.length > 1 ? null : [bruch(1)];
       }
-      if (n === 0 && istNull(basis.b)) {
-        return null; // 0⁰
+
+      let ergebnis = [bruch(1)];
+      for (let i = 0; i < n; i++) {
+        ergebnis = falte(ergebnis, basis);
+        if (ergebnis === null) {
+          return null;
+        }
       }
-      if (n < 0 && istNull(basis.b)) {
-        return null; // Division durch null
-      }
-      return { a: bruch(0), b: hoch(basis.b, n) };
+      return ergebnis;
     }
 
     case 'quotient': {
-      const nenner = linearform(term.nenner, name);
-      // Steht die Variable im Nenner, ist die Gleichung nicht linear —
-      // und der Definitionsbereich hat ein Loch. Beides Gründe genug.
-      if (nenner === null || !istNull(nenner.a) || istNull(nenner.b)) {
+      const nenner = koeffizienten(term.nenner, name);
+      // Steht die Variable im Nenner, ist es kein Polynom.
+      if (nenner === null || nenner.length > 1 || istNull(nenner[0])) {
         return null;
       }
-      const zaehler = linearform(term.zaehler, name);
+      const zaehler = koeffizienten(term.zaehler, name);
       if (zaehler === null) {
         return null;
       }
-      return { a: geteilt(zaehler.a, nenner.b), b: geteilt(zaehler.b, nenner.b) };
+      return zaehler.map((k) => geteilt(k, nenner[0]));
     }
 
     default:
+      // Wurzel oder Betrag mit der Variablen darin: kein Polynom.
       return null;
   }
+}
+
+function addiere(a, b) {
+  const laenge = Math.max(a.length, b.length);
+  const ergebnis = [];
+  for (let i = 0; i < laenge; i++) {
+    ergebnis.push(plus(a[i] ?? bruch(0), b[i] ?? bruch(0)));
+  }
+  return ergebnis;
+}
+
+// Zwei Polynome multiplizieren heißt, ihre Koeffizienten zu falten.
+function falte(a, b) {
+  if (a.length + b.length - 2 > HOECHSTER_GRAD) {
+    return null;
+  }
+  const ergebnis = Array.from({ length: a.length + b.length - 1 }, () => bruch(0));
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) {
+      ergebnis[i + j] = plus(ergebnis[i + j], mal(a[i], b[j]));
+    }
+  }
+  return ergebnis;
+}
+
+function gradVon(koeffs) {
+  for (let i = koeffs.length - 1; i >= 0; i--) {
+    if (!istNull(koeffs[i])) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+// Aus Koeffizienten wieder einen Term machen, absteigend sortiert:
+// [−5, 3, 2] wird 2x² + 3x − 5.
+function alsPolynom(koeffs, name) {
+  const glieder = [];
+  for (let i = koeffs.length - 1; i >= 0; i--) {
+    if (istNull(koeffs[i])) {
+      continue;
+    }
+    glieder.push(monom(koeffs[i], i, name));
+  }
+  return glieder.length === 0 ? zahl(0) : summe(...glieder);
+}
+
+function monom(koeffizient, grad, name) {
+  if (grad === 0) {
+    return zahl(koeffizient);
+  }
+  const potenzTeil = grad === 1 ? variable(name) : potenz(variable(name), zahl(grad));
+  return bruchGleich(koeffizient, bruch(1))
+    ? potenzTeil
+    : produkt(zahl(koeffizient), potenzTeil);
 }
 
 // ---------------------------------------------------------------------
 // Umformen
 // ---------------------------------------------------------------------
 
-function monom(koeffizient, name) {
-  if (bruchGleich(koeffizient, bruch(1))) {
-    return variable(name);
-  }
-  return produkt(zahl(koeffizient), variable(name));
-}
-
-// Eine Umformung auf beiden Seiten, mit Namen. Danach werden beide
-// Seiten aufgeräumt — sonst stünde da "3x + 5 − 5 = 14 − 5" und der
-// nächste Schritt wäre nicht zu erkennen.
+// Eine Umformung auf beiden Seiten. Danach werden beide Seiten
+// aufgeräumt — sonst stünde da "3x + 5 − 5 = 14 − 5" und der nächste
+// Schritt wäre nicht zu erkennen.
 function beideSeiten(g, wandle) {
   return gleichung(multipliziereAus(wandle(g.links)).term, multipliziereAus(wandle(g.rechts)).term);
 }
@@ -278,32 +353,40 @@ function punktText(koeffizient) {
   return `beide Seiten · ${zahlAlsText(kehrwert(koeffizient))}`;
 }
 
+function schritt(operation, g) {
+  return { operation, gleichung: g, text: alsText(g) };
+}
+
 // ---------------------------------------------------------------------
 // Lösen
 // ---------------------------------------------------------------------
 
 // Ergebnis ist immer ein Objekt mit `art`:
 //
-//   'eindeutig'  — genau eine Lösung, in `loesung` als Bruch
+//   'eindeutig'  — genau eine Lösung, in `loesungen[0]`
+//   'mehrere'    — zwei Lösungen, in `loesungen`
 //   'keine'      — die Lösungsmenge ist leer (z. B. x + 1 = x + 2)
 //   'alle'       — jede Zahl löst die Gleichung (z. B. 2(x+1) = 2x+2)
 //   'unklar'     — diese Datei kann es nicht; `grund` sagt warum
 //
+// Die Lösungen sind TERME, keine Brüche. Seit es quadratische
+// Gleichungen gibt, ist eine Lösung oft −2 + √17 — und das ist kein
+// Bruch. Als Kommazahl zu runden wäre die bequeme Lüge; als Term
+// stehenzulassen ist die Wahrheit.
+//
 // 'unklar' ist ausdrücklich ein gültiges Ergebnis und keine Ausnahme.
-// Eine quadratische Gleichung ist keine Panne, sie ist nur nicht das,
-// was diese Datei kann — und stillschweigend etwas Falsches zu liefern
-// wäre schlimmer als zuzugeben, dass man nicht weiterweiß.
+// Stillschweigend etwas Falsches zu liefern wäre schlimmer als
+// zuzugeben, dass man nicht weiterweiß.
 export function loese(g) {
   pruefeGleichung(g, 'loese');
 
   const namen = [...new Set([...variablen(g.links), ...variablen(g.rechts)])];
   if (namen.length > 1) {
-    return {
-      art: 'unklar',
-      grund: `Diese Gleichung hat mehrere Variablen (${namen.join(', ')}). Hier wird nach genau einer aufgelöst.`,
-      schritte: [],
-      gleichung: g,
-    };
+    return unklar(
+      `Diese Gleichung hat mehrere Variablen (${namen.join(', ')}). Hier wird nach genau einer aufgelöst.`,
+      [],
+      g
+    );
   }
 
   const name = namen[0] ?? 'x';
@@ -318,46 +401,83 @@ export function loese(g) {
     schritte.push(schritt('beide Seiten ausrechnen', aktuell));
   }
 
-  const links = linearform(aktuell.links, name);
-  const rechts = linearform(aktuell.rechts, name);
+  const links = koeffizienten(aktuell.links, name);
+  const rechts = koeffizienten(aktuell.rechts, name);
 
   if (links === null || rechts === null) {
-    return {
-      art: 'unklar',
-      grund:
-        'Diese Gleichung ist nicht linear. Quadratische Gleichungen, Wurzeln und ' +
+    return unklar(
+      'Diese Gleichung ist kein Polynom in einer Variablen. Wurzeln, Beträge und ' +
         'Variablen im Nenner kann diese Datei noch nicht lösen.',
       schritte,
-      gleichung: aktuell,
-    };
+      aktuell
+    );
   }
 
+  // Alles auf eine Seite: links − rechts.
+  const differenz = addiere(
+    links,
+    rechts.map((k) => negativ(k))
+  );
+  const grad = gradVon(differenz);
+
+  if (grad > 2) {
+    return unklar(
+      `Diese Gleichung ist vom Grad ${grad}. Gelöst werden hier Gleichungen ersten und zweiten Grades.`,
+      schritte,
+      aktuell
+    );
+  }
+
+  if (grad === 0) {
+    return ohneVariable(differenz[0], schritte, aktuell);
+  }
+  if (grad === 1) {
+    return loeseLinear(aktuell, links, rechts, name, schritte);
+  }
+  return loeseQuadratisch(aktuell, differenz, name, schritte);
+}
+
+function unklar(grund, schritte, g) {
+  return { art: 'unklar', grund, schritte, gleichung: g };
+}
+
+// Die Variable ist herausgefallen — dann entscheidet die Zahlenaussage.
+function ohneVariable(rest, schritte, g) {
+  const stimmt = istNull(rest);
+  return {
+    art: stimmt ? 'alle' : 'keine',
+    grund: stimmt
+      ? 'Die Variable fällt heraus und übrig bleibt eine wahre Aussage — jede Zahl löst die Gleichung.'
+      : 'Die Variable fällt heraus und übrig bleibt eine falsche Aussage — es gibt keine Lösung.',
+    schritte,
+    gleichung: g,
+  };
+}
+
+// ---------------------------------------------------------------------
+// Ersten Grades
+// ---------------------------------------------------------------------
+
+function loeseLinear(g, links, rechts, name, schritte) {
+  let aktuell = g;
+  const a1 = links[1] ?? bruch(0);
+  const b1 = links[0] ?? bruch(0);
+  const a2 = rechts[1] ?? bruch(0);
+  const b2 = rechts[0] ?? bruch(0);
+
   // Alles mit x nach links.
-  if (!istNull(rechts.a)) {
-    aktuell = addiereBeidseitig(aktuell, monom(negativ(rechts.a), name));
-    schritte.push(schritt(strichTextMonom(rechts.a, name), aktuell));
+  if (!istNull(a2)) {
+    aktuell = addiereBeidseitig(aktuell, monom(negativ(a2), 1, name));
+    schritte.push(schritt(strichTextMonom(a2, name), aktuell));
   }
 
   // Alles ohne x nach rechts.
-  if (!istNull(links.b)) {
-    aktuell = addiereBeidseitig(aktuell, zahl(negativ(links.b)));
-    schritte.push(schritt(strichText(links.b), aktuell));
+  if (!istNull(b1)) {
+    aktuell = addiereBeidseitig(aktuell, zahl(negativ(b1)));
+    schritte.push(schritt(strichText(b1), aktuell));
   }
 
-  const koeffizient = minus(links.a, rechts.a);
-
-  // Ist die Variable weggefallen, entscheidet die Zahlenaussage.
-  if (istNull(koeffizient)) {
-    const stimmt = bruchGleich(links.b, rechts.b);
-    return {
-      art: stimmt ? 'alle' : 'keine',
-      grund: stimmt
-        ? 'Die Variable fällt heraus und übrig bleibt eine wahre Aussage — jede Zahl löst die Gleichung.'
-        : 'Die Variable fällt heraus und übrig bleibt eine falsche Aussage — es gibt keine Lösung.',
-      schritte,
-      gleichung: aktuell,
-    };
-  }
+  const koeffizient = minus(a1, a2);
 
   // Durch den Koeffizienten teilen.
   if (!bruchGleich(koeffizient, bruch(1))) {
@@ -365,13 +485,89 @@ export function loese(g) {
     schritte.push(schritt(punktText(koeffizient), aktuell));
   }
 
-  const loesung = geteilt(minus(rechts.b, links.b), koeffizient);
-
-  return { art: 'eindeutig', loesung, schritte, gleichung: aktuell };
+  const loesung = geteilt(minus(b2, b1), koeffizient);
+  return { art: 'eindeutig', loesungen: [zahl(loesung)], schritte, gleichung: aktuell };
 }
 
-function schritt(operation, g) {
-  return { operation, gleichung: g, text: alsText(g) };
+// ---------------------------------------------------------------------
+// Zweiten Grades
+// ---------------------------------------------------------------------
+
+function loeseQuadratisch(g, differenz, name, schritte) {
+  let aktuell = g;
+
+  // Alles auf eine Seite. Nur als Schritt aufnehmen, wenn sich dadurch
+  // etwas ändert — bei "x² − 4 = 0" steht es schon so da.
+  const aufEinerSeite = gleichung(alsPolynom(differenz, name), zahl(0));
+  if (alsText(aufEinerSeite) !== alsText(aktuell)) {
+    aktuell = aufEinerSeite;
+    schritte.push(schritt('alles auf eine Seite bringen', aktuell));
+  }
+
+  // Auf die Normalform x² + px + q = 0 bringen. Die pq-Formel gilt nur
+  // dafür — mit einem Vorfaktor vor dem x² liefert sie Unsinn, und das
+  // ist einer der häufigsten Fehler überhaupt.
+  const a = differenz[2];
+  let normiert = differenz;
+  if (!bruchGleich(a, bruch(1))) {
+    normiert = differenz.map((k) => geteilt(k, a));
+    aktuell = gleichung(alsPolynom(normiert, name), zahl(0));
+    schritte.push(schritt(punktText(a), aktuell));
+  }
+
+  const p = normiert[1];
+  const q = normiert[0];
+
+  // Diskriminante D = (p/2)² − q. Ihr Vorzeichen entscheidet alles.
+  const halbesP = geteilt(p, bruch(2));
+  const diskriminante = minus(mal(halbesP, halbesP), q);
+
+  const pq = {
+    p,
+    q,
+    halbesP,
+    diskriminante,
+    formel: `x = −${zahlAlsText(halbesP)} ± √((${zahlAlsText(halbesP)})² − ${zahlAlsText(q)})`,
+  };
+
+  if (istNegativ(diskriminante)) {
+    return {
+      art: 'keine',
+      grund:
+        `Unter der Wurzel steht ${zahlAlsText(diskriminante)}, also eine negative Zahl. ` +
+        'Daraus lässt sich im Reellen keine Wurzel ziehen — die Gleichung hat keine Lösung. ' +
+        'Anschaulich: Die Parabel schneidet die x-Achse nicht.',
+      pq,
+      schritte,
+      gleichung: aktuell,
+    };
+  }
+
+  const minusHalbesP = negativ(halbesP);
+
+  if (istNull(diskriminante)) {
+    return {
+      art: 'eindeutig',
+      loesungen: [zahl(minusHalbesP)],
+      grund:
+        'Unter der Wurzel steht 0 — beide Lösungen fallen zusammen. ' +
+        'Anschaulich: Die Parabel berührt die x-Achse genau einmal.',
+      pq,
+      schritte,
+      gleichung: aktuell,
+    };
+  }
+
+  // Zwei Lösungen. Erst in der rohen Form −p/2 ± √D, damit man sieht,
+  // woher sie kommen; dann vereinfacht.
+  const wurzelTeil = wurzel(zahl(diskriminante));
+  const roh = [
+    summe(zahl(minusHalbesP), wurzelTeil),
+    summe(zahl(minusHalbesP), produkt(zahl(-1), wurzelTeil)),
+  ];
+  const loesungen = roh.map((t) => vereinfache(t).term);
+
+  return { art: 'mehrere', loesungen, roh, pq, schritte, gleichung: aktuell };
 }
 
 // ---------------------------------------------------------------------
@@ -381,10 +577,6 @@ function schritt(operation, g) {
 // Der Rechenweg in der Form, die im Konzept steht: Die Umformung steht
 // eingerückt ZWISCHEN den Zeilen, nicht daneben. So liest man sie als
 // das, was sie ist — der Übergang von einer Zeile zur nächsten.
-//
-//     3x + 5 = 14
-//              | beide Seiten − 5
-//     3x = 9
 export function alsRechenweg(g, ergebnis) {
   pruefeGleichung(g, 'alsRechenweg');
   const zeilen = [alsText(g)];
@@ -394,17 +586,26 @@ export function alsRechenweg(g, ergebnis) {
     zeilen.push(s.text);
   }
 
+  if (ergebnis.pq) {
+    zeilen.push('');
+    zeilen.push(
+      `p = ${zahlAlsText(ergebnis.pq.p)},  q = ${zahlAlsText(ergebnis.pq.q)}`
+    );
+    zeilen.push(`unter der Wurzel: ${zahlAlsText(ergebnis.pq.diskriminante)}`);
+  }
+
+  zeilen.push('');
   switch (ergebnis.art) {
     case 'eindeutig':
-      zeilen.push('');
-      zeilen.push(`L = { ${zahlAlsText(ergebnis.loesung)} }`);
+      zeilen.push(`L = { ${termAlsText(ergebnis.loesungen[0])} }`);
+      break;
+    case 'mehrere':
+      zeilen.push(`L = { ${ergebnis.loesungen.map(termAlsText).join('; ')} }`);
       break;
     case 'keine':
-      zeilen.push('');
       zeilen.push('L = { }   (keine Lösung)');
       break;
     case 'alle':
-      zeilen.push('');
       // "L = G" ist die Schreibweise des deutschen Unterrichts: Die
       // Lösungsmenge ist die ganze Grundmenge. Hier bewusst nicht ℚ
       // oder ℝ — welche Zahlen zugelassen sind, steht in der Aufgabe
@@ -412,7 +613,6 @@ export function alsRechenweg(g, ergebnis) {
       zeilen.push('L = G   (jede Zahl der Grundmenge löst die Gleichung)');
       break;
     default:
-      zeilen.push('');
       zeilen.push(ergebnis.grund);
   }
 

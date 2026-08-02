@@ -186,6 +186,31 @@ export const THEMEN = {
     mehr: ['gleichung', 'probe', 'loesungsmenge'],
   },
 
+  pqFormel: {
+    titel: 'Die pq-Formel',
+    text: [
+      'Die pq-Formel löst quadratische Gleichungen — also solche, in denen x² vorkommt. Sie liefert beide Lösungen auf einmal.',
+      'Sie gilt nur für die Normalform x² + px + q = 0. Steht vor dem x² noch eine Zahl, muss man zuerst durch sie teilen. Das zu vergessen ist der häufigste Fehler überhaupt: Aus 2x² + 8x + 6 = 0 wird erst x² + 4x + 3 = 0, und erst dann sind p = 4 und q = 3.',
+      'Entscheidend ist, was unter der Wurzel steht: (p/2)² − q. Ist das positiv, gibt es zwei Lösungen; ist es null, fallen beide zusammen; ist es negativ, gibt es keine — dann schneidet die Parabel die x-Achse nicht.',
+      'Auswendig können muss man sie nicht. Sie entsteht durch quadratische Ergänzung, also durch das Vervollständigen zu einem Binom — und wer das einmal nachvollzogen hat, kann sie jederzeit wieder herleiten.',
+    ],
+    formel: 'x² + px + q = 0   →   x = −p/2 ± √((p/2)² − q)',
+    beispiel:
+      'x² + 4x + 3 = 0:   p = 4, q = 3.   Unter der Wurzel: 2² − 3 = 1.   x = −2 ± 1, also −1 und −3.',
+    mehr: ['quadratischeGleichung', 'wurzel', 'loesungsmenge', 'probe'],
+  },
+
+  quadratischeGleichung: {
+    titel: 'Quadratische Gleichungen',
+    text: [
+      'Eine Gleichung heißt quadratisch, wenn die höchste Potenz der Variablen x² ist. Anders als bei einer linearen Gleichung gibt es dann meistens zwei Lösungen — nicht eine.',
+      'Der Grund ist anschaulich: Der Graph von x² + px + q ist eine Parabel. Gesucht sind die Stellen, an denen sie die x-Achse schneidet — und eine Parabel kann sie zweimal schneiden, einmal berühren oder ganz verfehlen.',
+      'Zwei Wege führen zum Ziel. Steht die Gleichung als Produkt da, etwa (x + 1)(x − 3) = 0, reicht der Satz vom Nullprodukt: Ein Produkt ist null, wenn ein Faktor null ist — also x = −1 oder x = 3. Sonst nimmt man die pq-Formel.',
+    ],
+    beispiel: 'x² = 4 hat zwei Lösungen: 2 und −2. Beide ergeben quadriert 4.',
+    mehr: ['pqFormel', 'ausklammern', 'potenz', 'loesungsmenge'],
+  },
+
   loesungsmenge: {
     titel: 'Die Lösungsmenge L',
     text: [
@@ -194,7 +219,7 @@ export const THEMEN = {
       'Die Grundmenge G sagt, welche Zahlen überhaupt zugelassen sind. In der Mittelstufe sind das oft die Bruchzahlen, in der Oberstufe die reellen Zahlen. Sie steht in der Aufgabe, nicht in der Gleichung.',
     ],
     beispiel: 'x + 1 = x + 2 führt auf 0 = 1 — das stimmt nie, also L = { }.',
-    mehr: ['gleichung', 'beideSeiten'],
+    mehr: ['gleichung', 'beideSeiten', 'quadratischeGleichung'],
   },
 
   probe: {

@@ -138,7 +138,7 @@ pruefung('Gleichungen lesen', () => {
 
   // Der Weg von der Eingabe bis zur Lösung, in einem Stück.
   const e = loese(parseGleichung('3x + 5 = 14'));
-  gleichText('und die Lösung stimmt', bruchAlsText(e.loesung), '3');
+  gleichText('und die Lösung stimmt', alsText(e.loesungen[0]), '3');
 
   wirft('ohne = ist es keine Gleichung', () => parseGleichung('3x + 5'));
 

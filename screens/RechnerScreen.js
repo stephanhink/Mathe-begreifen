@@ -23,9 +23,12 @@ const BEISPIELE = [
   '5x - 2 = 2x + 7',
   '2(x + 3) = 4x - 2',
   'x/3 = 2',
+  'x^2 = 4',
+  '2x^2 + 8x + 6 = 0',
+  'x^2 + 3x + 1 = 0',
+  'x^2 + 1 = 0',
   '(x + 3)^2',
   '3x + 5 + 2x',
-  '6x + 9',
   '√50',
   '√(x^2)',
   'x + 1 = x + 2',
@@ -188,6 +191,7 @@ function Loesung({ eingelesen, ergebnis }) {
   if (ergebnis.art === 'keine' || ergebnis.art === 'alle') {
     return (
       <View style={styles.ergebnisKasten}>
+        {ergebnis.pq ? <PqRechnung pq={ergebnis.pq} /> : null}
         <View style={styles.zeileMitKnopf}>
           <Text style={styles.ergebnis}>{ergebnis.art === 'keine' ? 'L = { }' : 'L = G'}</Text>
           <InfoButton thema="loesungsmenge" />
@@ -197,30 +201,66 @@ function Loesung({ eingelesen, ergebnis }) {
     );
   }
 
-  // Eindeutige Lösung: dazu gehört die Probe. Sie rechnet gegen die
-  // URSPRÜNGLICHE Gleichung, nicht gegen die letzte umgeformte Zeile —
-  // sonst könnte sie einen Fehler im Rechenweg gar nicht finden.
-  const p = probe(eingelesen, ergebnis.loesung);
+  const mengenText = ergebnis.loesungen.map(termAlsText).join('; ');
 
   return (
     <View style={styles.ergebnisKasten}>
+      {ergebnis.pq ? <PqRechnung pq={ergebnis.pq} /> : null}
+
       <View style={styles.zeileMitKnopf}>
-        <Text style={styles.ergebnis}>L = &#123; {bruchAlsText(ergebnis.loesung)} &#125;</Text>
+        <Text style={styles.ergebnis}>L = &#123; {mengenText} &#125;</Text>
         <InfoButton thema="loesungsmenge" />
       </View>
+      {ergebnis.grund ? <Text style={styles.begruendung}>{ergebnis.grund}</Text> : null}
 
       <View style={[styles.zeileMitKnopf, styles.probeUeberschrift]}>
         <Text style={styles.probeTitel}>Probe</Text>
         <InfoButton thema="probe" />
       </View>
+
+      {/* Die Probe rechnet gegen die URSPRÜNGLICHE Gleichung, nicht
+          gegen die letzte umgeformte Zeile — sonst könnte sie einen
+          Fehler im Rechenweg gar nicht finden. */}
+      {ergebnis.loesungen.map((l) => (
+        <ProbeZeilen key={termAlsText(l)} gleichung={eingelesen} loesung={l} />
+      ))}
+    </View>
+  );
+}
+
+// Die pq-Formel sichtbar machen: Welche Zahlen wurden eingesetzt, und
+// was steht unter der Wurzel? Genau daran entscheidet sich alles, und
+// genau das übersieht man beim Auswendiglernen.
+function PqRechnung({ pq }) {
+  return (
+    <View style={styles.pqKasten}>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.probeTitel}>pq-Formel</Text>
+        <InfoButton thema="pqFormel" />
+      </View>
       <Text style={styles.probeZeile}>
-        links: {termAlsText(eingelesen.links)} = {bruchAlsText(p.links)}
+        p = {bruchAlsText(pq.p)},  q = {bruchAlsText(pq.q)}
       </Text>
       <Text style={styles.probeZeile}>
-        rechts: {termAlsText(eingelesen.rechts)} = {bruchAlsText(p.rechts)}
+        unter der Wurzel: ({bruchAlsText(pq.halbesP)})² − ({bruchAlsText(pq.q)}) ={' '}
+        {bruchAlsText(pq.diskriminante)}
+      </Text>
+    </View>
+  );
+}
+
+function ProbeZeilen({ gleichung, loesung }) {
+  const p = probe(gleichung, loesung);
+  const seite = (wert) => (p.exakt ? bruchAlsText(wert) : String(Math.round(wert * 1e6) / 1e6));
+
+  return (
+    <View style={styles.probeBlock}>
+      <Text style={styles.probeZeile}>
+        x = {termAlsText(loesung)}: links {seite(p.links)}, rechts {seite(p.rechts)}
       </Text>
       <Text style={p.stimmt ? styles.probeGut : styles.probeSchlecht}>
-        {p.stimmt ? 'Beide Seiten gleich — die Lösung stimmt.' : 'Die Seiten stimmen nicht überein!'}
+        {p.stimmt ? 'stimmt' : 'stimmt nicht!'}
+        {p.exakt ? '' : ' — gerundet gerechnet, weil die Lösung kein Bruch ist'}
       </Text>
     </View>
   );
@@ -304,6 +344,15 @@ const styles = StyleSheet.create({
   },
   probeUeberschrift: {
     marginTop: 14,
+  },
+  probeBlock: {
+    marginTop: 6,
+  },
+  pqKasten: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: farben.trenner,
   },
   probeTitel: {
     fontSize: 14,

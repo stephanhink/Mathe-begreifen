@@ -17,7 +17,17 @@
 import { pruefung, wahr, zahl as zahlIst, gleich as gleichText, wirft } from './pruefer.mjs';
 import { wuerfel, startwertFuer } from './wuerfel.mjs';
 import { bruch, gleich as bruchGleich, alsText as bruchAlsText } from '../utils/bruch.js';
-import { zahl, variable, summe, produkt, potenz, quotient } from '../utils/term.js';
+import {
+  zahl,
+  variable,
+  summe,
+  produkt,
+  potenz,
+  quotient,
+  wurzel,
+  betrag,
+  alsText as termAlsText,
+} from '../utils/term.js';
 import {
   gleichung,
   istGleichung,
@@ -83,7 +93,7 @@ pruefung('Das Beispiel aus CLAUDE.md', () => {
   const e = loese(g);
 
   gleichText('Art', e.art, 'eindeutig');
-  gleichText('Lösung', bruchAlsText(e.loesung), '3');
+  gleichText('Lösung', termAlsText(e.loesungen[0]), '3');
   zahlIst('zwei Schritte', e.schritte.length, 2);
   gleichText('erster Schritt', e.schritte[0].operation, 'beide Seiten − 5');
   gleichText('danach', e.schritte[0].text, '3x = 9');
@@ -103,46 +113,46 @@ pruefung('Variablen auf beiden Seiten', () => {
   // 5x − 2 = 2x + 7
   const g = gleichung(lin(5, -2), lin(2, 7));
   const e = loese(g);
-  gleichText('Lösung', bruchAlsText(e.loesung), '3');
+  gleichText('Lösung', termAlsText(e.loesungen[0]), '3');
   gleichText('zuerst das x nach links', e.schritte[0].operation, 'beide Seiten − 2x');
   gleichText('dann die Zahl nach rechts', e.schritte[1].operation, 'beide Seiten + 2');
   gleichText('dann teilen', e.schritte[2].operation, 'beide Seiten : 3');
-  wahr('Probe stimmt', probe(g, e.loesung).stimmt);
+  wahr('Probe stimmt', probe(g, e.loesungen[0]).stimmt);
 });
 
 pruefung('Klammern werden zuerst aufgelöst', () => {
   // 2(x + 3) = 4x − 2
   const g = gleichung(produkt(zahl(2), summe(x, zahl(3))), lin(4, -2));
   const e = loese(g);
-  gleichText('Lösung', bruchAlsText(e.loesung), '4');
+  gleichText('Lösung', termAlsText(e.loesungen[0]), '4');
   gleichText('erster Schritt', e.schritte[0].operation, 'beide Seiten ausrechnen');
   gleichText('und die Klammer ist weg', e.schritte[0].text, '2x + 6 = 4x − 2');
-  wahr('Probe stimmt', probe(g, e.loesung).stimmt);
+  wahr('Probe stimmt', probe(g, e.loesungen[0]).stimmt);
 });
 
 pruefung('Brüche als Koeffizient', () => {
   // 1/2 x + 1 = 4 — durch 1/2 zu teilen schreibt niemand hin.
   const halb = gleichung(summe(produkt(zahl(bruch(1, 2)), x), zahl(1)), zahl(4));
   const e = loese(halb);
-  gleichText('Lösung', bruchAlsText(e.loesung), '6');
+  gleichText('Lösung', termAlsText(e.loesungen[0]), '6');
   gleichText('mit dem Kehrwert malnehmen', e.schritte[1].operation, 'beide Seiten · 2');
 
   // x : 3 = 2
   const geteiltDurch = gleichung(quotient(x, zahl(3)), zahl(2));
   const e2 = loese(geteiltDurch);
-  gleichText('x : 3 = 2', bruchAlsText(e2.loesung), '6');
+  gleichText('x : 3 = 2', termAlsText(e2.loesungen[0]), '6');
   gleichText('endet bei x = 6', e2.schritte[e2.schritte.length - 1].text, 'x = 6');
 
   // Eine Lösung, die selbst ein Bruch ist.
   const krumm = gleichung(lin(3, 1), zahl(3));
-  gleichText('3x + 1 = 3', bruchAlsText(loese(krumm).loesung), '2/3');
-  wahr('Probe stimmt auch bei krummer Lösung', probe(krumm, loese(krumm).loesung).stimmt);
+  gleichText('3x + 1 = 3', termAlsText(loese(krumm).loesungen[0]), '2/3');
+  wahr('Probe stimmt auch bei krummer Lösung', probe(krumm, loese(krumm).loesungen[0]).stimmt);
 });
 
 pruefung('Negative Zahlen', () => {
   const g = gleichung(lin(-3, 1), zahl(10));
   const e = loese(g);
-  gleichText('Lösung', bruchAlsText(e.loesung), '-3');
+  gleichText('Lösung', termAlsText(e.loesungen[0]), '−3');
   gleichText('durch eine negative Zahl teilen', e.schritte[1].operation, 'beide Seiten : −3');
 
   // Das Minuszeichen ist überall dasselbe Zeichen.
@@ -170,29 +180,106 @@ pruefung('Keine Lösung und alle Zahlen', () => {
   wahr('und noch eine', istErfuellt(alle, { x: bruch(-5, 3) }));
 });
 
-pruefung('Was diese Datei nicht kann, sagt sie', () => {
-  // Eine quadratische Gleichung ist keine Panne, sondern nur nicht das,
-  // was hier gelöst wird. Stillschweigend etwas Falsches zu liefern
-  // wäre schlimmer als zuzugeben, dass man nicht weiterweiß.
-  const quadratisch = loese(gleichung(potenz(x, zahl(2)), zahl(4)));
-  gleichText('x² = 4 ist unklar', quadratisch.art, 'unklar');
-  wahr('mit Begründung', quadratisch.grund.includes('nicht linear'));
+// ---------------------------------------------------------------------
+// Zweiten Grades
+// ---------------------------------------------------------------------
 
+pruefung('Quadratische Gleichungen', () => {
+  // Zwei Lösungen. Die Lösungsmenge wird aufsteigend gelesen, hier
+  // stehen sie in der Reihenfolge +√ und −√.
+  const zwei = loese(gleichung(potenz(x, zahl(2)), zahl(4)));
+  gleichText('x² = 4 hat mehrere Lösungen', zwei.art, 'mehrere');
+  zahlIst('nämlich zwei', zwei.loesungen.length, 2);
+  gleichText('L = { 2; −2 }', zwei.loesungen.map(termAlsText).join('; '), '2; −2');
+  wahr('beide bestehen die Probe', zwei.loesungen.every((l) => probe(gleichung(potenz(x, zahl(2)), zahl(4)), l).stimmt));
+
+  // Ein Vorfaktor vor dem x² muss weg, bevor die pq-Formel gilt. Das
+  // ist einer der häufigsten Fehler überhaupt.
+  const mitVorfaktor = gleichung(
+    summe(mal(2, potenz(x, zahl(2))), mal(8, x), zahl(6)),
+    zahl(0)
+  );
+  const e = loese(mitVorfaktor);
+  gleichText('2x² + 8x + 6 = 0', e.loesungen.map(termAlsText).join('; '), '−1; −3');
+  gleichText('erst durch 2 teilen', e.schritte[0].operation, 'beide Seiten : 2');
+  gleichText('dann steht die Normalform da', e.schritte[0].text, 'x² + 4x + 3 = 0');
+  zahlIst('p ist 4', Number(e.pq.p.z), 4);
+  zahlIst('q ist 3', Number(e.pq.q.z), 3);
+
+  // Die Diskriminante entscheidet, wie viele Lösungen es gibt.
+  const beruehrt = loese(gleichung(summe(potenz(x, zahl(2)), mal(-4, x), zahl(4)), zahl(0)));
+  gleichText('x² − 4x + 4 = 0 hat genau eine', beruehrt.art, 'eindeutig');
+  gleichText('nämlich 2', termAlsText(beruehrt.loesungen[0]), '2');
+  wahr('mit Begründung', beruehrt.grund.includes('berührt'));
+
+  const keine = loese(gleichung(summe(potenz(x, zahl(2)), zahl(1)), zahl(0)));
+  gleichText('x² + 1 = 0 hat keine', keine.art, 'keine');
+  wahr('und begründet es mit der Wurzel', keine.grund.includes('negative Zahl'));
+  wahr('und anschaulich mit der Parabel', keine.grund.includes('schneidet'));
+
+  // x · x ist genauso quadratisch wie x², auch wenn es nicht so aussieht.
+  gleichText('x · x = 4', loese(gleichung(produkt(x, x), zahl(4))).art, 'mehrere');
+  // Und ein Produkt zweier Klammern auch.
+  const produktform = loese(
+    gleichung(produkt(summe(x, zahl(1)), summe(x, zahl(-3))), zahl(0))
+  );
+  gleichText('(x + 1)(x − 3) = 0', produktform.loesungen.map(termAlsText).join('; '), '3; −1');
+});
+
+pruefung('Irrationale Lösungen bleiben exakt', () => {
+  // √2 lässt sich nicht als Bruch schreiben. Eine gerundete Kommazahl
+  // wäre die bequeme Lüge — der Term ist die Wahrheit.
+  const g = gleichung(potenz(x, zahl(2)), zahl(2));
+  const e = loese(g);
+  gleichText('x² = 2', e.loesungen.map(termAlsText).join('; '), '√2; −√2');
+
+  // Die Probe kann hier nicht exakt sein und sagt das auch.
+  const p = probe(g, e.loesungen[0]);
+  wahr('die Probe geht auf', p.stimmt);
+  wahr('aber nur gerundet', p.exakt === false);
+
+  // Bei einer rationalen Lösung ist sie dagegen exakt.
+  wahr('exakt bei x = 3', probe(gleichung(lin(3, 5), zahl(14)), zahl(3)).exakt);
+
+  // Ein Bruch unter der Wurzel wird weggeschafft, wie im Unterricht.
+  const krumm = loese(gleichung(summe(potenz(x, zahl(2)), mal(3, x), zahl(1)), zahl(0)));
+  gleichText(
+    'x² + 3x + 1 = 0',
+    krumm.loesungen.map(termAlsText).join('; '),
+    '−3/2 + 1/2 · √5; −3/2 − 1/2 · √5'
+  );
+  wahr('und beide bestehen die Probe', krumm.loesungen.every((l) => probe(gleichung(summe(potenz(x, zahl(2)), mal(3, x), zahl(1)), zahl(0)), l).stimmt));
+});
+
+pruefung('Was diese Datei nicht kann, sagt sie', () => {
+  // Nicht können ist keine Panne. Stillschweigend etwas Falsches zu
+  // liefern wäre schlimmer als zuzugeben, dass man nicht weiterweiß.
   const zweiVariablen = loese(gleichung(summe(x, y), zahl(3)));
   gleichText('x + y = 3 ist unklar', zweiVariablen.art, 'unklar');
   wahr('und nennt beide Variablen', zweiVariablen.grund.includes('x, y'));
 
-  // Variable im Nenner: nicht linear, und der Definitionsbereich hat
+  // Dritten Grades — die Grenze wird ausdrücklich benannt.
+  const kubisch = loese(gleichung(potenz(x, zahl(3)), zahl(8)));
+  gleichText('x³ = 8 ist unklar', kubisch.art, 'unklar');
+  wahr('und nennt den Grad', kubisch.grund.includes('Grad 3'));
+
+  // Variable im Nenner: kein Polynom, und der Definitionsbereich hat
   // ein Loch.
   gleichText('1 : x = 2 ist unklar', loese(gleichung(quotient(zahl(1), x), zahl(2))).art, 'unklar');
 
-  // x · x ist genauso quadratisch wie x², auch wenn es nicht so aussieht.
-  gleichText('x · x = 4 ist unklar', loese(gleichung(produkt(x, x), zahl(4))).art, 'unklar');
+  // Variable unter der Wurzel.
+  gleichText('√x = 2 ist unklar', loese(gleichung(wurzel(x), zahl(2))).art, 'unklar');
+  // Variable im Betrag.
+  gleichText('|x| = 2 ist unklar', loese(gleichung(betrag(x), zahl(2))).art, 'unklar');
 
   // x⁰ ist überall 1 AUSSER bei x = 0. Wer das zu "alle Zahlen"
   // vereinfacht, hat eine Lösung erfunden, die keine ist.
   gleichText('x⁰ = 1 ist unklar', loese(gleichung(potenz(x, zahl(0)), zahl(1))).art, 'unklar');
   wahr('und x = 0 erfüllt sie tatsächlich nicht', !istErfuellt(gleichung(potenz(x, zahl(0)), zahl(1)), { x: bruch(0) }));
+
+  // Ein irrationaler Koeffizient ist kein Bruch — auch das wird gesagt
+  // statt gerundet.
+  gleichText('√2 · x = 1 ist unklar', loese(gleichung(produkt(wurzel(zahl(2)), x), zahl(1))).art, 'unklar');
 });
 
 pruefung('Eine Gleichung ohne Variable', () => {
@@ -207,25 +294,43 @@ pruefung('Eine Gleichung ohne Variable', () => {
 const PUNKTE = 200;
 const GLEICHUNGEN = 80;
 
-// Ein zufälliger linearer Term in x.
-function zufallslinear(naechste, tiefe) {
+// Ein zufälliger Term in x, höchstens zweiten Grades.
+//
+// `quadratisch` steuert, ob auch x² entstehen darf. Ohne diesen Schalter
+// hätte die Prüfung den ganzen quadratischen Zweig nie erreicht — der
+// Fehler, der beim Einbau der Wurzeln aufgefallen ist und in CLAUDE.md
+// als Warnung steht: Ein Zufallstest, der den geprüften Code nicht
+// trifft, gibt falsche Sicherheit.
+function zufallsterm(naechste, tiefe, quadratisch) {
   if (tiefe <= 0 || naechste(10) < 4) {
     return naechste(3) === 0 ? x : zahl(naechste(13) - 6);
   }
-  switch (naechste(4)) {
+  switch (naechste(quadratisch ? 6 : 4)) {
     case 0:
-      return summe(zufallslinear(naechste, tiefe - 1), zufallslinear(naechste, tiefe - 1));
+      return summe(
+        zufallsterm(naechste, tiefe - 1, quadratisch),
+        zufallsterm(naechste, tiefe - 1, quadratisch)
+      );
     case 1:
       return summe(
-        zufallslinear(naechste, tiefe - 1),
-        zufallslinear(naechste, tiefe - 1),
-        zufallslinear(naechste, tiefe - 1)
+        zufallsterm(naechste, tiefe - 1, quadratisch),
+        zufallsterm(naechste, tiefe - 1, quadratisch),
+        zufallsterm(naechste, tiefe - 1, quadratisch)
       );
     case 2:
       // Zahl mal Term — so entstehen Klammern, die aufgelöst werden müssen.
-      return produkt(zahl(naechste(9) - 4), zufallslinear(naechste, tiefe - 1));
+      return produkt(zahl(naechste(9) - 4), zufallsterm(naechste, tiefe - 1, quadratisch));
+    case 4:
+      // x² direkt.
+      return produkt(zahl(naechste(5) - 2), potenz(x, zahl(2)));
+    case 5:
+      // Zwei Klammern nebeneinander — auch daraus wird x².
+      return produkt(
+        summe(x, zahl(naechste(9) - 4)),
+        summe(x, zahl(naechste(9) - 4))
+      );
     default:
-      return quotient(zufallslinear(naechste, tiefe - 1), zahl(naechste(4) + 1));
+      return quotient(zufallsterm(naechste, tiefe - 1, quadratisch), zahl(naechste(4) + 1));
   }
 }
 
@@ -247,7 +352,14 @@ pruefung('Jede Umformung lässt die Lösungsmenge unverändert', () => {
   let fehler = null;
 
   for (let i = 0; i < GLEICHUNGEN && fehler === null; i++) {
-    const start = gleichung(zufallslinear(naechste, 2), zufallslinear(naechste, 2));
+    // Die Hälfte der Durchgänge darf quadratisch werden, damit auch
+    // "alles auf eine Seite bringen" und das Teilen durch den Vorfaktor
+    // geprüft werden.
+    const quadratisch = i % 2 === 0;
+    const start = gleichung(
+      zufallsterm(naechste, 2, quadratisch),
+      zufallsterm(naechste, 2, quadratisch)
+    );
     const ergebnis = loese(start);
 
     let vorher = start;
@@ -286,17 +398,31 @@ pruefung('Die gefundene Lösung löst die ursprüngliche Gleichung', () => {
   // umgeformte. Genau das macht im Unterricht die Probe.
   const naechste = wuerfel(startwertFuer('probe'));
   let eindeutige = 0;
+  let mehrfache = 0;
   let alleFaelle = 0;
   let fehler = null;
 
   for (let i = 0; i < GLEICHUNGEN * 3 && fehler === null; i++) {
-    const g = gleichung(zufallslinear(naechste, 2), zufallslinear(naechste, 2));
+    const quadratisch = i % 2 === 0;
+    const g = gleichung(
+      zufallsterm(naechste, 2, quadratisch),
+      zufallsterm(naechste, 2, quadratisch)
+    );
     const e = loese(g);
 
-    if (e.art === 'eindeutig') {
-      eindeutige++;
-      if (!probe(g, e.loesung).stimmt) {
-        fehler = `"${alsText(g)}" → x = ${bruchAlsText(e.loesung)} besteht die Probe nicht`;
+    if (e.art === 'eindeutig' || e.art === 'mehrere') {
+      if (e.art === 'eindeutig') {
+        eindeutige++;
+      } else {
+        mehrfache++;
+      }
+      // Jede gefundene Lösung muss die Gleichung erfüllen — auch die
+      // zweite, und auch wenn sie irrational ist. Dann prüft probe()
+      // numerisch und sagt das über `exakt` auch.
+      for (const l of e.loesungen) {
+        if (!probe(g, l).stimmt) {
+          fehler = `"${alsText(g)}" → x = ${termAlsText(l)} besteht die Probe nicht`;
+        }
       }
     } else if (e.art === 'alle') {
       alleFaelle++;
@@ -320,4 +446,5 @@ pruefung('Die gefundene Lösung löst die ursprüngliche Gleichung', () => {
   wahr('die Probe geht immer auf', fehler === null, fehler ?? undefined);
   wahr('und es gab genug eindeutige Fälle', eindeutige >= 50, `nur ${eindeutige}`);
   wahr('und auch entartete Fälle kamen vor', alleFaelle >= 1, `${alleFaelle} Fälle mit "alle"`);
+  wahr('und quadratische mit zwei Lösungen', mehrfache >= 20, `nur ${mehrfache}`);
 });

@@ -561,10 +561,11 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
-- `utils/gleichung.js` — lineare Gleichungen lösen, Schritt für Schritt
-  („| beide Seiten − 5"), samt Probe. Erkennt „keine Lösung" und „jede
-  Zahl"; alles andere sagt ausdrücklich, dass es nicht geht
-- Zusammen **593 Prüfungen**
+- `utils/gleichung.js` — Gleichungen ersten und zweiten Grades lösen,
+  Schritt für Schritt („| beide Seiten − 5"), samt pq-Formel und Probe.
+  Erkennt „keine Lösung" und „jede Zahl"; alles andere sagt ausdrücklich,
+  dass es nicht geht
+- Zusammen **646 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -575,12 +576,13 @@ Was steht:
   Zeitdruck das erste Mal gebraucht wird.
 
 ## Offene Punkte
-- **Quadratische Gleichungen** (pq- und abc-Formel). Die Wurzeln stehen
-  jetzt, damit ist der Weg frei
-- `gleichung.js` kann bisher nur lineare Gleichungen mit einer Variablen.
-  Noch offen: Gleichungssysteme, Ungleichungen (dort dreht sich beim
-  Multiplizieren mit einer negativen Zahl das Zeichen um — eine eigene,
-  prüfbare Regel)
+- `gleichung.js` kann Gleichungen ersten und zweiten Grades mit einer
+  Variablen. Noch offen: Gleichungssysteme, Ungleichungen (dort dreht
+  sich beim Multiplizieren mit einer negativen Zahl das Zeichen um —
+  eine eigene, prüfbare Regel), Gleichungen dritten Grades
+- Der Satz vom Nullprodukt wird noch nicht als eigener Weg gezeigt:
+  (x + 1)(x − 3) = 0 wird ausmultipliziert und dann über pq gelöst,
+  obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
 - `utils/lernpfad.js` — Themengraph mit Voraussetzungen; Prüfung: keine

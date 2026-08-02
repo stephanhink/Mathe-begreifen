@@ -862,6 +862,28 @@ const WURZEL_ZIEHEN = {
   },
 };
 
+const NENNER_RATIONAL = {
+  name: 'den Nenner unter der Wurzel wegschaffen',
+  anwenden(t) {
+    if (t.art !== 'wurzel' || t.radikand.art !== 'zahl') {
+      return null;
+    }
+    const wert = t.radikand.wert;
+    if (istNegativ(wert) || istNull(wert) || wert.n === 1) {
+      return null;
+    }
+
+    // √(z/n) = √(z · n^(grad−1)) : n
+    //
+    // Nachrechnen: Unter der Wurzel steht dann z·n^(g−1)/n^g, und n^g
+    // kommt als n wieder heraus. Ein Bruch unter dem Wurzelzeichen ist
+    // im Unterricht verpönt, und zu Recht — man kann ihn schlecht
+    // abschätzen. √(1/2) sagt wenig, √2 : 2 ≈ 0,707 sagt mehr.
+    const neuerRadikand = mal(bruch(wert.z), hoch(bruch(wert.n), t.grad - 1));
+    return produkt(zahl(bruch(1, wert.n)), wurzel(zahl(neuerRadikand), t.grad));
+  },
+};
+
 const TEILWEISE_WURZEL = {
   name: 'teilweise Wurzel ziehen',
   anwenden(t) {
@@ -1188,6 +1210,7 @@ const AUFRAEUMEN = [
   KEHRWERT_STATT_TEILEN,
   WURZEL_ZIEHEN,
   WURZEL_AUS_POTENZ,
+  NENNER_RATIONAL,
   TEILWEISE_WURZEL,
   POTENZGESETZ,
   GLEICHARTIGE_GLIEDER,
