@@ -270,6 +270,25 @@ ein Dreieck mit Winkelsumme ≠ 180°, eine Wahrscheinlichkeit > 1. Jedes davon
 muss einen Fehler werfen oder ausdrücklich „gibt es nicht" sagen — nie eine
 Zahl raten.
 
+**Ablehnen heißt aber nicht abstürzen.** Ein Term wie `5 : 0` lässt sich
+hinschreiben; er hat nur keinen Wert. Umformen muss ihn deshalb stehen lassen,
+und erst das Auswerten darf werfen. Andernfalls brächte ein Tippfehler im
+Eingabefeld die App zu Fall, noch bevor gerechnet wird. Genau dieser Fehler
+steckte in `term.js` und wurde von der Zufallsprüfung gefunden.
+
+### Drei Sorten Fehler, die man auseinanderhalten muss
+Sie sehen gleich aus und bedeuten Verschiedenes. Die Fehlerobjekte tragen
+deshalb Kennzeichen:
+
+| Kennzeichen | Bedeutung | Beispiel |
+|---|---|---|
+| `undefiniert` | Das gibt es nicht | `1 : 0`, `√(−4)`, `0⁰` |
+| `irrational` | Das ist kein Bruch — aber es gibt es | `√2` |
+| `zuGross` | Das kann ich nicht ausrechnen | jenseits von 2^53 |
+
+Wer sie gleich behandelt, antwortet auf eine offene Frage mit einem sachlichen
+Nein. `istErfuellt` in `gleichung.js` tat das anfangs bei `zuGross` — behoben.
+
 ### Die eine Prüfung, die alles trägt
 Für das Termumform-System gilt:
 
@@ -280,11 +299,15 @@ Für das Termumform-System gilt:
 Umgesetzt in `tests/term.mjs`. Drei Dinge sind daran wichtig und sollten so
 bleiben:
 
-1. **Verglichen wird exakt, nicht mit Toleranz.** Solange die Termsprache
-   keine Wurzeln kennt, ist jeder Wert an einer rationalen Stelle wieder
-   rational — dann prüft man auf Gleichheit statt auf Ähnlichkeit. (Der
-   ursprüngliche Entwurf sah einen numerischen Vergleich mit Toleranz vor;
-   das wäre schwächer.)
+1. **Verglichen wird exakt, wo es exakt geht.** Ohne Wurzeln ist jeder Wert
+   an einer rationalen Stelle wieder rational — dann prüft man auf
+   Gleichheit statt auf Ähnlichkeit, und das ist strenger als der
+   ursprünglich vorgesehene numerische Vergleich. Sobald eine Wurzel im
+   Spiel ist, geht das nicht mehr: √2 hat keine Bruchdarstellung. Dort
+   wird numerisch mit relativer Toleranz verglichen — also doch der Weg
+   aus dem Entwurf, aber nur da, wo er nötig ist. `auswerteExakt`
+   unterscheidet die Fälle über gekennzeichnete Fehler (`irrational`,
+   `undefiniert`, `zuGross`).
 2. **Jeder Zwischenschritt wird geprüft, nicht nur Anfang und Ende.** Ein
    Fehler, der sich in der Mitte selbst wieder aufhebt, wäre sonst
    unsichtbar.
@@ -324,6 +347,18 @@ Rund 40.200 verglichene Stellen, dazu 160 zufällige Gleichungen, deren
 Lösung gegen die **ursprüngliche** Gleichung geprüft wird — das ist die
 Probe aus dem Unterricht, und sie fängt einen Fehler auch dann, wenn alle
 folgenden Schritte sauber waren.
+
+### Zufallsproben müssen den geprüften Code auch erreichen
+Beim Einbau der Wurzeln fiel eine Lücke auf, die als Warnung taugt: Ein
+absichtlich falsch gebautes `√(x²) → x` wurde von der gezielten Prüfung
+erkannt, von der Zufallsprüfung aber **nicht**. Der Generator hatte die
+Regel schlicht nie ausgelöst — er baute Wurzeln über zufälligen
+Radikanden, und die Form `√(t²)` kam dabei praktisch nie vor.
+
+Ein Zufallstest, der den geprüften Code nicht trifft, gibt falsche
+Sicherheit. Der Generator in `tests/term.mjs` baut deshalb gezielt auch
+Formen, auf die eine bestimmte Regel wartet. Wer eine Regel ergänzt,
+ergänzt den Generator mit.
 
 ### Zufallsproben brauchen den Gegenfall
 Wo an Zufallszahlen geprüft wird, muss die Fehlermeldung die konkreten Werte
@@ -490,12 +525,13 @@ Was steht:
 - `utils/bruch.js` — exakte Bruchrechnung
 - `utils/term.js` — Terme darstellen, exakt auswerten, umformen mit
   benannten Schritten. Regeln: neutrale Elemente, Zahlen zusammenrechnen,
-  Kehrwert statt Teilen, Potenzgesetz, gleichartige Glieder,
-  ausmultiplizieren, ausklammern
+  Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
+  aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
+  ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
 - `utils/gleichung.js` — lineare Gleichungen lösen, Schritt für Schritt
   („| beide Seiten − 5"), samt Probe. Erkennt „keine Lösung" und „jede
   Zahl"; alles andere sagt ausdrücklich, dass es nicht geht
-- Zusammen **299 Prüfungen**
+- Zusammen **350 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -506,15 +542,14 @@ Was steht:
   Zeitdruck das erste Mal gebraucht wird.
 
 ## Offene Punkte
-- **Wurzeln fehlen in `term.js`** — und daran hängt einiges: quadratische
-  Gleichungen (pq- und abc-Formel) sind ohne sie nicht zu lösen. Vorher
-  braucht es eine Antwort auf die Frage, was mit dem Definitionsbereich
-  passiert (√(x²) ist |x|, nicht x). Dieselbe Frage stellt sich beim
-  Kürzen von Bruchtermen
+- **Quadratische Gleichungen** (pq- und abc-Formel). Die Wurzeln stehen
+  jetzt, damit ist der Weg frei
 - `gleichung.js` kann bisher nur lineare Gleichungen mit einer Variablen.
   Noch offen: Gleichungssysteme, Ungleichungen (dort dreht sich beim
   Multiplizieren mit einer negativen Zahl das Zeichen um — eine eigene,
   prüfbare Regel)
+- Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
+  Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
 - `utils/lernpfad.js` — Themengraph mit Voraussetzungen; Prüfung: keine
   Zyklen, jedes Thema erreichbar
 - `utils/wissen.js` — Prüfung: kein Info-Knopf zeigt ins Leere, kein

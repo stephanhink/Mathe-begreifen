@@ -34,6 +34,7 @@ import {
   istNull,
   istGanz,
   istNegativ,
+  betrag as bruchBetrag,
   gleich as bruchGleich,
   alsZahl,
   ausDezimal,
@@ -114,7 +115,38 @@ export function quotient(zaehler, nenner) {
   return Object.freeze({ art: 'quotient', zaehler, nenner });
 }
 
-const ARTEN = ['zahl', 'variable', 'summe', 'produkt', 'potenz', 'quotient'];
+// Der Wurzelgrad ist eine feste Zahl, kein Term: In der Schule steht dort
+// immer eine konkrete Zahl (2, 3, gelegentlich 4). Ein Term als
+// Wurzelexponent wäre etwas anderes und käme über x^(1/n).
+export function wurzel(radikand, grad = 2) {
+  pruefeTerm(radikand, 'wurzel');
+  if (!Number.isInteger(grad) || grad < 1) {
+    throw new Error(`wurzel: Grad ${grad} muss eine ganze Zahl ≥ 1 sein`);
+  }
+  return Object.freeze({ art: 'wurzel', radikand, grad });
+}
+
+// Der Betrag. Er steht hier nicht als Zierde, sondern weil es ohne ihn
+// keine ehrliche Antwort auf √(x²) gibt: Das ist |x|, nicht x. Bei
+// x = −3 liefert √((−3)²) = √9 = 3, und das ist eben nicht −3.
+//
+// Diese eine Stelle ist der Grund, warum Wurzeln im Konzept als offene
+// Frage vermerkt waren.
+export function betrag(inhalt) {
+  pruefeTerm(inhalt, 'betrag');
+  return Object.freeze({ art: 'betrag', inhalt });
+}
+
+const ARTEN = [
+  'zahl',
+  'variable',
+  'summe',
+  'produkt',
+  'potenz',
+  'quotient',
+  'wurzel',
+  'betrag',
+];
 
 export function istTerm(wert) {
   return typeof wert === 'object' && wert !== null && ARTEN.includes(wert.art);
@@ -147,6 +179,10 @@ function kinderVon(term) {
       return [term.basis, term.exponent];
     case 'quotient':
       return [term.zaehler, term.nenner];
+    case 'wurzel':
+      return [term.radikand];
+    case 'betrag':
+      return [term.inhalt];
     default:
       return [];
   }
@@ -168,6 +204,10 @@ function mitKind(term, index, neu) {
       return index === 0 ? potenz(neu, term.exponent) : potenz(term.basis, neu);
     case 'quotient':
       return index === 0 ? quotient(neu, term.nenner) : quotient(term.zaehler, neu);
+    case 'wurzel':
+      return wurzel(neu, term.grad);
+    case 'betrag':
+      return betrag(neu);
     default:
       throw new Error(`mitKind: ${term.art} hat keine Kinder`);
   }
@@ -246,23 +286,148 @@ export function auswerteExakt(term, belegung = {}) {
     case 'quotient':
       return geteilt(auswerteExakt(term.zaehler, belegung), auswerteExakt(term.nenner, belegung));
 
+    case 'wurzel':
+      return wurzelExakt(auswerteExakt(term.radikand, belegung), term.grad);
+
+    case 'betrag':
+      return bruchBetrag(auswerteExakt(term.inhalt, belegung));
+
     default:
       throw new Error(`auswerteExakt: unbekannte Art "${term.art}"`);
   }
 }
 
+// Die n-te Wurzel eines Bruchs — exakt oder gar nicht.
+//
+// √(4/9) ist 2/3, das geht. √2 ist irrational und damit KEIN Bruch;
+// dafür hat diese App keine Zahlendarstellung. Sie liefert dann auch
+// keinen Näherungswert, sondern wirft — mit einem Kennzeichen, damit
+// der Aufrufer "das ist keine rationale Zahl" von "das gibt es nicht"
+// unterscheiden kann. Wer eine Kommazahl will, nimmt auswerte().
+function wurzelExakt(wert, grad) {
+  if (grad === 1) {
+    return wert;
+  }
+  if (istNegativ(wert) && grad % 2 === 0) {
+    const fehler = new Error(
+      `Die ${grad}. Wurzel aus ${bruchAlsText(wert)} gibt es im Reellen nicht — ` +
+        'aus einer negativen Zahl lässt sich keine Wurzel mit geradem Grad ziehen'
+    );
+    fehler.undefiniert = true;
+    throw fehler;
+  }
+
+  const z = ganzeWurzel(wert.z, grad);
+  const n = ganzeWurzel(wert.n, grad);
+  if (z === null || n === null) {
+    const fehler = new Error(
+      `Die ${grad}. Wurzel aus ${bruchAlsText(wert)} ist irrational und lässt sich nicht als Bruch schreiben`
+    );
+    fehler.irrational = true;
+    throw fehler;
+  }
+  return bruch(z, n);
+}
+
+// Die ganzzahlige n-te Wurzel, oder null. Der Kandidat aus Math.pow ist
+// bei großen Zahlen um eins daneben — deshalb wird die Umgebung geprüft
+// und das Ergebnis nachgerechnet, statt ihm zu glauben.
+function ganzeWurzel(zahlwert, grad) {
+  const vorzeichen = zahlwert < 0 ? -1 : 1;
+  const betragWert = Math.abs(zahlwert);
+  if (betragWert === 0) {
+    return 0;
+  }
+  const geschaetzt = Math.round(betragWert ** (1 / grad));
+  for (const kandidat of [geschaetzt - 1, geschaetzt, geschaetzt + 1]) {
+    if (kandidat > 0 && kandidat ** grad === betragWert) {
+      return vorzeichen * kandidat;
+    }
+  }
+  return null;
+}
+
 // Als Kommazahl — für Funktionsgraphen und alles, was ohnehin nur
 // gezeichnet wird. Nicht zum Weiterrechnen.
 //
-// Die Belegung darf hier auch Kommazahlen enthalten; sie werden exakt
-// umgerechnet (0,5 → 1/2). Gerechnet wird trotzdem in Brüchen, nur das
-// Ergebnis ist eine Kommazahl.
+// Solange kein Term eine Wurzel enthält, ist das dasselbe wie
+// auswerteExakt, nur eben gerundet. Sobald Wurzeln im Spiel sind, ist es
+// der einzige Weg: √2 hat keine Bruchdarstellung, aber sehr wohl einen
+// Zahlenwert, den man zeichnen kann.
+//
+// Undefinierte Stellen werden auch hier geworfen, nicht als NaN
+// zurückgegeben. Eine stillschweigende NaN würde sich durch die ganze
+// Rechnung ziehen und am Ende als leerer Graph erscheinen, ohne dass
+// jemand sagen könnte, wo es schiefging.
 export function auswerte(term, belegung = {}) {
-  const alsBrueche = {};
-  for (const [name, wert] of Object.entries(belegung)) {
-    alsBrueche[name] = istBruch(wert) ? wert : ausDezimal(wert);
+  pruefeTerm(term, 'auswerte');
+
+  const zahlwert = (t) => auswerte(t, belegung);
+
+  switch (term.art) {
+    case 'zahl':
+      return alsZahl(term.wert);
+
+    case 'variable': {
+      const wert = belegung[term.name];
+      if (wert === undefined) {
+        throw new Error(`auswerte: Variable "${term.name}" ist nicht belegt`);
+      }
+      return istBruch(wert) ? alsZahl(wert) : Number(wert);
+    }
+
+    case 'summe':
+      return term.teile.reduce((s, t) => s + zahlwert(t), 0);
+
+    case 'produkt':
+      return term.teile.reduce((p, t) => p * zahlwert(t), 1);
+
+    case 'potenz': {
+      const ergebnis = zahlwert(term.basis) ** zahlwert(term.exponent);
+      return endlich(ergebnis, term);
+    }
+
+    case 'quotient': {
+      const nenner = zahlwert(term.nenner);
+      if (nenner === 0) {
+        werfeUndefiniert(`Division durch null in "${alsText(term)}"`);
+      }
+      return zahlwert(term.zaehler) / nenner;
+    }
+
+    case 'wurzel': {
+      const r = zahlwert(term.radikand);
+      if (r < 0 && term.grad % 2 === 0) {
+        werfeUndefiniert(
+          `Die ${term.grad}. Wurzel aus ${r} gibt es im Reellen nicht`
+        );
+      }
+      // Math.pow(-8, 1/3) ist NaN — negative Basis mit gebrochenem
+      // Exponenten kennt JavaScript nicht. Bei ungeradem Grad wird das
+      // Vorzeichen deshalb von Hand herausgezogen: ∛(−8) = −∛8 = −2.
+      const wurzelwert = Math.abs(r) ** (1 / term.grad);
+      return endlich(r < 0 ? -wurzelwert : wurzelwert, term);
+    }
+
+    case 'betrag':
+      return Math.abs(zahlwert(term.inhalt));
+
+    default:
+      throw new Error(`auswerte: unbekannte Art "${term.art}"`);
   }
-  return alsZahl(auswerteExakt(term, alsBrueche));
+}
+
+function endlich(wert, term) {
+  if (!Number.isFinite(wert)) {
+    werfeUndefiniert(`"${alsText(term)}" hat hier keinen Zahlenwert`);
+  }
+  return wert;
+}
+
+function werfeUndefiniert(nachricht) {
+  const fehler = new Error(nachricht);
+  fehler.undefiniert = true;
+  throw fehler;
 }
 
 // ---------------------------------------------------------------------
@@ -303,7 +468,27 @@ const HOCHGESTELLT = {
 // Bindungsstärke, damit nur die Klammern gesetzt werden, die man wirklich
 // braucht. Zu viele Klammern sind fast so schlimm wie zu wenige: Sie
 // lassen einen einfachen Term kompliziert aussehen.
-const STAERKE = { summe: 1, produkt: 2, quotient: 2, potenz: 3, zahl: 4, variable: 4 };
+//
+// Die Wurzel steht bewusst NICHT ganz oben, obwohl √x wie ein
+// geschlossenes Zeichen aussieht. Grund: In "√x²" wäre nicht zu
+// erkennen, ob die Wurzel oder das Quadrat zuerst kommt — auf Papier
+// entscheidet das der Wurzelstrich, den es hier nicht gibt. Also muss
+// dort "(√x)²" stehen.
+//
+// Der Betrag darf dagegen ganz oben stehen: |x| bringt seine
+// Begrenzungen mit, |x|² ist eindeutig.
+const STAERKE = {
+  summe: 1,
+  produkt: 2,
+  quotient: 2,
+  wurzel: 2,
+  potenz: 3,
+  zahl: 4,
+  variable: 4,
+  betrag: 4,
+};
+
+const WURZELZEICHEN = { 2: '√', 3: '∛', 4: '∜' };
 
 export function alsText(term) {
   pruefeTerm(term, 'alsText');
@@ -337,9 +522,41 @@ export function alsText(term) {
     case 'quotient':
       return `${geklammert(term.zaehler, 'quotient')} : ${geklammert(term.nenner, 'potenz')}`;
 
+    case 'wurzel':
+      return wurzelAlsText(term);
+
+    case 'betrag':
+      return `|${alsText(term.inhalt)}|`;
+
     default:
       throw new Error(`alsText: unbekannte Art "${term.art}"`);
   }
+}
+
+function wurzelAlsText(term) {
+  const zeichen = WURZELZEICHEN[term.grad] ?? `${hochgestellt(term.grad)}√`;
+
+  // Unter der Wurzel steht auf Papier ein Strich, der zusammenhält, was
+  // dazugehört. In einer Textzeile gibt es den nicht — also muss alles
+  // in Klammern, was mehr als ein Zeichen ist. "√2x" wäre sonst nicht
+  // von "√(2x)" zu unterscheiden, und die beiden sind verschieden.
+  //
+  // Ohne Klammern kommen deshalb nur ein Buchstabe und eine nicht
+  // negative ganze Zahl aus. Ein Bruch nicht: "√4/9" läse sich als
+  // (√4)/9 und wäre 2/9 statt 2/3. Eine negative Zahl auch nicht,
+  // damit das Minus nicht zwischen Wurzelzeichen und Ziffer verloren
+  // geht.
+  const r = term.radikand;
+  const einfach =
+    r.art === 'variable' || (r.art === 'zahl' && istGanz(r.wert) && !istNegativ(r.wert));
+  return einfach ? `${zeichen}${alsText(r)}` : `${zeichen}(${alsText(r)})`;
+}
+
+function hochgestellt(zahlwert) {
+  const ziffern = String(zahlwert);
+  return [...ziffern].every((z) => z in HOCHGESTELLT)
+    ? [...ziffern].map((z) => HOCHGESTELLT[z]).join('')
+    : ziffern;
 }
 
 function geklammert(term, umgebung) {
@@ -376,8 +593,10 @@ function produktAlsText(term) {
   //
   // Und vor allem NICHT bei einem Bruch als Koeffizient: "1/2x" liest
   // sich wie 1/(2x) und meint das Gegenteil. Dort muss der Punkt stehen.
+  // Vor einer Wurzel steht ebenfalls kein Punkt: 5√2, nicht 5 · √2.
   const ersterOhnePunkt =
-    istGanz(faktor) && (rest[0].art === 'variable' || rest[0].art === 'potenz');
+    istGanz(faktor) &&
+    (rest[0].art === 'variable' || rest[0].art === 'potenz' || rest[0].art === 'wurzel');
   if (!ersterOhnePunkt) {
     return `${zahlText(faktor)} · ${restText}`;
   }
@@ -531,6 +750,16 @@ const NEUTRALE_ELEMENTE = {
       return t.zaehler;
     }
 
+    // Die erste Wurzel einer Zahl ist die Zahl selbst.
+    if (t.art === 'wurzel' && t.grad === 1) {
+      return t.radikand;
+    }
+
+    // ||x|| ist |x| — der Betrag eines Betrags bringt nichts Neues.
+    if (t.art === 'betrag' && t.inhalt.art === 'betrag') {
+      return t.inhalt;
+    }
+
     return null;
   },
 };
@@ -558,7 +787,17 @@ const ZAHLEN_ZUSAMMENRECHNEN = {
       return produkt(zahl(wert), ...rest);
     }
 
-    if (t.art === 'quotient' && t.zaehler.art === 'zahl' && t.nenner.art === 'zahl') {
+    // Eine Null im Nenner ist kein Grund abzustürzen. "5 : 0" ist ein
+    // Term, den man hinschreiben kann — er hat nur keinen Wert. Also
+    // bleibt er beim Umformen stehen und wirft erst beim Auswerten.
+    // Andernfalls brächte ein Tippfehler im Eingabefeld die App zu Fall,
+    // noch bevor irgendetwas gerechnet wurde.
+    if (
+      t.art === 'quotient' &&
+      t.zaehler.art === 'zahl' &&
+      t.nenner.art === 'zahl' &&
+      !istNull(t.nenner.wert)
+    ) {
       return zahl(geteilt(t.zaehler.wert, t.nenner.wert));
     }
 
@@ -572,7 +811,83 @@ const ZAHLEN_ZUSAMMENRECHNEN = {
       return zahl(hoch(t.basis.wert, t.exponent.wert.z));
     }
 
+    if (t.art === 'betrag' && t.inhalt.art === 'zahl') {
+      return zahl(bruchBetrag(t.inhalt.wert));
+    }
+
     return null;
+  },
+};
+
+const WURZEL_ZIEHEN = {
+  name: 'Wurzel ziehen',
+  anwenden(t) {
+    if (t.art !== 'wurzel' || t.radikand.art !== 'zahl') {
+      return null;
+    }
+    try {
+      return zahl(wurzelExakt(t.radikand.wert, t.grad));
+    } catch {
+      // Irrational (√2) oder im Reellen nicht vorhanden (√−4): Beides
+      // ist kein Grund umzuformen. Der Term bleibt stehen und sagt
+      // damit die Wahrheit — geraten wird nichts.
+      return null;
+    }
+  },
+};
+
+const TEILWEISE_WURZEL = {
+  name: 'teilweise Wurzel ziehen',
+  anwenden(t) {
+    if (t.art !== 'wurzel' || t.radikand.art !== 'zahl') {
+      return null;
+    }
+    const wert = t.radikand.wert;
+    if (!istGanz(wert) || istNegativ(wert) || istNull(wert)) {
+      return null;
+    }
+
+    // Den größten Faktor k herausziehen, dessen grad-te Potenz im
+    // Radikanden steckt: √50 = √(25 · 2) = 5√2.
+    let heraus = 1;
+    let rest = wert.z;
+    for (let teiler = 2; teiler ** t.grad <= rest; teiler++) {
+      const potenzWert = teiler ** t.grad;
+      while (rest % potenzWert === 0) {
+        rest /= potenzWert;
+        heraus *= teiler;
+      }
+    }
+
+    if (heraus === 1) {
+      return null;
+    }
+    return produkt(zahl(heraus), wurzel(zahl(rest), t.grad));
+  },
+};
+
+const WURZEL_AUS_POTENZ = {
+  name: 'Wurzel aus einer Potenz ziehen',
+  anwenden(t) {
+    if (t.art !== 'wurzel' || t.radikand.art !== 'potenz') {
+      return null;
+    }
+    const e = t.radikand.exponent;
+    if (e.art !== 'zahl' || !istGanz(e.wert) || e.wert.z !== t.grad) {
+      return null;
+    }
+
+    // Hier sitzt die Falle, wegen der Wurzeln im Konzept als offene
+    // Frage vermerkt waren:
+    //
+    //   √(x²) ist NICHT x, sondern |x|.
+    //
+    // Bei x = −3 ist √((−3)²) = √9 = 3, und das ist nicht −3. Wer die
+    // Wurzel gegen das Quadrat einfach wegkürzt, macht aus einer immer
+    // richtigen Aussage eine, die für die halbe Zahlengerade falsch
+    // ist. Bei ungeradem Grad gibt es das Problem nicht: ∛(x³) ist x,
+    // auch für negative x.
+    return t.grad % 2 === 0 ? betrag(t.radikand.basis) : t.radikand.basis;
   },
 };
 
@@ -808,6 +1123,9 @@ const AUFRAEUMEN = [
   NEUTRALE_ELEMENTE,
   ZAHLEN_ZUSAMMENRECHNEN,
   KEHRWERT_STATT_TEILEN,
+  WURZEL_ZIEHEN,
+  WURZEL_AUS_POTENZ,
+  TEILWEISE_WURZEL,
   POTENZGESETZ,
   GLEICHARTIGE_GLIEDER,
 ];

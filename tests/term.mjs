@@ -24,6 +24,8 @@ import {
   produkt,
   potenz,
   quotient,
+  wurzel,
+  betrag,
   istTerm,
   istGleich,
   variablen,
@@ -191,6 +193,19 @@ pruefung('Durch eine Zahl teilen', () => {
   // Eine Null im Nenner wird nicht stillschweigend weggerechnet.
   gleichText('x : 0 bleibt stehen', alsText(vereinfache(quotient(x, zahl(0))).term), 'x : 0');
   wirft('und wirft beim Auswerten', () => auswerteExakt(quotient(x, zahl(0)), { x: bruch(1) }));
+
+  // Und das Umformen selbst darf daran nicht scheitern: "5 : 0" ist ein
+  // Term, den man hinschreiben kann — er hat nur keinen Wert. Würde
+  // vereinfache() hier werfen, brächte ein Tippfehler im Eingabefeld
+  // die App zu Fall, noch bevor gerechnet wird.
+  gleichText('5 : 0 bleibt stehen', alsText(vereinfache(quotient(zahl(5), zahl(0))).term), '5 : 0');
+  gleichText('0 : 0 bleibt stehen', alsText(vereinfache(quotient(zahl(0), zahl(0))).term), '0 : 0');
+  gleichText(
+    'auch mitten in einer Summe',
+    alsText(vereinfache(summe(quotient(zahl(0), zahl(0)), x)).term),
+    '0 : 0 + x'
+  );
+  wirft('0 : 0 wirft beim Auswerten', () => auswerteExakt(quotient(zahl(0), zahl(0))));
 });
 
 pruefung('Ein Bruch als Koeffizient klebt nicht am Buchstaben', () => {
@@ -277,6 +292,120 @@ pruefung('x⁰ wird nicht vorschnell zu 1', () => {
   wirft('und wirft beim Auswerten', () => auswerteExakt(potenz(zahl(0), zahl(-1))));
 });
 
+pruefung('Wurzeln aufschreiben', () => {
+  gleichText('√x', alsText(wurzel(x)), '√x');
+  gleichText('√2', alsText(wurzel(zahl(2))), '√2');
+  gleichText('∛x', alsText(wurzel(x, 3)), '∛x');
+  gleichText('∜x', alsText(wurzel(x, 4)), '∜x');
+  gleichText('⁵√x für höhere Grade', alsText(wurzel(x, 5)), '⁵√x');
+
+  // Auf Papier hält der Wurzelstrich zusammen, was dazugehört. In einer
+  // Textzeile muss das die Klammer tun.
+  gleichText('√(2x), nicht √2x', alsText(wurzel(produkt(zahl(2), x))), '√(2x)');
+  gleichText('√(x + 1)', alsText(wurzel(summe(x, zahl(1)))), '√(x + 1)');
+  gleichText('√(4/9), nicht √4/9', alsText(wurzel(zahl(bruch(4, 9)))), '√(4/9)');
+  gleichText('√(−4), nicht √−4', alsText(wurzel(zahl(-4))), '√(−4)');
+
+  // Und umgekehrt braucht die Wurzel selbst eine Klammer, sobald etwas
+  // dahinter steht: "√x²" wäre nicht zu lesen.
+  gleichText('(√x)², nicht √x²', alsText(potenz(wurzel(x), zahl(2))), '(√x)²');
+
+  // 5√2 wie im Heft, nicht 5 · √2.
+  gleichText('5√2', alsText(produkt(zahl(5), wurzel(zahl(2)))), '5√2');
+
+  gleichText('|x|', alsText(betrag(x)), '|x|');
+  gleichText('|x|² braucht keine Klammer', alsText(potenz(betrag(x), zahl(2))), '|x|²');
+
+  wirft('Wurzel mit Grad 0', () => wurzel(x, 0));
+  wirft('Wurzel mit gebrochenem Grad', () => wurzel(x, 1.5));
+});
+
+pruefung('Wurzeln ziehen', () => {
+  gleichText('√4', alsText(vereinfache(wurzel(zahl(4))).term), '2');
+  gleichText('√(4/9)', alsText(vereinfache(wurzel(zahl(bruch(4, 9)))).term), '2/3');
+  gleichText('√0', alsText(vereinfache(wurzel(zahl(0))).term), '0');
+  gleichText('∛8', alsText(vereinfache(wurzel(zahl(8), 3)).term), '2');
+  gleichText('⁵√32', alsText(vereinfache(wurzel(zahl(32), 5)).term), '2');
+  gleichText('erste Wurzel', alsText(vereinfache(wurzel(x, 1)).term), 'x');
+
+  // Aus einer negativen Zahl lässt sich mit ungeradem Grad sehr wohl
+  // eine Wurzel ziehen — mit geradem nicht.
+  gleichText('∛(−8)', alsText(vereinfache(wurzel(zahl(-8), 3)).term), '−2');
+  gleichText('√(−4) bleibt stehen', alsText(vereinfache(wurzel(zahl(-4))).term), '√(−4)');
+  wirft('und wirft beim Auswerten', () => auswerteExakt(wurzel(zahl(-4))));
+
+  // Teilweises Wurzelziehen — ein Thema für sich im Unterricht.
+  gleichText('√50', alsText(vereinfache(wurzel(zahl(50))).term), '5√2');
+  gleichText('√12', alsText(vereinfache(wurzel(zahl(12))).term), '2√3');
+  gleichText('√72', alsText(vereinfache(wurzel(zahl(72))).term), '6√2');
+  gleichText('∛54', alsText(vereinfache(wurzel(zahl(54), 3)).term), '3∛2');
+  gleichText('unter dem richtigen Namen', vereinfache(wurzel(zahl(50))).schritte[0].regel, 'teilweise Wurzel ziehen');
+
+  // √2 ist irrational und bleibt stehen. Ein Näherungswert wäre hier
+  // eine erfundene Genauigkeit.
+  gleichText('√2 bleibt √2', alsText(vereinfache(wurzel(zahl(2))).term), '√2');
+  zahlIst('und bekommt keinen Schritt', vereinfache(wurzel(zahl(2))).schritte.length, 0);
+  gleichText('√3 bleibt √3', alsText(vereinfache(wurzel(zahl(3))).term), '√3');
+});
+
+pruefung('√(x²) ist |x| und nicht x', () => {
+  // Das ist die Stelle, wegen der Wurzeln im Konzept als offene Frage
+  // vermerkt waren. Bei x = −3 ist √((−3)²) = √9 = 3, nicht −3.
+  gleichText('√(x²)', alsText(vereinfache(wurzel(potenz(x, zahl(2)))).term), '|x|');
+  gleichText(
+    'unter dem richtigen Namen',
+    vereinfache(wurzel(potenz(x, zahl(2)))).schritte[0].regel,
+    'Wurzel aus einer Potenz ziehen'
+  );
+
+  // Der Nachweis, dass die Vereinfachung stimmt und die naheliegende
+  // falsch wäre: an der Stelle x = −3 auswerten.
+  zahlIst('√(x²) bei x = −3 ist 3', auswerte(wurzel(potenz(x, zahl(2))), { x: -3 }), 3);
+  zahlIst('und |x| ebenso', auswerte(betrag(x), { x: -3 }), 3);
+  wahr('x wäre dort −3 und damit falsch', auswerte(x, { x: -3 }) === -3);
+
+  // Bei ungeradem Grad gibt es das Problem nicht.
+  gleichText('∛(x³) ist x', alsText(vereinfache(wurzel(potenz(x, zahl(3)), 3)).term), 'x');
+  zahlIst('auch bei x = −3', auswerte(wurzel(potenz(x, zahl(3)), 3), { x: -3 }), -3);
+
+  // Die Gegenrichtung wird NICHT vereinfacht: (√x)² ist nur für x ≥ 0
+  // überhaupt definiert, x dagegen überall. Wer kürzt, erweitert den
+  // Definitionsbereich — derselbe Fehler wie bei x⁰.
+  gleichText('(√x)² bleibt stehen', alsText(vereinfache(potenz(wurzel(x), zahl(2))).term), '(√x)²');
+  wirft('denn bei x = −1 gibt es das nicht', () =>
+    auswerte(potenz(wurzel(x), zahl(2)), { x: -1 })
+  );
+});
+
+pruefung('Wurzeln als Kommazahl', () => {
+  // Exakt geht bei √2 nicht — als Zahlenwert zum Zeichnen sehr wohl.
+  wahr('√2 ist ungefähr 1,4142', Math.abs(auswerte(wurzel(zahl(2))) - 1.4142135623730951) < 1e-12);
+  zahlIst('∛(−8) ist −2', auswerte(wurzel(zahl(-8), 3)), -2);
+  zahlIst('√(1/4) ist 0,5', auswerte(wurzel(zahl(bruch(1, 4)))), 0.5);
+
+  // Die beiden Fehlerarten sind auseinanderzuhalten: "kein Bruch" ist
+  // etwas anderes als "gibt es nicht".
+  let irrational = false;
+  try {
+    auswerteExakt(wurzel(zahl(2)));
+  } catch (fehler) {
+    irrational = fehler.irrational === true;
+  }
+  wahr('√2 exakt meldet "irrational"', irrational);
+
+  let undefiniert = false;
+  try {
+    auswerte(wurzel(zahl(-4)));
+  } catch (fehler) {
+    undefiniert = fehler.undefiniert === true;
+  }
+  wahr('√(−4) meldet "undefiniert"', undefiniert);
+
+  wirft('Division durch null liefert kein Unendlich', () =>
+    auswerte(quotient(zahl(1), x), { x: 0 })
+  );
+});
+
 pruefung('Die Notbremse', () => {
   // Ein Rechenweg, der nicht zur Ruhe kommt, würde die App auf einem
   // Handy einfrieren — ohne Fehlermeldung, ohne Hinweis. Deshalb bricht
@@ -304,11 +433,19 @@ const PUNKTE = 200;
 const TERME = 60;
 
 // Ein zufälliger Term aus Zahlen, x und y.
+//
+// Der Generator baut absichtlich auch Formen, die eine bestimmte Regel
+// AUSLÖSEN — etwa √(t²) für "Wurzel aus einer Potenz ziehen". Ohne das
+// hätte diese Prüfung eine Lücke, die beim Bauen tatsächlich auffiel:
+// Ein absichtlich falsch gebautes √(x²) → x wurde von der gezielten
+// Prüfung erkannt, von der Zufallsprüfung aber nicht — sie hatte die
+// Regel schlicht nie erreicht. Ein Zufallstest, der den geprüften Code
+// nicht trifft, gibt falsche Sicherheit.
 function zufallsterm(naechste, tiefe) {
   if (tiefe <= 0 || naechste(10) < 4) {
     return naechste(3) === 0 ? zahl(naechste(11) - 5) : variable(naechste(2) === 0 ? 'x' : 'y');
   }
-  switch (naechste(5)) {
+  switch (naechste(8)) {
     case 0:
       return summe(zufallsterm(naechste, tiefe - 1), zufallsterm(naechste, tiefe - 1));
     case 1:
@@ -321,19 +458,53 @@ function zufallsterm(naechste, tiefe) {
       return produkt(zufallsterm(naechste, tiefe - 1), zufallsterm(naechste, tiefe - 1));
     case 3:
       return potenz(zufallsterm(naechste, tiefe - 1), zahl(naechste(5) - 1));
-    default:
+    case 4:
       return quotient(zufallsterm(naechste, tiefe - 1), zufallsterm(naechste, tiefe - 1));
+    case 5:
+      return wurzel(zufallsterm(naechste, tiefe - 1), naechste(2) === 0 ? 2 : 3);
+    case 6: {
+      // √(t²) und ∛(t³) — die Form, auf die "Wurzel aus einer Potenz
+      // ziehen" wartet. Bei geradem Grad muss dabei ein Betrag
+      // entstehen, sonst stimmt der Wert für negative t nicht.
+      const grad = naechste(2) === 0 ? 2 : 3;
+      return wurzel(potenz(zufallsterm(naechste, tiefe - 1), zahl(grad)), grad);
+    }
+    default:
+      return betrag(zufallsterm(naechste, tiefe - 1));
   }
 }
 
-// Auswerten mit drei möglichen Ausgängen: ein Wert, "hier nicht
-// definiert" (Division durch null, 0⁰) oder "zu groß für JavaScript".
+// Auswerten mit vier möglichen Ausgängen: ein exakter Wert, "hier nicht
+// definiert" (Division durch null, 0⁰, √ aus negativ), "irrational"
+// (√2 ist kein Bruch) oder "zu groß für JavaScript".
 function werteAus(term, belegung) {
   try {
     return { wert: auswerteExakt(term, belegung) };
   } catch (fehler) {
-    return fehler.zuGross ? { zuGross: true } : { undefiniert: true };
+    if (fehler.zuGross) {
+      return { zuGross: true };
+    }
+    if (fehler.irrational) {
+      return { irrational: true };
+    }
+    return { undefiniert: true };
   }
+}
+
+function naeherung(term, belegung) {
+  try {
+    const wert = auswerte(term, belegung);
+    return Number.isFinite(wert) ? { wert } : { undefiniert: true };
+  } catch {
+    return { undefiniert: true };
+  }
+}
+
+// Zwei Kommazahlen gelten als gleich, wenn sie es bis auf Rundung sind.
+// Die Toleranz ist relativ: Bei einem Ergebnis um 10.000 ist eine
+// absolute Schranke von 1e-9 schärfer als die Rechengenauigkeit selbst.
+function ungefaehrGleich(a, b) {
+  return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
 }
 
 // Vergleicht zwei Terme an PUNKTE zufälligen rationalen Stellen.
@@ -365,16 +536,35 @@ function vergleiche(vorher, nachher, naechste) {
       continue;
     }
 
+    const stelle = () => namen.map((n) => `${n} = ${bruchAlsText(belegung[n])}`).join(', ');
+    const meldung = (istText, sollText) => ({
+      verglichen,
+      fehler:
+        `"${alsText(vorher)}" → "${alsText(nachher)}" ` +
+        `bei ${stelle() || 'ohne Variable'}: ${istText} statt ${sollText}`,
+    });
+
+    // Sobald eine Wurzel im Spiel ist, gibt es keinen Bruch mehr, mit
+    // dem sich exakt vergleichen ließe — √2 ist irrational. Dann wird
+    // numerisch verglichen, mit Toleranz. Das ist genau der Weg, den
+    // das Konzept ursprünglich für alle Terme vorsah; ohne Wurzeln ist
+    // der exakte Vergleich strenger, mit Wurzeln geht es nicht anders.
+    if (a.irrational || b.irrational) {
+      const na = naeherung(vorher, belegung);
+      const nb = naeherung(nachher, belegung);
+      if (na.undefiniert || nb.undefiniert) {
+        continue;
+      }
+      verglichen++;
+      if (!ungefaehrGleich(na.wert, nb.wert)) {
+        return meldung(String(na.wert), String(nb.wert));
+      }
+      continue;
+    }
+
     verglichen++;
     if (!bruchGleich(a.wert, b.wert)) {
-      const stelle = namen.map((n) => `${n} = ${bruchAlsText(belegung[n])}`).join(', ');
-      return {
-        verglichen,
-        fehler:
-          `"${alsText(vorher)}" → "${alsText(nachher)}" ` +
-          `bei ${stelle || 'ohne Variable'}: ` +
-          `${bruchAlsText(a.wert)} statt ${bruchAlsText(b.wert)}`,
-      };
+      return meldung(bruchAlsText(a.wert), bruchAlsText(b.wert));
     }
   }
 
