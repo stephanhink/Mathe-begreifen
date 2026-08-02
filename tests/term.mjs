@@ -412,8 +412,12 @@ pruefung('Die Notbremse', () => {
   // der Antrieb nach 100 Schritten ab. Dass die Bremse existiert, wird
   // hier festgehalten; auslösen darf sie im Normalbetrieb nie.
   const tief = multipliziereAus(potenz(summe(x, y, zahl(1)), zahl(4)));
-  wahr('ein großes Binom kommt trotzdem zur Ruhe', tief.schritte.length < 100);
-  wahr('und liefert ein Ergebnis', alsText(tief.term).length > 0);
+  wahr('ein großes Binom kommt zur Ruhe', tief.schritte.length < 1000);
+  // 81 Produkte entstehen dabei, und jeder Schritt ist echte Arbeit.
+  // Die Grenze darf den Aufwand nicht begrenzen, nur die Endlosschleife
+  // abfangen — deshalb ist hier viel Luft.
+  wahr('braucht dafür aber gut hundert Schritte', tief.schritte.length > 100);
+  zahlIst('und rechnet richtig', auswerte(tief.term, { x: 2, y: 3 }), 1296);
 });
 
 pruefung('Der Rechenweg als Zeilen', () => {

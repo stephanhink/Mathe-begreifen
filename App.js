@@ -10,6 +10,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { farben } from './utils/konstanten';
 import BaustelleScreen from './screens/BaustelleScreen';
+import RechnerScreen from './screens/RechnerScreen';
 
 // Jeder Tab bekommt einen Schlüssel, ein Label für die Tab-Leiste und die
 // Screen-Komponente, die angezeigt wird. Ein neues Themengebiet bedeutet:
@@ -57,16 +58,9 @@ const TABS = [
       />
     ),
   },
-  {
-    key: 'gleichungen',
-    label: 'Gleich.',
-    Screen: () => (
-      <BaustelleScreen
-        titel="Gleichungen"
-        inhalt="Linear, quadratisch (pq und abc), Gleichungssysteme, Ungleichungen."
-      />
-    ),
-  },
+  // Der erste fertige Screen. Er sitzt beim Tab "Gleichungen", kann aber
+  // schon beides: Terme umformen und lineare Gleichungen lösen.
+  { key: 'gleichungen', label: 'Gleich.', Screen: RechnerScreen },
   {
     key: 'funktionen',
     label: 'Funkt.',

@@ -477,15 +477,21 @@ const HOCHGESTELLT = {
 //
 // Der Betrag darf dagegen ganz oben stehen: |x| bringt seine
 // Begrenzungen mit, |x|² ist eindeutig.
+// Die Division bindet SCHWÄCHER als die Multiplikation, obwohl beide
+// gleichrangig sind. Der Grund ist die Eindeutigkeit beim Wiedereinlesen:
+// "3 · x : y" ließe offen, ob 3 · (x : y) oder (3 · x) : y gemeint ist.
+// Im Wert ist das dasselbe, im Term nicht — und die Rundreise-Prüfung in
+// tests/parser.mjs merkt genau das. Also bekommt eine Division innerhalb
+// eines Produkts eine Klammer: "3 · (x : y)".
 const STAERKE = {
   summe: 1,
-  produkt: 2,
   quotient: 2,
-  wurzel: 2,
-  potenz: 3,
-  zahl: 4,
-  variable: 4,
-  betrag: 4,
+  produkt: 3,
+  wurzel: 3,
+  potenz: 4,
+  zahl: 5,
+  variable: 5,
+  betrag: 5,
 };
 
 const WURZELZEICHEN = { 2: '√', 3: '∛', 4: '∜' };
@@ -565,49 +571,69 @@ function geklammert(term, umgebung) {
 }
 
 function produktAlsText(term) {
-  const zahlen = term.teile.filter((t) => t.art === 'zahl');
-  const rest = term.teile.filter((t) => t.art !== 'zahl');
-
-  const faktor = zahlen.reduce((p, t) => mal(p, t.wert), bruch(1));
-  const restText = rest.map((t) => geklammert(t, 'produkt')).join(' · ');
-
-  if (rest.length === 0) {
-    return zahlText(faktor);
-  }
-  // 1 · x ist x, (−1) · x ist −x. Beides wegzulassen ist kein
-  // Vereinfachungsschritt, sondern nur Schreibweise.
-  if (bruchGleich(faktor, bruch(1))) {
-    return restText;
-  }
-  if (bruchGleich(faktor, bruch(-1))) {
-    return `${MINUS}${restText}`;
-  }
-
-  // Zwischen Zahl und Buchstabe steht kein Malpunkt: 3x, nicht 3 · x.
-  // Das gilt auch, wenn noch weitere Faktoren folgen — 2x · (1 + 3x)
-  // liest sich wie im Heft, 2 · x · (1 + 3x) sieht nach Maschine aus.
+  // Jeder Faktor wird einzeln aufgeschrieben, in der Reihenfolge, in der
+  // er dasteht. Hier wird NICHT gerechnet.
   //
-  // Vor einer Klammer bleibt der Punkt dagegen stehen: 2 · (x + 3).
-  // Ohne ihn stünde dort 2(x + 3), und dann müsste man erklären, warum
-  // hier ein unsichtbares Mal steht und bei f(x) nicht.
-  //
-  // Und vor allem NICHT bei einem Bruch als Koeffizient: "1/2x" liest
-  // sich wie 1/(2x) und meint das Gegenteil. Dort muss der Punkt stehen.
-  // Vor einer Wurzel steht ebenfalls kein Punkt: 5√2, nicht 5 · √2.
-  const ersterOhnePunkt =
-    istGanz(faktor) &&
-    (rest[0].art === 'variable' || rest[0].art === 'potenz' || rest[0].art === 'wurzel');
-  if (!ersterOhnePunkt) {
-    return `${zahlText(faktor)} · ${restText}`;
+  // Das klingt selbstverständlich, war es aber nicht: Eine frühere
+  // Fassung fasste alle Zahlfaktoren zusammen und schrieb für 3 · 4
+  // schlicht "12". Damit sah der Term vor und nach dem Schritt "Zahlen
+  // zusammenrechnen" gleich aus — und der Schritt verschwand
+  // stillschweigend aus dem Rechenweg, weil der Antrieb ihn für einen
+  // Leerlauf hielt. Aufgefallen ist das erst der Rundreise-Prüfung in
+  // tests/parser.mjs.
+  const stuecke = term.teile.map((t) => geklammert(t, 'produkt'));
+  const [erster, zweiter] = term.teile;
+
+  // 1 · x ist x, (−1) · x ist −x. Das ist keine Rechnung, sondern
+  // Schreibweise — aber nur vor einem Faktor, der keine Zahl ist.
+  // "1 · 2" bleibt "1 · 2", sonst wäre wieder gerechnet.
+  if (erster.art === 'zahl' && zweiter !== undefined && zweiter.art !== 'zahl') {
+    if (bruchGleich(erster.wert, bruch(1))) {
+      return stuecke.slice(1).join(' · ');
+    }
+    if (bruchGleich(erster.wert, bruch(-1))) {
+      return `${MINUS}${stuecke.slice(1).join(' · ')}`;
+    }
+
+    // Zwischen Zahl und Buchstabe steht kein Malpunkt: 3x, nicht 3 · x.
+    // Das gilt auch, wenn weitere Faktoren folgen — 2x · (1 + 3x) liest
+    // sich wie im Heft.
+    //
+    // Vor einer Klammer bleibt der Punkt stehen: 2 · (x + 3). Ohne ihn
+    // stünde dort 2(x + 3), und dann müsste man erklären, warum hier ein
+    // unsichtbares Mal steht und bei f(x) nicht.
+    //
+    // Vor allem NICHT bei einem Bruch als Koeffizient: "1/2x" liest sich
+    // wie 1/(2x) und meint das Gegenteil.
+    //
+    // Vor einer Wurzel dagegen schon: 5√2, nicht 5 · √2.
+    const ohnePunkt =
+      istGanz(erster.wert) &&
+      (zweiter.art === 'variable' || zweiter.art === 'potenz' || zweiter.art === 'wurzel');
+    if (ohnePunkt) {
+      return [`${stuecke[0]}${stuecke[1]}`, ...stuecke.slice(2)].join(' · ');
+    }
   }
 
-  const kopf = geklammert(rest[0], 'produkt');
-  const schwanz = rest.slice(1).map((t) => geklammert(t, 'produkt'));
-  return [`${zahlText(faktor)}${kopf}`, ...schwanz].join(' · ');
+  return stuecke.join(' · ');
 }
 
 function potenzAlsText(term) {
-  const basisText = geklammert(term.basis, 'potenz');
+  // Zwei Fälle brauchen eine Klammer, die die Bindungsstärke allein
+  // nicht erzwingt — beide von der Rundreise-Prüfung gefunden:
+  //
+  //   (x⁰)²   sonst stünde "x⁰²", und das läse sich als x⁰²  = x²
+  //   (−4)²   sonst stünde "−4²", und das läse sich als −(4²) = −16
+  //
+  // Der zweite ist der gefährlichere: Das Ergebnis wäre nicht nur
+  // anders, sondern hätte das falsche Vorzeichen.
+  const basisBrauchtKlammer =
+    term.basis.art === 'potenz' ||
+    (term.basis.art === 'zahl' && istNegativ(term.basis.wert));
+
+  const basisText = basisBrauchtKlammer
+    ? `(${alsText(term.basis)})`
+    : geklammert(term.basis, 'potenz');
 
   if (term.exponent.art === 'zahl' && istGanz(term.exponent.wert)) {
     const ziffern = String(term.exponent.wert.z);
@@ -891,6 +917,33 @@ const WURZEL_AUS_POTENZ = {
   },
 };
 
+const ZAHL_NACH_VORN = {
+  name: 'die Zahl vor den Buchstaben schreiben',
+  anwenden(t) {
+    if (t.art !== 'produkt') {
+      return null;
+    }
+    const zahlen = t.teile.filter((f) => f.art === 'zahl');
+    const rest = t.teile.filter((f) => f.art !== 'zahl');
+    if (zahlen.length === 0 || rest.length === 0) {
+      return null;
+    }
+    // Stehen die Zahlen schon vorn, ist nichts zu tun.
+    if (t.teile.slice(0, zahlen.length).every((f) => f.art === 'zahl')) {
+      return null;
+    }
+
+    // Reine Schreibweise, kein Rechnen — erlaubt ist es, weil bei der
+    // Multiplikation die Reihenfolge egal ist.
+    //
+    // Nötig ist es, weil beim Ausmultiplizieren beides nebeneinander
+    // entsteht: (x + 3)(x + 3) liefert unter anderem "x · 3" und
+    // "3 · x". In einer Zeile beides zu sehen ist für jemanden, der
+    // gerade lernt, unnötig verwirrend — im Heft steht die Zahl vorn.
+    return produkt(...zahlen, ...rest);
+  },
+};
+
 const KEHRWERT_STATT_TEILEN = {
   name: 'durch eine Zahl teilen heißt mit dem Kehrwert malnehmen',
   anwenden(t) {
@@ -1091,7 +1144,16 @@ function ersteAnwendung(term, regel) {
 // Die Notbremse. Eine Regel, die sich selbst wieder auslöst, würde die
 // App sonst einfrieren — auf einem Handy ohne Fehlermeldung. Lieber ein
 // klarer Abbruch, den eine Prüfung sichtbar macht.
-const HOECHSTENS_SCHRITTE = 100;
+//
+// Die Zahl ist bewusst großzügig. Sie soll eine Regel abfangen, die im
+// Kreis läuft, und nicht den Aufwand begrenzen: (x + y + 1)⁴ braucht
+// ehrliche 120 Schritte, weil dort 81 Produkte entstehen. Eine zu enge
+// Grenze würde eine richtige Rechnung abweisen und damit einen Fehler
+// melden, wo keiner ist.
+//
+// Ursprünglich standen hier 100 — das war ein Aufwandsbudget, kein
+// Schleifenschutz, und es schlug bei genau diesem Term an.
+const HOECHSTENS_SCHRITTE = 1000;
 
 function laufe(term, regeln) {
   pruefeTerm(term, 'laufe');
@@ -1121,6 +1183,7 @@ function laufe(term, regeln) {
 
 const AUFRAEUMEN = [
   NEUTRALE_ELEMENTE,
+  ZAHL_NACH_VORN,
   ZAHLEN_ZUSAMMENRECHNEN,
   KEHRWERT_STATT_TEILEN,
   WURZEL_ZIEHEN,

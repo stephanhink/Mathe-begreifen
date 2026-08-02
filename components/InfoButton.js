@@ -14,7 +14,7 @@ import { holeThema } from '../utils/wissen';
 // Kleiner runder Info-Knopf, der neben einem Feld-Label sitzt und ein
 // Fenster mit der Erklärung öffnet.
 //
-// Verwendung:  <InfoButton thema="phWert" />
+// Verwendung:  <InfoButton thema="loesungsmenge" />
 //
 // Die "Mehr dazu"-Links im Fenster wechseln das Thema, ohne dass man
 // schließen und neu öffnen muss. Weil man sich dabei verlaufen kann,

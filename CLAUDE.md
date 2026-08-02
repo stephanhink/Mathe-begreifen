@@ -348,6 +348,33 @@ Lösung gegen die **ursprüngliche** Gleichung geprüft wird — das ist die
 Probe aus dem Unterricht, und sie fängt einen Fehler auch dann, wenn alle
 folgenden Schritte sauber waren.
 
+### Die Rundreise: Schreibweise und Parser prüfen sich gegenseitig
+`tests/parser.mjs` verlangt für Zufallsterme:
+
+> Was `alsText()` schreibt, muss `parseTerm()` wieder einlesen — und
+> dabei denselben Term ergeben, nicht nur denselben Wert.
+
+Das prüft beide Seiten auf einmal und fängt jede **mehrdeutige
+Schreibweise**. Beim Einbau hat sie gleich fünf gefunden, die von Hand
+nie aufgefallen wären:
+
+| geschrieben | wurde gelesen als | jetzt |
+|---|---|---|
+| `3 · 4` | — | der Renderer rechnete heimlich „12" |
+| `−4²` | −(4²) = −16 | `(−4)²` |
+| `x⁰²` | x² | `(x⁰)²` |
+| `3 · x : y` | (3 · x) : y | `3 · (x : y)` |
+| `− 1/5 · x` | (−1) · 1/5 · x | Minus wandert in den Koeffizienten |
+
+Der erste war der schlimmste: `alsText` fasste Zahlfaktoren zusammen und
+schrieb für `3 · 4` gleich „12". Damit sah der Term vor und nach dem
+Schritt „Zahlen zusammenrechnen" gleich aus — und der Schritt verschwand
+**stillschweigend aus dem Rechenweg**, weil der Antrieb ihn für einen
+Leerlauf hielt. In einer App, deren ganzer Zweck der Rechenweg ist.
+
+Merksatz daraus: **Der Renderer rechnet nicht.** Er schreibt auf, was
+dasteht.
+
 ### Zufallsproben müssen den geprüften Code auch erreichen
 Beim Einbau der Wurzeln fiel eine Lücke auf, die als Warnung taugt: Ein
 absichtlich falsch gebautes `√(x²) → x` wurde von der gezielten Prüfung
@@ -522,6 +549,12 @@ Stand 2026-08-01: **Gerüst steht, erste Fachlogik fertig.**
 
 Was steht:
 - Expo-Projekt SDK 57, Tab-Leiste, Ordnerstruktur
+- **Der erste Screen läuft**: `screens/RechnerScreen.js` (Tab „Gleich.").
+  Eingabefeld für Term oder Gleichung, Rechenweg mit benannten Schritten,
+  Lösungsmenge, Probe, Info-Knöpfe. Der Screen rechnet nichts — er ruft
+  `utils/` auf und stellt dar
+- `utils/parser.js` — getippten Text einlesen („3x + 5 = 14")
+- `utils/wissen.js` — 16 Erklärtexte für die Info-Knöpfe
 - `utils/bruch.js` — exakte Bruchrechnung
 - `utils/term.js` — Terme darstellen, exakt auswerten, umformen mit
   benannten Schritten. Regeln: neutrale Elemente, Zahlen zusammenrechnen,
@@ -531,7 +564,7 @@ Was steht:
 - `utils/gleichung.js` — lineare Gleichungen lösen, Schritt für Schritt
   („| beide Seiten − 5"), samt Probe. Erkennt „keine Lösung" und „jede
   Zahl"; alles andere sagt ausdrücklich, dass es nicht geht
-- Zusammen **350 Prüfungen**
+- Zusammen **593 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -555,7 +588,8 @@ Was steht:
 - `utils/wissen.js` — Prüfung: kein Info-Knopf zeigt ins Leere, kein
   `mehr`-Link geht auf eine unbekannte ID
 - `utils/aufgaben.js` — Aufgabengenerator (Grundlage des Lückenfinders)
-- Alle sieben Screens
+- Sechs der sieben Screens (nur der Rechner steht). `BaustelleScreen.js`
+  ist der Platzhalter dafür und verschwindet, wenn der letzte steht
 - App-Icon/Branding noch nicht gestaltet (Standard-Expo-Icons als Platzhalter,
   Leitfarbe Indigo `#4338CA` steht in `utils/konstanten.js` und `app.json`)
 - `docs/` ist noch leer: `datenschutz.html` und `play-store-listing.md` fehlen

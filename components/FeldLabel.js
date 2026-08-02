@@ -5,7 +5,7 @@ import { farben } from '../utils/konstanten';
 
 // Beschriftung über einem Eingabefeld, optional mit Info-Knopf dahinter.
 //
-//   <FeldLabel thema="phWert">c(H₃O⁺) in mol/L</FeldLabel>
+//   <FeldLabel thema="term">Deine Eingabe</FeldLabel>
 //
 // Ohne "thema" verhält es sich wie ein normales Label — praktisch für
 // Felder, die keiner Erklärung bedürfen.

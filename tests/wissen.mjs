@@ -1,0 +1,91 @@
+// Prüft, dass kein Info-Knopf ins Leere zeigt.
+//
+// Diese Prüfung liest den Quelltext der Screens und Komponenten, statt
+// sie auszuführen — dafür bräuchte es React, und in tests/ läuft
+// blankes Node. Gesucht wird nach thema="..." im Quelltext.
+//
+// Der Nutzen ist konkret: Ein Info-Knopf mit vertipptem Namen zeigt in
+// der App gar nichts an. Ohne diese Prüfung fiele das erst auf, wenn
+// jemand draufdrückt — und der Knopf sitzt ja gerade da, wo jemand
+// nicht weiterweiß.
+
+import { readFileSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { pruefung, wahr, zahl } from './pruefer.mjs';
+import { THEMEN, holeThema } from '../utils/wissen.js';
+
+const wurzel = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+function quelltexte() {
+  const texte = [];
+  for (const ordner of ['screens', 'components']) {
+    const pfad = join(wurzel, ordner);
+    for (const datei of readdirSync(pfad)) {
+      if (datei.endsWith('.js')) {
+        texte.push({ datei: `${ordner}/${datei}`, inhalt: readFileSync(join(pfad, datei), 'utf8') });
+      }
+    }
+  }
+  return texte;
+}
+
+pruefung('Wissenstexte', () => {
+  const ids = new Set(Object.keys(THEMEN));
+  wahr('es gibt überhaupt Themen', ids.size > 0);
+
+  for (const [id, t] of Object.entries(THEMEN)) {
+    wahr(`${id}: hat einen Titel`, Boolean(t.titel));
+    wahr(`${id}: hat Text`, Array.isArray(t.text) && t.text.length > 0);
+
+    // Der erste Absatz ist die Antwort in Alltagssprache. Wird er zu
+    // lang, ist er keine Antwort mehr, sondern ein Aufsatz — und wer
+    // eine Lücke hat, liest ihn nicht zu Ende.
+    wahr(`${id}: erster Absatz ist kurz genug`, t.text[0].length <= 400, `${t.text[0].length} Zeichen`);
+
+    for (const ziel of t.mehr || []) {
+      wahr(`${id}: Querverweis "${ziel}" existiert`, ids.has(ziel));
+      wahr(`${id}: Querverweis "${ziel}" zeigt nicht auf sich selbst`, ziel !== id);
+    }
+  }
+
+  wahr('holeThema findet ein bekanntes Thema', Boolean(holeThema('term')));
+  wahr('und gibt bei unbekanntem nichts zurück', holeThema('gibtEsNicht') === undefined);
+});
+
+pruefung('Info-Knöpfe in den Screens', () => {
+  const benutzt = new Set();
+  const ids = new Set(Object.keys(THEMEN));
+
+  for (const { datei, inhalt } of quelltexte()) {
+    for (const treffer of inhalt.matchAll(/thema="([^"]+)"/g)) {
+      const id = treffer[1];
+      benutzt.add(id);
+      wahr(`${datei}: Info-Knopf "${id}" hat einen Text`, ids.has(id));
+    }
+  }
+
+  wahr('es gibt überhaupt Info-Knöpfe', benutzt.size > 0, `${benutzt.size} gefunden`);
+});
+
+pruefung('Jedes Thema ist erreichbar', () => {
+  // Ein Text, den niemand öffnen kann, ist verlorene Arbeit. Erreichbar
+  // heißt: Entweder sitzt ein Info-Knopf im Screen darauf, oder ein
+  // anderes Thema verlinkt ihn unter "mehr".
+  const erreichbar = new Set();
+
+  for (const { inhalt } of quelltexte()) {
+    for (const treffer of inhalt.matchAll(/thema="([^"]+)"/g)) {
+      erreichbar.add(treffer[1]);
+    }
+  }
+  for (const t of Object.values(THEMEN)) {
+    for (const ziel of t.mehr || []) {
+      erreichbar.add(ziel);
+    }
+  }
+
+  for (const id of Object.keys(THEMEN)) {
+    wahr(`${id}: von irgendwo aus erreichbar`, erreichbar.has(id));
+  }
+});
