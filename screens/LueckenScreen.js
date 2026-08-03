@@ -90,6 +90,8 @@ export default function LueckenScreen() {
         zustand={lauf.zustand}
         stand={stand}
         nochmal={() => setLauf(neuerLauf(stand))}
+        zurUebersicht={() => setLauf(null)}
+        vergessen={vergessen}
       />
     );
   }
@@ -422,7 +424,7 @@ function Wegkontrolle({ weg, start }) {
 
 // --------------------------------------------------------------------
 
-function Ergebnis({ zustand, stand, nochmal }) {
+function Ergebnis({ zustand, stand, nochmal, zurUebersicht, vergessen }) {
   const a = auswertung(zustand);
   const zeilen = alsBericht(zustand);
 
@@ -463,8 +465,20 @@ function Ergebnis({ zustand, stand, nochmal }) {
         </Text>
       </View>
 
+      {/* Der Lernstand gehört auch hierher: Nach einer Sitzung will man
+          sehen, was sich verändert hat — und hier sitzt der Knopf zum
+          Löschen.
+
+          Vorher führte vom Ergebnis nur "Noch einmal" weg, und das
+          startete sofort die nächste Sitzung. Die Startseite mit dem
+          Lernstand war danach nicht mehr erreichbar. */}
+      <Lernstand uebersicht={uebersicht(stand, heute())} vergessen={vergessen} />
+
       <Pressable style={styles.knopf} onPress={nochmal}>
         <Text style={styles.knopfText}>Noch einmal</Text>
+      </Pressable>
+      <Pressable style={styles.knopfLeise} onPress={zurUebersicht}>
+        <Text style={styles.knopfLeiseText}>Zur Übersicht</Text>
       </Pressable>
     </ScreenGeruest>
   );
