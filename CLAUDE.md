@@ -350,6 +350,27 @@ Stand 2026-08-01 werden dabei rund 15.800 Stellen tatsächlich verglichen.
 Die Prüfung ist gegengeprüft: Eine absichtlich falsch gebaute Regel wird
 erkannt, und die Meldung nennt Regel, Term vorher/nachher und die Stelle.
 
+### Dieselben Invarianten prüfen auch den Schüler
+`utils/rechenweg.js` dreht die beiden tragenden Invarianten um: Statt die
+eigenen Umformungen zu prüfen, prüft es die des Menschen. Wer seinen
+Rechenweg Zeile für Zeile eintippt, bekommt gesagt, **ab welcher Zeile** es
+nicht mehr stimmt — nicht bloß „falsch".
+
+Das ist derselbe Code-Gedanke wie in `tests/`, nur zur Laufzeit: Bei Termen
+muss jede Zeile denselben Wert haben wie die vorige, bei Gleichungen
+dieselbe Lösungsmenge.
+
+> **Bei Gleichungen reichen feste Prüfstellen NICHT.** Zwei Gleichungen mit
+> verschiedenen Lösungen sind an einer beliebigen Stelle fast immer beide
+> *unerfüllt* — die Stichprobe sähe überall dasselbe und meldete nichts.
+> Geprüft wird deshalb an den **Lösungen** beider Zeilen (über `loese`).
+> Wer aus `3x = 9` ein `3x = 5` macht, ändert nichts an dem, was bei x = 7
+> passiert — aber alles an dem, was bei x = 3 passiert.
+
+Diese Prüfung ist ehrlich über ihre Grenze: Ein Gegenbeispiel ist sicher,
+eine Übereinstimmung nur sehr wahrscheinlich. Sie kann nicht bestätigen,
+dass eine Umformung für alle Zahlen gilt — und behauptet das nirgends.
+
 ### Die zweite tragende Prüfung: die Lösungsmenge
 Für `gleichung.js` gilt die entsprechende, aber **andere** Aussage:
 
@@ -596,7 +617,11 @@ Was steht:
   Schritt für Schritt („| beide Seiten − 5"), samt pq-Formel und Probe.
   Erkennt „keine Lösung" und „jede Zahl"; alles andere sagt ausdrücklich,
   dass es nicht geht
-- Zusammen **1158 Prüfungen**
+- `utils/rechenweg.js` — den SELBST gerechneten Weg prüfen, Zeile für
+  Zeile, mit Angabe der ersten fehlerhaften Zeile
+- `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
+  fehlen (√ ² ³ · : ^)
+- Zusammen **1211 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft

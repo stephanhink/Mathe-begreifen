@@ -293,6 +293,7 @@ const GENERATOREN = {
     const g = gleichung(summe(x, zahl(b)), zahl(loesung + b));
     return {
       frage: `Löse die Gleichung: ${gleichungAlsText(g)}`,
+      start: g,
       art: 'zahl',
       loesung: zahl(loesung),
     };
@@ -314,6 +315,7 @@ const GENERATOREN = {
     );
     return {
       frage: `Löse die Gleichung: ${gleichungAlsText(g)}`,
+      start: g,
       art: 'zahl',
       loesung: zahl(loesung),
     };
@@ -326,6 +328,7 @@ const GENERATOREN = {
     const g = gleichung(produkt(zahl(a), summe(x, zahl(b))), zahl(a * (loesung + b)));
     return {
       frage: `Löse die Gleichung: ${gleichungAlsText(g)}`,
+      start: g,
       art: 'zahl',
       loesung: zahl(loesung),
     };
@@ -338,6 +341,7 @@ const GENERATOREN = {
     const g = gleichung(summe(quotient(x, zahl(nenner)), zahl(b)), zahl(loesung / nenner + b));
     return {
       frage: `Löse die Gleichung: ${gleichungAlsText(g)}`,
+      start: g,
       art: 'zahl',
       loesung: zahl(loesung),
     };
@@ -364,6 +368,7 @@ const GENERATOREN = {
     const g = gleichung(summe(...glieder), zahl(0));
     return {
       frage: `Löse die Gleichung: ${gleichungAlsText(g)}`,
+      start: g,
       art: 'zahlen',
       loesung: [zahl(Math.max(r1, r2)), zahl(Math.min(r1, r2))],
       hinweis: 'Es gibt zwei Lösungen. Schreibe beide, getrennt durch ein Semikolon.',
@@ -391,6 +396,10 @@ export function erzeugeAufgabe(themaId, naechste = zufall) {
     titel: thema?.titel ?? themaId,
     wissen: thema?.wissen ?? null,
     ...roh,
+    // Womit der Rechenweg anfängt. Bei einer Gleichung ist das die
+    // Gleichung, bei einer Umformung der Term. Wer selbst rechnet,
+    // beginnt hier — und die erste eigene Zeile wird dagegen geprüft.
+    start: roh.start ?? roh.term ?? null,
     loesungText: Array.isArray(roh.loesung)
       ? roh.loesung.map(termAlsText).join('; ')
       : termAlsText(roh.loesung),
@@ -478,8 +487,17 @@ function einStellenVergleich(a, b, belegung) {
 //
 // Rückgabe: { richtig, grund }. `grund` steht nur bei falschen Antworten
 // und sagt, WAS nicht stimmt — "falsch" allein hilft niemandem.
+// "x = 3" ist die natürliche Art, eine Gleichungslösung hinzuschreiben —
+// und die letzte Zeile eines Rechenwegs sieht ohnehin so aus. Gefragt
+// ist aber die Zahl. Also wird das "x =" abgestreift, statt es als
+// Fehler zu werten.
+function ohneVariableVorn(text) {
+  const treffer = text.match(/^\s*[a-zA-Zα-ωΑ-Ω]\s*=\s*(.+)$/);
+  return treffer ? treffer[1].trim() : text;
+}
+
 export function pruefeAntwort(aufgabe, eingabe) {
-  const text = String(eingabe).trim();
+  const text = ohneVariableVorn(String(eingabe).trim());
   if (text === '') {
     return { richtig: false, grund: 'Da steht noch nichts.' };
   }
@@ -519,7 +537,7 @@ export function pruefeAntwort(aufgabe, eingabe) {
 function pruefeMehrere(aufgabe, text) {
   const teile = text
     .split(/[;,]|\boder\b|\bund\b/)
-    .map((s) => s.trim())
+    .map((s) => ohneVariableVorn(s.trim()))
     .filter(Boolean);
 
   if (teile.length !== aufgabe.loesung.length) {

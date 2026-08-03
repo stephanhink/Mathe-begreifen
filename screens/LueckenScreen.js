@@ -3,9 +3,11 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import ScreenGeruest from '../components/ScreenGeruest';
 import InfoButton from '../components/InfoButton';
+import MatheTastatur from '../components/MatheTastatur';
 import { farben } from '../utils/konstanten';
 import { holeThema } from '../utils/lernpfad';
 import { erzeugeAufgabe, pruefeAntwort } from '../utils/aufgaben';
+import { pruefeRechenweg, alsText as rechenwegAlsText } from '../utils/rechenweg';
 import {
   starte,
   naechstesThema,
@@ -76,13 +78,66 @@ function Start({ aufStart }) {
 
 function Frage({ lauf, setLauf, abbrechen }) {
   const [eingabe, setEingabe] = useState('');
+  const [auswahl, setAuswahl] = useState({ start: 0, end: 0 });
   const [geprueft, setGeprueft] = useState(null);
 
   const { zustand, aufgabe } = lauf;
   const nummer = zustand.verlauf.length + 1;
 
+  // Ein Zeichen an der Schreibmarke einfügen, nicht am Ende. Wer mitten
+  // in einer Zeile ein Malzeichen vergessen hat, soll es dort einsetzen
+  // können, wo es hingehört.
+  function einfuegen(zeichen) {
+    const vorne = eingabe.slice(0, auswahl.start);
+    const hinten = eingabe.slice(auswahl.end);
+    setEingabe(vorne + zeichen + hinten);
+    const neu = auswahl.start + zeichen.length;
+    setAuswahl({ start: neu, end: neu });
+  }
+
+  function loeschen() {
+    if (auswahl.start !== auswahl.end) {
+      setEingabe(eingabe.slice(0, auswahl.start) + eingabe.slice(auswahl.end));
+      setAuswahl({ start: auswahl.start, end: auswahl.start });
+      return;
+    }
+    if (auswahl.start === 0) {
+      return;
+    }
+    setEingabe(eingabe.slice(0, auswahl.start - 1) + eingabe.slice(auswahl.start));
+    setAuswahl({ start: auswahl.start - 1, end: auswahl.start - 1 });
+  }
+
+  // Steht mehr als eine Zeile da, wird zuerst der Rechenweg geprüft und
+  // erst danach das Ergebnis. So bekommt man bei einem Fehler in Zeile 3
+  // auch Zeile 3 gesagt — und nicht bloß "falsch".
   function pruefen() {
-    setGeprueft(pruefeAntwort(aufgabe, eingabe));
+    const zeilen = eingabe.split('\n').map((z) => z.trim()).filter(Boolean);
+
+    if (zeilen.length === 0) {
+      setGeprueft({ richtig: false, grund: 'Da steht noch nichts.' });
+      return;
+    }
+
+    if (zeilen.length === 1) {
+      setGeprueft(pruefeAntwort(aufgabe, zeilen[0]));
+      return;
+    }
+
+    const weg = pruefeRechenweg(zeilen, aufgabe.start);
+    if (weg.ersterFehler !== null) {
+      const zeile = weg.zeilen[weg.ersterFehler];
+      const davor =
+        weg.ersterFehler === 0
+          ? 'Schon die erste Zeile stimmt nicht.'
+          : `Bis Zeile ${weg.ersterFehler} stimmt alles.`;
+      setGeprueft({ richtig: false, weg, grund: `${davor} ${zeile.grund}` });
+      return;
+    }
+
+    // Der Weg trägt. Jetzt zählt noch, ob am Ende wirklich das Ergebnis
+    // steht.
+    setGeprueft({ ...pruefeAntwort(aufgabe, zeilen[zeilen.length - 1]), weg });
   }
 
   function weiter() {
@@ -93,6 +148,7 @@ function Frage({ lauf, setLauf, abbrechen }) {
       aufgabe: naechstes ? erzeugeAufgabe(naechstes) : null,
     });
     setEingabe('');
+    setAuswahl({ start: 0, end: 0 });
     setGeprueft(null);
   }
 
@@ -116,38 +172,45 @@ function Frage({ lauf, setLauf, abbrechen }) {
         style={styles.feld}
         value={eingabe}
         onChangeText={setEingabe}
-        placeholder="Deine Antwort"
+        selection={auswahl}
+        onSelectionChange={(e) => setAuswahl(e.nativeEvent.selection)}
+        placeholder={'Ergebnis — oder Zeile für Zeile rechnen'}
         placeholderTextColor={farben.textSehrLeise}
         autoCapitalize="none"
         autoCorrect={false}
         editable={geprueft === null}
-        onSubmitEditing={pruefen}
+        multiline
       />
 
-      {aufgabe.hinweis && geprueft === null ? (
-        <Text style={styles.hinweis}>{aufgabe.hinweis}</Text>
-      ) : null}
-
       {geprueft === null ? (
-        <View style={styles.knopfReihe}>
-          <Pressable style={styles.knopf} onPress={pruefen}>
-            <Text style={styles.knopfText}>Prüfen</Text>
-          </Pressable>
-          <Pressable style={styles.knopfLeise} onPress={weissNicht}>
-            <Text style={styles.knopfLeiseText}>Weiß ich nicht</Text>
-          </Pressable>
-        </View>
+        <>
+          <MatheTastatur aufTaste={einfuegen} aufLoeschen={loeschen} />
+          <Text style={styles.hinweis}>
+            Du kannst gleich das Ergebnis hinschreiben — oder jeden Zwischenschritt in eine
+            eigene Zeile. Dann sagt dir die App, ab welcher Zeile es nicht mehr stimmt.
+          </Text>
+          {aufgabe.hinweis ? <Text style={styles.hinweis}>{aufgabe.hinweis}</Text> : null}
+
+          <View style={styles.knopfReihe}>
+            <Pressable style={styles.knopf} onPress={pruefen}>
+              <Text style={styles.knopfText}>Prüfen</Text>
+            </Pressable>
+            <Pressable style={styles.knopfLeise} onPress={weissNicht}>
+              <Text style={styles.knopfLeiseText}>Weiß ich nicht</Text>
+            </Pressable>
+          </View>
+        </>
       ) : (
         <View>
+          {geprueft.weg ? <Wegkontrolle weg={geprueft.weg} start={aufgabe.start} /> : null}
+
           <View style={geprueft.richtig ? styles.richtigKasten : styles.falschKasten}>
             <Text style={geprueft.richtig ? styles.richtigText : styles.falschText}>
               {geprueft.richtig ? 'Richtig.' : 'Noch nicht.'}
             </Text>
             {geprueft.grund ? <Text style={styles.begruendung}>{geprueft.grund}</Text> : null}
             {!geprueft.richtig ? (
-              <Text style={styles.begruendung}>
-                Richtig wäre: {aufgabe.loesungText}
-              </Text>
+              <Text style={styles.begruendung}>Richtig wäre: {aufgabe.loesungText}</Text>
             ) : null}
           </View>
 
@@ -161,6 +224,23 @@ function Frage({ lauf, setLauf, abbrechen }) {
         <Text style={styles.abbruchText}>Abbrechen</Text>
       </Pressable>
     </ScreenGeruest>
+  );
+}
+
+// Der eigene Rechenweg, Zeile für Zeile abgehakt. Die Zeile mit dem
+// Fehler wird hervorgehoben — nicht die letzte, sondern die erste, ab
+// der es nicht mehr stimmt.
+function Wegkontrolle({ weg, start }) {
+  return (
+    <View style={styles.wegKasten}>
+      {start ? <Text style={styles.wegStart}>{rechenwegAlsText(start)}</Text> : null}
+      {weg.zeilen.map((z) => (
+        <View key={z.nummer} style={styles.wegZeileReihe}>
+          <Text style={z.ok ? styles.hakenGut : styles.hakenSchlecht}>{z.ok ? '✓' : '✗'}</Text>
+          <Text style={[styles.wegEigeneZeile, !z.ok && styles.wegZeileFalsch]}>{z.text}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -279,6 +359,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: farben.text,
     backgroundColor: farben.weiss,
+    minHeight: 96,
+    textAlignVertical: 'top',
   },
   hinweis: {
     fontSize: 13,
@@ -396,6 +478,44 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: farben.text,
     lineHeight: 22,
+  },
+  wegKasten: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: farben.trenner,
+  },
+  wegStart: {
+    fontSize: 16,
+    color: farben.textLeise,
+    marginBottom: 6,
+    marginLeft: 22,
+  },
+  wegZeileReihe: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  wegEigeneZeile: {
+    flex: 1,
+    fontSize: 16,
+    color: farben.text,
+    lineHeight: 24,
+  },
+  wegZeileFalsch: {
+    color: farben.falsch,
+    fontWeight: '700',
+  },
+  hakenGut: {
+    fontSize: 16,
+    color: farben.richtig,
+    width: 14,
+  },
+  hakenSchlecht: {
+    fontSize: 16,
+    color: farben.falsch,
+    width: 14,
   },
   liste: {
     fontSize: 14,
