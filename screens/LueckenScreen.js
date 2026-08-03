@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import ScreenGeruest from '../components/ScreenGeruest';
@@ -16,6 +16,16 @@ import {
   auswertung,
   alsBericht,
 } from '../utils/luecken';
+import {
+  leererStand,
+  verbuche,
+  sichereThemen,
+  faelligeThemen,
+  uebersicht,
+  heute,
+  alleVergessen,
+} from '../utils/fortschritt';
+import { ladeFortschritt, sichereFortschritt } from '../utils/speicher';
 
 // Der Lückenfinder.
 //
@@ -26,26 +36,93 @@ import {
 
 export default function LueckenScreen() {
   const [lauf, setLauf] = useState(null);
+  // Der gespeicherte Lernstand. `null` heißt: noch nicht geladen — erst
+  // danach darf eine Sitzung starten, sonst würde sie das Vorwissen
+  // nicht kennen.
+  const [stand, setStand] = useState(null);
+
+  useEffect(() => {
+    let abgebrochen = false;
+    ladeFortschritt().then((geladen) => {
+      if (!abgebrochen) {
+        setStand(geladen);
+      }
+    });
+    return () => {
+      abgebrochen = true;
+    };
+  }, []);
+
+  // Eine Antwort wandert in den Stand und wird gesichert. Schlägt das
+  // Sichern fehl, läuft die Sitzung trotzdem weiter — der Lauf ist
+  // wichtiger als sein Andenken.
+  function verbucheAntwort(themaId, richtig) {
+    setStand((alt) => {
+      const neu = verbuche(alt ?? leererStand(), themaId, richtig);
+      sichereFortschritt(neu);
+      return neu;
+    });
+  }
+
+  function vergessen() {
+    const leer = alleVergessen();
+    setStand(leer);
+    sichereFortschritt(leer);
+    setLauf(null);
+  }
+
+  if (stand === null) {
+    return (
+      <ScreenGeruest titel="Lückenfinder" untertitel="einen Moment">
+        <Text style={styles.absatz}>Lernstand wird geladen …</Text>
+      </ScreenGeruest>
+    );
+  }
 
   if (lauf === null) {
-    return <Start aufStart={() => setLauf(neuerLauf())} />;
+    return (
+      <Start stand={stand} aufStart={() => setLauf(neuerLauf(stand))} vergessen={vergessen} />
+    );
   }
   if (istFertig(lauf.zustand)) {
-    return <Ergebnis zustand={lauf.zustand} nochmal={() => setLauf(neuerLauf())} />;
+    return (
+      <Ergebnis
+        zustand={lauf.zustand}
+        stand={stand}
+        nochmal={() => setLauf(neuerLauf(stand))}
+      />
+    );
   }
-  return <Frage lauf={lauf} setLauf={setLauf} abbrechen={() => setLauf(null)} />;
+  return (
+    <Frage
+      lauf={lauf}
+      setLauf={setLauf}
+      verbucheAntwort={verbucheAntwort}
+      abbrechen={() => setLauf(null)}
+    />
+  );
 }
 
-function neuerLauf() {
-  const zustand = starte();
-  return { zustand, aufgabe: erzeugeAufgabe(naechstesThema(zustand)) };
+// Eine neue Sitzung — mit dem, was schon bekannt ist. Was sitzt, wird
+// übersprungen; was fällig ist, kommt zuerst dran.
+function neuerLauf(stand) {
+  const tag = heute();
+  const zustand = starte({
+    bereitsSicher: sichereThemen(stand, tag),
+    faellig: faelligeThemen(stand, tag),
+  });
+  const naechstes = naechstesThema(zustand);
+  return { zustand, aufgabe: naechstes ? erzeugeAufgabe(naechstes) : null };
 }
 
 // --------------------------------------------------------------------
 
-function Start({ aufStart }) {
+function Start({ stand, aufStart, vergessen }) {
+  const u = uebersicht(stand, heute());
+
   return (
     <ScreenGeruest titel="Lückenfinder" untertitel="Finden, woran es wirklich hakt">
+      {u.geuebt > 0 ? <Lernstand uebersicht={u} vergessen={vergessen} /> : null}
       <View style={styles.kasten}>
         <Text style={styles.absatz}>
           Mathematik ist eine Kette. Wer bei der pq-Formel scheitert, hat oft gar kein Problem
@@ -74,9 +151,44 @@ function Start({ aufStart }) {
   );
 }
 
+// Was aus früheren Sitzungen bekannt ist.
+//
+// Der Lernstand bleibt auf dem Gerät — kein Konto, keine Anmeldung,
+// nichts verlässt das Handy. Deshalb steht hier auch der Knopf zum
+// Löschen: Wer seinen Stand nicht loswerden kann, ist ihm ausgeliefert.
+function Lernstand({ uebersicht: u, vergessen }) {
+  return (
+    <View style={styles.standKasten}>
+      <Text style={styles.standTitel}>Dein Stand</Text>
+      <Text style={styles.standZeile}>
+        {u.sicher.length} von {u.geuebt} geübten Themen sitzen gerade.
+        {u.faellig.length > 0 ? `  ${u.faellig.length} wären mal wieder dran.` : ''}
+      </Text>
+      <Text style={styles.standZeile}>
+        {u.richtig} von {u.versuche} Aufgaben richtig · zuletzt geübt am{' '}
+        {alsDatum(u.zuletzt)}
+      </Text>
+      <Text style={styles.standKlein}>
+        Alles bleibt auf diesem Gerät. Kein Konto, keine Anmeldung.
+      </Text>
+      <Pressable onPress={vergessen} style={styles.vergessenKnopf}>
+        <Text style={styles.vergessenText}>Lernstand löschen</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function alsDatum(iso) {
+  if (!iso) {
+    return '—';
+  }
+  const [jahr, monat, tag] = iso.split('-');
+  return `${Number(tag)}.${Number(monat)}.${jahr}`;
+}
+
 // --------------------------------------------------------------------
 
-function Frage({ lauf, setLauf, abbrechen }) {
+function Frage({ lauf, setLauf, verbucheAntwort, abbrechen }) {
   const [eingabe, setEingabe] = useState('');
   const [auswahl, setAuswahl] = useState({ start: 0, end: 0 });
   const [geprueft, setGeprueft] = useState(null);
@@ -154,6 +266,7 @@ function Frage({ lauf, setLauf, abbrechen }) {
   }
 
   function weiter() {
+    verbucheAntwort(aufgabe.thema, geprueft.richtig);
     const neuerZustand = antworte(zustand, aufgabe.thema, geprueft.richtig);
     const naechstes = naechstesThema(neuerZustand);
     setLauf({
@@ -261,7 +374,7 @@ function Wegkontrolle({ weg, start }) {
 
 // --------------------------------------------------------------------
 
-function Ergebnis({ zustand, nochmal }) {
+function Ergebnis({ zustand, stand, nochmal }) {
   const a = auswertung(zustand);
   const zeilen = alsBericht(zustand);
 
@@ -287,6 +400,15 @@ function Ergebnis({ zustand, nochmal }) {
         {/* Was nicht drankam, steht ausdrücklich als "unbekannt" da.
             Eine App, die ungefragt behauptet "Brüche kannst du",
             verspielt genau das Vertrauen, für das sie gebaut ist. */}
+        {a.uebersprungen.length > 0 ? (
+          <>
+            <Text style={styles.abschnitt}>Übersprungen — saß schon früher</Text>
+            <Text style={styles.liste}>
+              {a.uebersprungen.map((id) => holeThema(id).titel).join(' · ')}
+            </Text>
+          </>
+        ) : null}
+
         <Text style={styles.abschnitt}>Nicht abgefragt — darüber ist nichts bekannt</Text>
         <Text style={styles.liste}>
           {a.nichtGefragt.map((id) => holeThema(id).titel).join(' · ')}
@@ -536,5 +658,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: farben.text,
     lineHeight: 21,
+  },
+  standKasten: {
+    borderWidth: 1,
+    borderColor: farben.trenner,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 18,
+  },
+  standTitel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: farben.textLeise,
+    marginBottom: 6,
+  },
+  standZeile: {
+    fontSize: 15,
+    color: farben.text,
+    lineHeight: 22,
+  },
+  standKlein: {
+    fontSize: 12,
+    color: farben.textSehrLeise,
+    marginTop: 8,
+  },
+  vergessenKnopf: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  vergessenText: {
+    fontSize: 13,
+    color: farben.falsch,
   },
 });

@@ -58,12 +58,52 @@ const STANDARD_MAX_FRAGEN = 15;
 // ersetzt. Das macht die Prüfungen einfach und den Screen auch: Er hält
 // den Zustand in useState und ersetzt ihn bei jeder Antwort.
 
-export function starte({ maxFragen = STANDARD_MAX_FRAGEN, mischen = null } = {}) {
-  const start = spitzen();
+// `bereitsSicher` sind Themen, die in einer FRÜHEREN Sitzung abgefragt
+// wurden, saßen und noch nicht wieder fällig sind (utils/fortschritt.js).
+// Sie werden übersprungen — das ist der Grund, warum die zweite Sitzung
+// kürzer ist als die erste.
+//
+// Achtung, feiner Unterschied: Diese Themen sind GEPRÜFT, nicht bloß
+// angenommen. Trotzdem landen sie im selben Feld, weil beides dasselbe
+// bewirkt: Sie werden nicht von sich aus gefragt. Wird beim Abstieg
+// eines davon gebraucht, kommt es sehr wohl dran — dann gibt es ja einen
+// Anlass, an ihm zu zweifeln.
+//
+// `faellig` sind Themen, deren Pause um ist. Sie kommen VOR die Spitzen,
+// denn Wiedervorlage ist der eigentliche Zweck des gespeicherten Stands.
+export function starte({
+  maxFragen = STANDARD_MAX_FRAGEN,
+  mischen = null,
+  bereitsSicher = [],
+  faellig = [],
+} = {}) {
+  const start = spitzen().filter((id) => !bereitsSicher.includes(id));
+  const gemischt = mischen ? mischen([...start]) : start;
+
+  const zuerst = faellig.filter((id) => !bereitsSicher.includes(id));
+  const stapel = [...zuerst, ...gemischt.filter((id) => !zuerst.includes(id))];
+
+  // Aus "sitzt" folgt dasselbe wie aus einer richtigen Antwort: Was
+  // darunter liegt, wird vorerst mit angenommen. Ohne das brächte
+  // Vorwissen fast nichts — die App überspränge zwar die Spitze, fragte
+  // aber sofort eine Ebene tiefer weiter und wäre genauso lang.
+  const angenommen = [...bereitsSicher];
+  for (const id of bereitsSicher) {
+    for (const v of alleVoraussetzungen(id)) {
+      if (!angenommen.includes(v) && !faellig.includes(v)) {
+        angenommen.push(v);
+      }
+    }
+  }
+
   return Object.freeze({
-    stapel: mischen ? mischen([...start]) : start,
+    stapel: Object.freeze(stapel),
     ergebnisse: Object.freeze({}),
-    angenommen: Object.freeze([]),
+    angenommen: Object.freeze(angenommen),
+    // Für den Bericht zählt nur, was WIRKLICH einmal abgefragt wurde.
+    // Die mitangenommenen Voraussetzungen gehören nicht dazu — über die
+    // ist nach wie vor nichts bekannt.
+    uebersprungen: Object.freeze([...bereitsSicher]),
     verlauf: Object.freeze([]),
     maxFragen,
   });
@@ -183,14 +223,24 @@ export function auswertung(zustand) {
     };
   });
 
+  // Drei Kategorien, streng getrennt — und die Trennung ist der Grund,
+  // warum man dieser App glauben kann:
+  //
+  //   sicher        in DIESER Sitzung abgefragt und gesessen
+  //   uebersprungen früher abgefragt, saß, Pause noch nicht um
+  //   nichtGefragt  darüber ist nichts bekannt
+  const uebersprungen = (zustand.uebersprungen ?? []).filter((id) => !(id in ergebnisse));
+
   return {
     luecken,
     unklar,
     berichte,
     sicher: richtig,
+    uebersprungen,
     gefragt: zustand.verlauf.length,
-    // Ausdrücklich getrennt ausgewiesen: Darüber ist nichts bekannt.
-    nichtGefragt: alleThemen().filter((id) => !(id in ergebnisse)),
+    nichtGefragt: alleThemen().filter(
+      (id) => !(id in ergebnisse) && !uebersprungen.includes(id)
+    ),
   };
 }
 

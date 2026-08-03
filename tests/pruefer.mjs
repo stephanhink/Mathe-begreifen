@@ -25,7 +25,19 @@ export function pruefung(name, fn) {
   aktuell = { name, anzahl: 0, fehler: [] };
   laeufe.push(aktuell);
   try {
-    fn();
+    const rueckgabe = fn();
+    // Dieser Rahmen ist synchron. Gibt jemand eine async-Funktion
+    // herein, laufen die Prüfungen erst, wenn hier längst aufgeräumt
+    // ist — der Block meldete dann stillschweigend "0 Prüfungen" und
+    // sähe grün aus. Lieber ein klarer Abbruch.
+    //
+    // Wer etwas Asynchrones prüfen will, wartet VOR dem pruefung()
+    // darauf (top-level await) und prüft danach die Ergebnisse.
+    if (rueckgabe && typeof rueckgabe.then === 'function') {
+      aktuell.fehler.push(
+        'Abbruch: pruefung() nimmt keine async-Funktion — erst awaiten, dann prüfen'
+      );
+    }
   } catch (f) {
     aktuell.fehler.push(`Abbruch: ${f.message}`);
   }

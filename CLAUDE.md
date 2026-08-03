@@ -250,6 +250,64 @@ oder Fertigkeiten, die man nicht einzeln prüfen kann.
 Verbunden sind sie über das Feld `wissen` in `lernpfad.js`. Dass diese
 Verweise nicht ins Leere gehen, prüft `tests/lernpfad.mjs`.
 
+## Der Lernstand — und warum es keine Anmeldung gibt
+
+Der Fortschritt wird auf dem Gerät gespeichert (`AsyncStorage`, ein
+JSON-Blob). **Kein Konto, kein Server, keine Anmeldung** — und das ist eine
+Entscheidung, keine Bequemlichkeit:
+
+Die Zielgruppe sind Minderjährige. Nach DSGVO Art. 8 bräuchte man in
+Deutschland für Kinder unter 16 die Einwilligung der Eltern; dazu kämen
+Altersabfrage, Löschanträge, Play-Store-Familienrichtlinien und die Haftung
+für Lerndaten auf einem Server. Lernstände sind heikel, weil sie Schwächen
+dokumentieren.
+
+Der Gegenwert: Im Play Store lässt sich unter *Data Safety* wahrheitsgemäß
+**„keine Daten erhoben"** angeben. Was nie erhoben wird, kann nicht
+abfließen.
+
+Gespeichert wird nur, was nötig ist — kein Name, kein Gerät, keine Uhrzeit:
+
+```json
+{ "version": 1, "themen": { "bruchKuerzen":
+  { "versuche": 3, "richtig": 2, "fach": 2, "zuletzt": "2026-08-03", "faellig": "2026-08-10" } } }
+```
+
+### Der Lernkartenkasten
+Jedes Thema hat ein Fach (1–5) und ein Fälligkeitsdatum, nach dem Prinzip
+von Sebastian Leitner: richtig → ein Fach weiter, längere Pause; falsch →
+zurück auf Fach 1 und sofort wieder dran. Die Pausen: **3, 7, 21, 60, 180
+Tage**.
+
+> Die erste Zahl war zuerst **1 Tag** — und damit war die zweite Sitzung
+> genauso lang wie die erste, denn am Tag darauf war schon wieder alles
+> fällig. Der Denkfehler: Ein Tag ist die Pause für eine *falsch*
+> beantwortete Karte. Aufgefallen ist das erst beim Durchspielen mehrerer
+> Tage hintereinander — keine Prüfung hätte es gefunden, weil jede einzelne
+> für sich stimmte.
+
+Dieselbe Pause trägt zwei Aussagen: wann geübt wird **und** wie lange die
+App jemandem glaubt, dass er es kann.
+
+### Drei Kategorien, streng getrennt
+Die Regel aus `luecken.js` gilt über Sitzungen hinweg weiter:
+
+| | Bedeutung |
+|---|---|
+| `sicher` | in DIESER Sitzung abgefragt und gesessen |
+| `uebersprungen` | früher abgefragt, saß, Pause läuft noch |
+| `nichtGefragt` | darüber ist nichts bekannt |
+
+Angenommene Voraussetzungen landen **nie** im gespeicherten Stand. Sonst
+behauptete die App beim nächsten Start Dinge, die sie nie geprüft hat.
+
+### Kein React, kein Speicher, keine Uhr in `fortschritt.js`
+Die Datei liest und schreibt nichts und fragt nie nach der Uhrzeit — das
+Datum kommt von außen herein. Nur deshalb lässt sich prüfen, was in einem
+halben Jahr passiert, ohne ein halbes Jahr zu warten. Das Ablegen erledigt
+`speicher.js` mit austauschbarem Hintergrund, damit die Prüfungen ohne
+React Native laufen.
+
 ## Fachliche Leitlinien
 - **Korrektheit vor Vereinfachung.** Wo eine Näherung üblich ist, zusätzlich
   exakt rechnen und den Unterschied zeigen — genau daran versteht man die
@@ -455,6 +513,14 @@ Leerlauf hielt. In einer App, deren ganzer Zweck der Rechenweg ist.
 Merksatz daraus: **Der Renderer rechnet nicht.** Er schreibt auf, was
 dasteht.
 
+### Der Prüfrahmen ist synchron
+`pruefung()` nimmt keine `async`-Funktion. Vorher liefen deren Prüfungen
+erst, wenn der Rahmen längst aufgeräumt hatte — der Block meldete
+stillschweigend „0 Prüfungen" und sah grün aus. Jetzt bricht er mit klarer
+Meldung ab. Wer etwas Asynchrones prüfen will, wartet **vor** dem
+`pruefung()` darauf (top-level `await`) und prüft danach die Ergebnisse;
+`tests/fortschritt.mjs` macht es so.
+
 ### Zufallsproben müssen den geprüften Code auch erreichen
 Beim Einbau der Wurzeln fiel eine Lücke auf, die als Warnung taugt: Ein
 absichtlich falsch gebautes `√(x²) → x` wurde von der gezielten Prüfung
@@ -632,6 +698,8 @@ Was steht:
 - **Der Lückenfinder läuft** (Tab „Lücken", ganz links): `utils/lernpfad.js`
   (Themengraph, 22 Themen), `utils/aufgaben.js` (ein Generator je Thema),
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
+- **Der Lernstand bleibt erhalten**: `utils/fortschritt.js` (Lernkartenkasten)
+  und `utils/speicher.js` (Adapter auf AsyncStorage)
 - **Der Zahlen-Bildschirm läuft** (Tab „Zahlen"): `utils/bruchrechnung.js`
   (Bruchrechnen mit sichtbarem Gleichnamigmachen) und `utils/prozent.js`
   (die drei Grundaufgaben, Zu-/Abnahme und die Rückwärtsrechnung)
@@ -655,7 +723,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **1334 Prüfungen**
+- Zusammen **1419 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft

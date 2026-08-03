@@ -19,3 +19,4 @@ import './aufgaben.mjs';
 import './luecken.mjs';
 import './rechenweg.mjs';
 import './zahlen.mjs';
+import './fortschritt.mjs';

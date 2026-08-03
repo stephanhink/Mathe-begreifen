@@ -180,6 +180,46 @@ pruefung('Die Suche bleibt kurz genug', () => {
   }
 });
 
+pruefung('Was früher schon saß, wird übersprungen', () => {
+  // Das ist der Gewinn des gespeicherten Stands: Die zweite Sitzung ist
+  // kürzer als die erste.
+  const alleSpitzen = spitzen();
+  const ohne = sitzung(() => true);
+  const mit = sitzung(() => true, { bereitsSicher: alleSpitzen });
+
+  wahr('mit Vorwissen sind es weniger Fragen', mit.gefragt.length < ohne.gefragt.length,
+    `${mit.gefragt.length} statt ${ohne.gefragt.length}`);
+  for (const id of alleSpitzen) {
+    wahr(`${id}: wird nicht noch einmal gefragt`, !mit.gefragt.includes(id));
+  }
+
+  // Übersprungenes steht getrennt von dem, was in DIESER Sitzung saß.
+  const a = auswertung(mit.zustand);
+  for (const id of alleSpitzen) {
+    wahr(`${id}: gilt als übersprungen, nicht als hier geprüft`,
+      a.uebersprungen.includes(id) && !a.sicher.includes(id));
+  }
+  wahr('und nicht als unbekannt', alleSpitzen.every((id) => !a.nichtGefragt.includes(id)));
+});
+
+pruefung('Beim Abstieg wird auch Übersprungenes wieder gefragt', () => {
+  // Wer die pq-Formel nicht kann, muss darunter nachgefragt bekommen —
+  // auch wenn das letzte Woche noch saß. Ein Anlass zu zweifeln ist ja
+  // da.
+  const voraus = voraussetzungenVon('quadratischeGleichung');
+  const { gefragt } = sitzung(schueler(['quadratischeGleichung']), { bereitsSicher: voraus });
+
+  for (const v of voraus) {
+    wahr(`${v}: kommt trotz Vorwissen wieder dran`, gefragt.includes(v));
+  }
+});
+
+pruefung('Fälliges kommt zuerst', () => {
+  const { gefragt } = sitzung(() => true, { faellig: ['bruchKuerzen', 'potenzDefinition'] });
+  gleichText('das erste Thema ist ein fälliges', gefragt[0], 'bruchKuerzen');
+  gleichText('dann das zweite', gefragt[1], 'potenzDefinition');
+});
+
 pruefung('Die Obergrenze greift', () => {
   const { gefragt } = sitzung(() => false, { maxFragen: 5 });
   zahlIst('nach fünf Fragen ist Schluss', gefragt.length, 5);
