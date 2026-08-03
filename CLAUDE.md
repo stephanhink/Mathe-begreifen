@@ -273,6 +273,34 @@ Gespeichert wird nur, was nötig ist — kein Name, kein Gerät, keine Uhrzeit:
   { "versuche": 3, "richtig": 2, "fach": 2, "zuletzt": "2026-08-03", "faellig": "2026-08-10" } } }
 ```
 
+### Formeln umstellen ist etwas anderes als Gleichungen lösen
+`gleichung.js` lehnt mehrere Variablen ab, und das zu Recht: Es **sucht
+eine Zahl**. `utils/umstellen.js` hat ein anderes Ziel — die Formel soll
+nach einer Größe aufgelöst werden, alle anderen Buchstaben bleiben
+stehen. Aus „eine Lösung finden" wird „anders hinschreiben".
+
+Das Verfahren ist Schälen: Man sieht sich an, was ZULETZT mit der
+gesuchten Größe gemacht wurde, und macht es auf beiden Seiten rückgängig.
+
+> Geschält wird die Seite, auf der die Größe steht — egal welche. Zuerst
+> holte ich sie immer nach links; bei `v = s : t` ergab das **vier**
+> Schritte mit zwei Seitentauschen, wo man von Hand zwei schreibt. Das
+> Tauschen ist kein Rechenschritt, sondern eine Leserichtung, und gehört
+> nicht in den Weg, wenn es nichts bewirkt.
+
+**Die Vorbehalte werden mitgeführt, nicht verschwiegen.** Mit `t` zu
+multiplizieren ist nur erlaubt für `t ≠ 0`, durch `v` zu teilen nur für
+`v ≠ 0`, und beim Wurzelziehen gäbe es auch die negative Lösung. Eine
+Formelsammlung schreibt das nicht dazu, weil dort nur positive Größen
+vorkommen — eine App, die rechnen lehrt, sollte es sagen, sonst lernt man
+eine Regel mit einem stillschweigenden Loch.
+
+Geprüft wird mit einer **Gegenprobe in Zahlen**: Für jede Formel und jede
+Größe wird umgestellt, die Zielgröße aus der umgestellten Form berechnet
+und in die ursprüngliche eingesetzt. Beide Seiten müssen übereinstimmen.
+Gegengeprüft mit einem absichtlich falschen Schritt (mal statt geteilt) —
+wird gefunden, mit konkreten Zahlen.
+
 ### Wo exakt gerechnet wird und wo nicht
 `utils/geometrie.js` musste diese Frage zum ersten Mal für drei
 verschiedene Fälle im selben Modul beantworten:
@@ -769,6 +797,8 @@ Was steht:
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
 - **Der Lernstand bleibt erhalten**: `utils/fortschritt.js` (Lernkartenkasten)
   und `utils/speicher.js` (Adapter auf AsyncStorage)
+- **Der Terme-Bildschirm läuft** (Tab „Terme"): `utils/umstellen.js`
+  (Formeln nach einer Größe auflösen, mit Vorbehalten)
 - **Der Geometrie-Bildschirm läuft** (Tab „Geom."): `utils/geometrie.js`
   (Pythagoras, rechtwinklige Dreiecke, Flächen), `components/Dreieck.js`
 - **Der Funktionen-Bildschirm läuft** (Tab „Funkt."): `utils/funktion.js`
@@ -817,8 +847,8 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Zwei der sieben Screens (Lückenfinder, Zahlen, Rechner, Funktionen und
-  Geometrie stehen; offen sind Terme und Zufall).
+- Ein Screen fehlt noch: **Zufall**. `BaustelleScreen.js` ist der
+  Platzhalter dafür und verschwindet, wenn er steht.
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,

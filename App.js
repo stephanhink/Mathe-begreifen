@@ -15,6 +15,7 @@ import LueckenScreen from './screens/LueckenScreen';
 import ZahlenScreen from './screens/ZahlenScreen';
 import FunktionenScreen from './screens/FunktionenScreen';
 import GeometrieScreen from './screens/GeometrieScreen';
+import TermeScreen from './screens/TermeScreen';
 
 // Jeder Tab bekommt einen Schlüssel, ein Label für die Tab-Leiste und die
 // Screen-Komponente, die angezeigt wird. Ein neues Themengebiet bedeutet:
@@ -32,16 +33,7 @@ const TABS = [
   // kann sich auch keinen Tab aussuchen.
   { key: 'luecken', label: 'Lücken', Screen: LueckenScreen },
   { key: 'zahlen', label: 'Zahlen', Screen: ZahlenScreen },
-  {
-    key: 'terme',
-    label: 'Terme',
-    Screen: () => (
-      <BaustelleScreen
-        titel="Terme"
-        inhalt="Klammern, Binome, Faktorisieren, Bruchterme, Formeln umstellen."
-      />
-    ),
-  },
+  { key: 'terme', label: 'Terme', Screen: TermeScreen },
   // Der erste fertige Screen. Er sitzt beim Tab "Gleichungen", kann aber
   // schon beides: Terme umformen und lineare Gleichungen lösen.
   { key: 'gleichungen', label: 'Gleich.', Screen: RechnerScreen },

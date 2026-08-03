@@ -99,6 +99,19 @@ export const THEMEN = {
     mehr: ['ausklammern', 'gleichartigeGlieder', 'potenz', 'termUmformen'],
   },
 
+  formelUmstellen: {
+    titel: 'Eine Formel umstellen',
+    text: [
+      'Eine Formel umstellen heißt: sie nach einer anderen Größe auflösen. Aus v = s : t wird t = s : v — dieselbe Aussage, nur anders herum aufgeschrieben.',
+      'Das Verfahren ist immer dasselbe: Man sieht sich an, was ZULETZT mit der gesuchten Größe gemacht wurde, und macht es rückgängig — auf beiden Seiten. Steht t im Nenner, nimmt man beide Seiten mal t. Steht danach ein v davor, teilt man durch v.',
+      'Warum das wichtig ist: Ohne Umstellen kann man eine Formelsammlung nur in einer Richtung benutzen. Mit v = s : t lässt sich die Geschwindigkeit ausrechnen — aber die Frage „Wie lange brauche ich?" beantwortet erst die umgestellte Form.',
+      'Achtung bei den Vorbehalten. Mit t malzunehmen ist nur erlaubt, wenn t nicht null ist; durch v zu teilen nur, wenn v nicht null ist. In der Physik stimmt das meistens von selbst — eine Zeit von null Sekunden kommt selten vor. Sagen sollte man es trotzdem.',
+    ],
+    formel: 'v = s : t   →   t = s : v',
+    beispiel: 'Ein Auto fährt 120 km mit 60 km/h. t = s : v = 120 : 60 = 2 Stunden.',
+    mehr: ['beideSeiten', 'variable', 'definitionsbereich'],
+  },
+
   ausklammern: {
     titel: 'Gemeinsamen Faktor ausklammern',
     text: [

@@ -22,3 +22,4 @@ import './zahlen.mjs';
 import './fortschritt.mjs';
 import './funktion.mjs';
 import './geometrie.mjs';
+import './umstellen.mjs';
