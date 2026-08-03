@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import ScreenGeruest from '../components/ScreenGeruest';
 import InfoButton from '../components/InfoButton';
-import MatheTastatur from '../components/MatheTastatur';
+import MatheFeld from '../components/MatheFeld';
 import { farben } from '../utils/konstanten';
 import { holeThema } from '../utils/lernpfad';
 import { erzeugeAufgabe, pruefeAntwort } from '../utils/aufgaben';
@@ -214,35 +214,11 @@ function alsDatum(iso) {
 
 function Frage({ lauf, setLauf, verbucheAntwort, abbrechen }) {
   const [eingabe, setEingabe] = useState('');
-  const [auswahl, setAuswahl] = useState({ start: 0, end: 0 });
   const [geprueft, setGeprueft] = useState(null);
 
   const { zustand, aufgabe } = lauf;
   const nummer = zustand.verlauf.length + 1;
 
-  // Ein Zeichen an der Schreibmarke einfügen, nicht am Ende. Wer mitten
-  // in einer Zeile ein Malzeichen vergessen hat, soll es dort einsetzen
-  // können, wo es hingehört.
-  function einfuegen(zeichen) {
-    const vorne = eingabe.slice(0, auswahl.start);
-    const hinten = eingabe.slice(auswahl.end);
-    setEingabe(vorne + zeichen + hinten);
-    const neu = auswahl.start + zeichen.length;
-    setAuswahl({ start: neu, end: neu });
-  }
-
-  function loeschen() {
-    if (auswahl.start !== auswahl.end) {
-      setEingabe(eingabe.slice(0, auswahl.start) + eingabe.slice(auswahl.end));
-      setAuswahl({ start: auswahl.start, end: auswahl.start });
-      return;
-    }
-    if (auswahl.start === 0) {
-      return;
-    }
-    setEingabe(eingabe.slice(0, auswahl.start - 1) + eingabe.slice(auswahl.start));
-    setAuswahl({ start: auswahl.start - 1, end: auswahl.start - 1 });
-  }
 
   // Steht mehr als eine Zeile da, wird zuerst der Rechenweg geprüft und
   // erst danach das Ergebnis. So bekommt man bei einem Fehler in Zeile 3
@@ -298,7 +274,6 @@ function Frage({ lauf, setLauf, verbucheAntwort, abbrechen }) {
       aufgabe: naechstes ? erzeugeAufgabe(naechstes) : null,
     });
     setEingabe('');
-    setAuswahl({ start: 0, end: 0 });
     setGeprueft(null);
   }
 
@@ -331,23 +306,16 @@ function Frage({ lauf, setLauf, verbucheAntwort, abbrechen }) {
         ) : null}
       </View>
 
-      <TextInput
-        style={styles.feld}
-        value={eingabe}
-        onChangeText={setEingabe}
-        selection={auswahl}
-        onSelectionChange={(e) => setAuswahl(e.nativeEvent.selection)}
-        placeholder={'Ergebnis — oder Zeile für Zeile rechnen'}
-        placeholderTextColor={farben.textSehrLeise}
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={geprueft === null}
-        multiline
+      <MatheFeld
+        wert={eingabe}
+        setWert={setEingabe}
+        platzhalter="Ergebnis — oder Zeile für Zeile rechnen"
+        bearbeitbar={geprueft === null}
+        mehrzeilig
       />
 
       {geprueft === null ? (
         <>
-          <MatheTastatur aufTaste={einfuegen} aufLoeschen={loeschen} />
           <Text style={styles.hinweis}>
             Du kannst gleich das Ergebnis hinschreiben — oder Schritt für Schritt rechnen.
             Dann sagt dir die App, ab welcher Stelle es nicht mehr stimmt. Beides geht:
@@ -549,18 +517,6 @@ const styles = StyleSheet.create({
     color: farben.textLeise,
   },
 
-  feld: {
-    borderWidth: 1,
-    borderColor: farben.rand,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 18,
-    color: farben.text,
-    backgroundColor: farben.weiss,
-    minHeight: 96,
-    textAlignVertical: 'top',
-  },
   hinweis: {
     fontSize: 13,
     color: farben.textLeise,

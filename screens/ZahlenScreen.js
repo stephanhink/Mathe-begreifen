@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import ScreenGeruest from '../components/ScreenGeruest';
 import InfoButton from '../components/InfoButton';
+import ZahlenTasten from '../components/ZahlenTasten';
 import { farben } from '../utils/konstanten';
 import { rechne, kuerze, alsKommazahl, wertAlsText } from '../utils/bruchrechnung';
 import {
@@ -21,6 +22,28 @@ import {
 // es tatsächlich hakt — das Gleichnamigmachen — wäre unsichtbar.
 //
 // Wie überall: Der Screen rechnet nichts, er ruft utils/ auf.
+
+// Merkt sich, in welches Feld zuletzt getippt wurde — die Leiste
+// darunter wirkt dann darauf. Ohne das bräuchte jedes der sechs Felder
+// eine eigene Leiste.
+function useAktivesFeld() {
+  const [feld, setFeld] = useState(null);
+
+  return {
+    aktiv: feld !== null,
+    merkeFeld: (setWert, holeWert) => setFeld({ setWert, holeWert }),
+    anhaengen: (zeichen) => {
+      if (feld) {
+        feld.setWert(feld.holeWert() + zeichen);
+      }
+    },
+    letztesWeg: () => {
+      if (feld) {
+        feld.setWert(feld.holeWert().slice(0, -1));
+      }
+    },
+  };
+}
 
 const BEREICHE = [
   { key: 'brueche', label: 'Brüche' },
@@ -58,6 +81,7 @@ export default function ZahlenScreen() {
 const RECHENARTEN = ['+', '−', '·', ':'];
 
 function Brueche() {
+  const feld = useAktivesFeld();
   const [za, setZa] = useState('1');
   const [na, setNa] = useState('2');
   const [zb, setZb] = useState('1');
@@ -84,7 +108,13 @@ function Brueche() {
       </View>
 
       <View style={styles.bruchReihe}>
-        <Bruchfeld zaehler={za} setZaehler={setZa} nenner={na} setNenner={setNa} />
+        <Bruchfeld
+          zaehler={za}
+          setZaehler={setZa}
+          nenner={na}
+          setNenner={setNa}
+          merkeFeld={feld.merkeFeld}
+        />
 
         <View style={styles.zeichenSpalte}>
           {RECHENARTEN.map((r) => (
@@ -100,8 +130,20 @@ function Brueche() {
           ))}
         </View>
 
-        <Bruchfeld zaehler={zb} setZaehler={setZb} nenner={nb} setNenner={setNb} />
+        <Bruchfeld
+          zaehler={zb}
+          setZaehler={setZb}
+          nenner={nb}
+          setNenner={setNb}
+          merkeFeld={feld.merkeFeld}
+        />
       </View>
+
+      <ZahlenTasten
+        aufTaste={feld.anhaengen}
+        aufLoeschen={feld.letztesWeg}
+        aktiv={feld.aktiv}
+      />
 
       {ergebnis.fehler ? (
         <Hinweiskasten text={ergebnis.fehler} />
@@ -120,13 +162,14 @@ function Brueche() {
   );
 }
 
-function Bruchfeld({ zaehler, setZaehler, nenner, setNenner }) {
+function Bruchfeld({ zaehler, setZaehler, nenner, setNenner, merkeFeld }) {
   return (
     <View style={styles.bruch}>
       <TextInput
         style={styles.bruchFeld}
         value={zaehler}
         onChangeText={setZaehler}
+        onFocus={() => merkeFeld?.(setZaehler, () => zaehler)}
         keyboardType="numbers-and-punctuation"
         textAlign="center"
       />
@@ -135,6 +178,7 @@ function Bruchfeld({ zaehler, setZaehler, nenner, setNenner }) {
         style={styles.bruchFeld}
         value={nenner}
         onChangeText={setNenner}
+        onFocus={() => merkeFeld?.(setNenner, () => nenner)}
         keyboardType="numbers-and-punctuation"
         textAlign="center"
       />
@@ -143,6 +187,7 @@ function Bruchfeld({ zaehler, setZaehler, nenner, setNenner }) {
 }
 
 function Kuerzen() {
+  const feld = useAktivesFeld();
   const [zaehler, setZaehler] = useState('18');
   const [nenner, setNenner] = useState('24');
 
@@ -169,8 +214,15 @@ function Kuerzen() {
           setZaehler={setZaehler}
           nenner={nenner}
           setNenner={setNenner}
+          merkeFeld={feld.merkeFeld}
         />
       </View>
+
+      <ZahlenTasten
+        aufTaste={feld.anhaengen}
+        aufLoeschen={feld.letztesWeg}
+        aktiv={feld.aktiv}
+      />
 
       {ergebnis.fehler ? (
         <Hinweiskasten text={ergebnis.fehler} />
@@ -235,6 +287,7 @@ const FRAGEN = [
 ];
 
 function Prozent() {
+  const feld = useAktivesFeld();
   const [frageKey, setFrageKey] = useState('wert');
   const frage = FRAGEN.find((f) => f.key === frageKey);
   const [eins, setEins] = useState(frage.anfang[0]);
@@ -280,9 +333,25 @@ function Prozent() {
       ))}
 
       <View style={styles.eingabeReihe}>
-        <Zahlenfeld beschriftung={frage.felder[0]} wert={eins} setWert={setEins} />
-        <Zahlenfeld beschriftung={frage.felder[1]} wert={zwei} setWert={setZwei} />
+        <Zahlenfeld
+          beschriftung={frage.felder[0]}
+          wert={eins}
+          setWert={setEins}
+          merkeFeld={feld.merkeFeld}
+        />
+        <Zahlenfeld
+          beschriftung={frage.felder[1]}
+          wert={zwei}
+          setWert={setZwei}
+          merkeFeld={feld.merkeFeld}
+        />
       </View>
+
+      <ZahlenTasten
+        aufTaste={feld.anhaengen}
+        aufLoeschen={feld.letztesWeg}
+        aktiv={feld.aktiv}
+      />
 
       {ergebnis.fehler ? (
         <Hinweiskasten text={ergebnis.fehler} />
@@ -303,7 +372,7 @@ function Prozent() {
   );
 }
 
-function Zahlenfeld({ beschriftung, wert, setWert }) {
+function Zahlenfeld({ beschriftung, wert, setWert, merkeFeld }) {
   return (
     <View style={styles.zahlenfeld}>
       <Text style={styles.feldLabel}>{beschriftung}</Text>
@@ -311,6 +380,7 @@ function Zahlenfeld({ beschriftung, wert, setWert }) {
         style={styles.feld}
         value={wert}
         onChangeText={setWert}
+        onFocus={() => merkeFeld?.(setWert, () => wert)}
         keyboardType="numbers-and-punctuation"
       />
     </View>

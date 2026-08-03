@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import ScreenGeruest from '../components/ScreenGeruest';
 import FeldLabel from '../components/FeldLabel';
 import InfoButton from '../components/InfoButton';
-import MatheTastatur from '../components/MatheTastatur';
+import MatheFeld from '../components/MatheFeld';
 import { farben } from '../utils/konstanten';
 import { alsText as bruchAlsText } from '../utils/bruch';
 import { alsText as termAlsText, multipliziereAus } from '../utils/term';
@@ -64,48 +64,18 @@ function rechne(eingabe) {
 
 export default function RechnerScreen() {
   const [eingabe, setEingabe] = useState('3x + 5 = 14');
-  const [auswahl, setAuswahl] = useState({ start: 0, end: 0 });
   const ergebnis = useMemo(() => rechne(eingabe), [eingabe]);
 
-  // An der Schreibmarke einfügen, nicht am Ende — sonst kann man ein
-  // vergessenes Zeichen nicht dort nachtragen, wo es hingehört.
-  function einfuegen(zeichen) {
-    const neuerText = eingabe.slice(0, auswahl.start) + zeichen + eingabe.slice(auswahl.end);
-    const neu = auswahl.start + zeichen.length;
-    setEingabe(neuerText);
-    setAuswahl({ start: neu, end: neu });
-  }
-
-  function loeschen() {
-    if (auswahl.start !== auswahl.end) {
-      setEingabe(eingabe.slice(0, auswahl.start) + eingabe.slice(auswahl.end));
-      setAuswahl({ start: auswahl.start, end: auswahl.start });
-      return;
-    }
-    if (auswahl.start === 0) {
-      return;
-    }
-    setEingabe(eingabe.slice(0, auswahl.start - 1) + eingabe.slice(auswahl.start));
-    setAuswahl({ start: auswahl.start - 1, end: auswahl.start - 1 });
-  }
 
   return (
     <ScreenGeruest titel="Rechner" untertitel="Term oder Gleichung — mit Rechenweg">
       <FeldLabel thema="term">Deine Eingabe</FeldLabel>
-      <TextInput
-        style={styles.feld}
-        value={eingabe}
-        onChangeText={setEingabe}
-        selection={auswahl}
-        onSelectionChange={(e) => setAuswahl(e.nativeEvent.selection)}
-        placeholder="z. B. 3x + 5 = 14"
-        placeholderTextColor={farben.textSehrLeise}
-        autoCapitalize="none"
-        autoCorrect={false}
-        multiline
+      <MatheFeld
+        wert={eingabe}
+        setWert={setEingabe}
+        platzhalter="z. B. 3x + 5 = 14"
+        mehrzeilig
       />
-
-      <MatheTastatur aufTaste={einfuegen} aufLoeschen={loeschen} />
 
       <View style={styles.beispiele}>
         {BEISPIELE.map((b) => (
@@ -296,17 +266,6 @@ function ProbeZeilen({ gleichung, loesung }) {
 }
 
 const styles = StyleSheet.create({
-  feld: {
-    borderWidth: 1,
-    borderColor: farben.rand,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 18,
-    color: farben.text,
-    backgroundColor: farben.weiss,
-    minHeight: 48,
-  },
   beispiele: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } fro
 import ScreenGeruest from '../components/ScreenGeruest';
 import FeldLabel from '../components/FeldLabel';
 import InfoButton from '../components/InfoButton';
-import MatheTastatur from '../components/MatheTastatur';
+import MatheFeld from '../components/MatheFeld';
 import Funktionsgraph from '../components/Funktionsgraph';
 import { farben } from '../utils/konstanten';
 import { parseTerm } from '../utils/parser';
@@ -105,47 +105,20 @@ function besonderePunkte(term, name) {
 
 export default function FunktionenScreen() {
   const [eingabe, setEingabe] = useState('x^2 - 6x + 8');
-  const [auswahl, setAuswahl] = useState({ start: 0, end: 0 });
   const { width } = useWindowDimensions();
 
   const ergebnis = useMemo(() => untersuche(eingabe), [eingabe]);
   const breite = Math.min(width - 48, 420);
 
-  function einfuegen(zeichen) {
-    const neuerText = eingabe.slice(0, auswahl.start) + zeichen + eingabe.slice(auswahl.end);
-    const neu = auswahl.start + zeichen.length;
-    setEingabe(neuerText);
-    setAuswahl({ start: neu, end: neu });
-  }
-
-  function loeschen() {
-    if (auswahl.start !== auswahl.end) {
-      setEingabe(eingabe.slice(0, auswahl.start) + eingabe.slice(auswahl.end));
-      setAuswahl({ start: auswahl.start, end: auswahl.start });
-      return;
-    }
-    if (auswahl.start === 0) {
-      return;
-    }
-    setEingabe(eingabe.slice(0, auswahl.start - 1) + eingabe.slice(auswahl.start));
-    setAuswahl({ start: auswahl.start - 1, end: auswahl.start - 1 });
-  }
 
   return (
     <ScreenGeruest titel="Funktionen" untertitel="Eintippen, sehen, verstehen">
       <FeldLabel thema="funktion">f(x) =</FeldLabel>
-      <TextInput
-        style={styles.feld}
-        value={eingabe}
-        onChangeText={setEingabe}
-        selection={auswahl}
-        onSelectionChange={(e) => setAuswahl(e.nativeEvent.selection)}
-        placeholder="z. B. x^2 − 6x + 8"
-        placeholderTextColor={farben.textSehrLeise}
-        autoCapitalize="none"
-        autoCorrect={false}
+      <MatheFeld
+        wert={eingabe}
+        setWert={setEingabe}
+        platzhalter="z. B. x^2 − 6x + 8"
       />
-      <MatheTastatur aufTaste={einfuegen} aufLoeschen={loeschen} />
 
       <View style={styles.beispiele}>
         {BEISPIELE.map((b) => (
@@ -248,16 +221,6 @@ function formatZahl(wert) {
 }
 
 const styles = StyleSheet.create({
-  feld: {
-    borderWidth: 1,
-    borderColor: farben.rand,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 18,
-    color: farben.text,
-    backgroundColor: farben.weiss,
-  },
   beispiele: {
     flexDirection: 'row',
     flexWrap: 'wrap',
