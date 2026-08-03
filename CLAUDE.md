@@ -371,6 +371,20 @@ Diese Prüfung ist ehrlich über ihre Grenze: Ein Gegenbeispiel ist sicher,
 eine Übereinstimmung nur sehr wahrscheinlich. Sie kann nicht bestätigen,
 dass eine Umformung für alle Zahlen gilt — und behauptet das nirgends.
 
+#### Das Gleichheitszeichen bedeutet zweierlei
+Und zwar je nach Aufgabe. Das ist beim ersten Ausprobieren durch einen
+Nutzer aufgefallen:
+
+| Aufgabe | Was `=` bedeutet | Beispiel |
+|---|---|---|
+| ein **Term** | ein **Kettenglied** | `√20 = √(4 · 5) = 2√5` — eine Zeile, drei Glieder, alle wertgleich |
+| eine **Gleichung** | die **Gleichung** | `3x = 9` — eine Zeile, genau ein `=` |
+
+Entschieden wird das am Ausgangspunkt der Aufgabe (`aufgabe.start`),
+nicht am Inhalt der Zeile. Vorher wurde jede Zeile mit `=` als Gleichung
+gelesen — und ein völlig richtiger Weg wie oben galt als falsch, weil die
+nächste Zeile dann ein Term war und „nicht dazu passte".
+
 ### Die zweite tragende Prüfung: die Lösungsmenge
 Für `gleichung.js` gilt die entsprechende, aber **andere** Aussage:
 
@@ -621,7 +635,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **1211 Prüfungen**
+- Zusammen **1233 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft

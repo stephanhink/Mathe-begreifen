@@ -119,7 +119,19 @@ function Frage({ lauf, setLauf, abbrechen }) {
       return;
     }
 
-    if (zeilen.length === 1) {
+    // Wann wird der Weg geprüft und wann nur die Antwort?
+    //
+    // Sobald mehr als eine Zeile dasteht — oder ein Gleichheitszeichen
+    // vorkommt. Denn "√20 = √(4 · 5) = 2√5" ist ein Rechenweg, auch
+    // wenn er in eine Zeile passt.
+    //
+    // Eine nackte Zahl ("3") ist dagegen einfach die Antwort. Sie durch
+    // die Wegprüfung zu schicken hieße, bei einer Gleichungsaufgabe ein
+    // fehlendes Gleichheitszeichen anzumahnen — obwohl genau das
+    // gefragt war.
+    const alsWeg = aufgabe.start && (zeilen.length > 1 || eingabe.includes('='));
+
+    if (!alsWeg) {
       setGeprueft(pruefeAntwort(aufgabe, zeilen[0]));
       return;
     }
@@ -136,8 +148,9 @@ function Frage({ lauf, setLauf, abbrechen }) {
     }
 
     // Der Weg trägt. Jetzt zählt noch, ob am Ende wirklich das Ergebnis
-    // steht.
-    setGeprueft({ ...pruefeAntwort(aufgabe, zeilen[zeilen.length - 1]), weg });
+    // steht — geprüft wird das letzte Glied, nicht die letzte Zeile.
+    // Bei "√20 = 2√5" ist die Antwort 2√5 und nicht die ganze Zeile.
+    setGeprueft({ ...pruefeAntwort(aufgabe, rechenwegAlsText(weg.ergebnis)), weg });
   }
 
   function weiter() {
@@ -186,8 +199,10 @@ function Frage({ lauf, setLauf, abbrechen }) {
         <>
           <MatheTastatur aufTaste={einfuegen} aufLoeschen={loeschen} />
           <Text style={styles.hinweis}>
-            Du kannst gleich das Ergebnis hinschreiben — oder jeden Zwischenschritt in eine
-            eigene Zeile. Dann sagt dir die App, ab welcher Zeile es nicht mehr stimmt.
+            Du kannst gleich das Ergebnis hinschreiben — oder Schritt für Schritt rechnen.
+            Dann sagt dir die App, ab welcher Stelle es nicht mehr stimmt. Beides geht:
+            jeder Schritt in eine eigene Zeile, oder mit Gleichheitszeichen aneinander,
+            so wie im Heft: {'\n'}√20 = √(4 · 5) = 2√5
           </Text>
           {aufgabe.hinweis ? <Text style={styles.hinweis}>{aufgabe.hinweis}</Text> : null}
 

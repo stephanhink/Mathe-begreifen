@@ -128,6 +128,36 @@ pruefung('Bruchzahl und Division auseinanderhalten', () => {
   wirft('Bruch mit Nenner 0', () => parseTerm('1/0'));
 });
 
+pruefung('Ausgeschriebene Namen', () => {
+  // Auf einer Handytastatur ist "wurzel" schneller getippt als das
+  // Zeichen gesucht. Und wer "wurzel(20)" schreibt, meint ganz sicher
+  // nicht w · u · r · z · e · l · 20 — genau das kam vorher heraus, und
+  // die App rechnete stillschweigend Unsinn.
+  gleichText('wurzel(20)', rund('wurzel(20)'), '√20');
+  gleichText('Wurzel(4*5) — Großschreibung egal', rund('Wurzel(4*5)'), '√(4 · 5)');
+  gleichText('sqrt(9)', rund('sqrt(9)'), '√9');
+  gleichText('betrag(-5)', rund('betrag(-5)'), '|−5|');
+  gleichText('abs(x)', rund('abs(x)'), '|x|');
+  zahlIst('und der Wert stimmt', auswerte(parseTerm('wurzel(20)')), Math.sqrt(20));
+
+  // Ohne Klammer dahinter bleibt es ein Produkt aus Variablen — sonst
+  // wäre "ab" plötzlich ein unbekanntes Wort statt a · b.
+  gleichText('ab bleibt a · b', rund('ab'), 'a · b');
+  gleichText('xy bleibt x · y', rund('xy'), 'x · y');
+  gleichText('2x(x+1) bleibt ein Produkt', rund('2x(x+1)'), '2x · (x + 1)');
+
+  // Ein unbekanntes Wort vor einer Klammer wird abgelehnt, statt
+  // stillschweigend als Variablenkette gelesen zu werden.
+  wirft('sin(x) kennt die App nicht', () => parseTerm('sin(x)'));
+  let meldung = '';
+  try {
+    parseTerm('sin(x)');
+  } catch (f) {
+    meldung = f.message;
+  }
+  wahr('und sagt, was sie kennt', meldung.includes('wurzel'));
+});
+
 pruefung('Gleichungen lesen', () => {
   gleichText('3x + 5 = 14', gleichungAlsText(parseGleichung('3x + 5 = 14')), '3x + 5 = 14');
   gleichText(

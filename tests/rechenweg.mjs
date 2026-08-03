@@ -108,12 +108,12 @@ pruefung('Auch die erste Zeile wird geprüft', () => {
 });
 
 pruefung('Was der Rechenweg nicht durchgehen lässt', () => {
-  const kaputt = pruefeRechenweg(['3x + 5 = 14', '3x = ']);
+  const kaputt = pruefeRechenweg(['3x + 5 = 14', '3x = '], parseGleichung('3x + 5 = 14'));
   zahlIst('eine unlesbare Zeile', kaputt.ersterFehler, 1);
   wahr('mit Meldung', kaputt.zeilen[1].grund.length > 0);
 
   // Aus einer Gleichung darf nicht plötzlich ein Term werden.
-  const gemischt = pruefeRechenweg(['3x + 5 = 14', '3x']);
+  const gemischt = pruefeRechenweg(['3x + 5 = 14', '3x'], parseGleichung('3x + 5 = 14'));
   zahlIst('Gleichung und Term gemischt', gemischt.ersterFehler, 1);
   wahr('mit Hinweis auf das Gleichheitszeichen', gemischt.zeilen[1].grund.includes('Gleichheitszeichen'));
 
@@ -124,9 +124,64 @@ pruefung('Was der Rechenweg nicht durchgehen lässt', () => {
 pruefung('Leerzeilen stören nicht', () => {
   // Wer beim Tippen eine Zeile zu viel erwischt, soll deswegen keine
   // Fehlermeldung bekommen.
-  const e = pruefeRechenweg(['3x + 5 = 14', '', '3x = 9', '   ', 'x = 3']);
+  const e = pruefeRechenweg(
+    ['3x + 5 = 14', '', '3x = 9', '   ', 'x = 3'],
+    parseGleichung('3x + 5 = 14')
+  );
   wahr('kein Fehler', e.ersterFehler === null);
   zahlIst('und nur die echten Zeilen zählen', e.zeilen.length, 3);
+});
+
+pruefung('Bei Termen ist das = ein Kettenglied', () => {
+  // So schreibt man eine Umformung im Heft:
+  //
+  //     √20 = √(4 · 5) = 2√5
+  //
+  // Das "=" ist hier keine Gleichung, die man löst, sondern ein
+  // Kettenglied: Alles in der Zeile hat denselben Wert. Vorher wurde
+  // die erste Zeile als Gleichung gelesen und passte dann nicht mehr
+  // zur zweiten — der Fall, an dem das aufgefallen ist.
+  const start = parseTerm('√20');
+
+  const e = pruefeRechenweg(['√20 = √(4*5)', '2√5'], start);
+  wahr('die Kette geht durch', e.ersterFehler === null, e.ersterFehler !== null ? e.zeilen[e.ersterFehler].grund : undefined);
+  zahlIst('zwei Zeilen', e.zeilen.length, 2);
+
+  // Auch alles in einer Zeile.
+  const einzeilig = pruefeRechenweg(['√20 = √(4*5) = 2√5'], start);
+  wahr('drei Glieder in einer Zeile', einzeilig.ersterFehler === null);
+
+  // Und ganz ohne Gleichheitszeichen, wie bisher.
+  wahr('nur das Ergebnis', pruefeRechenweg(['2√5'], start).ersterFehler === null);
+
+  // Ein Fehler innerhalb einer Zeile wird auch dort gefunden.
+  const drin = pruefeRechenweg(['√20 = √(4*5) = 4√5'], start);
+  zahlIst('Fehler in der ersten Zeile', drin.ersterFehler, 0);
+  wahr('und die Meldung zeigt auf das Glied', drin.zeilen[0].grund.includes('Glied dieser Zeile'));
+
+  // Ein falsches erstes Glied fällt gegen die Aufgabe auf.
+  const falscherStart = pruefeRechenweg(['√20 = √(4+5)'], start);
+  zahlIst('falsches erstes Glied', falscherStart.ersterFehler, 0);
+
+  // Dasselbe bei einer gewöhnlichen Termumformung.
+  const term = pruefeRechenweg(
+    ['3x + 5 + 2x = 5x + 5', '5x + 5 = 5(x + 1)'],
+    parseTerm('3x + 5 + 2x')
+  );
+  wahr('Kette über zwei Zeilen', term.ersterFehler === null);
+});
+
+pruefung('Bei Gleichungen bleibt das = die Gleichung', () => {
+  // Hier darf NICHT zerlegt werden: "3x = 9" ist eine Gleichung, keine
+  // Kette aus 3x und 9.
+  const start = parseGleichung('3x + 5 = 14');
+  const e = pruefeRechenweg(['3x = 9', 'x = 3'], start);
+  wahr('der Weg trägt', e.ersterFehler === null);
+
+  // Und eine Zeile ohne Gleichheitszeichen ist dort ein Fehler.
+  const ohne = pruefeRechenweg(['3x'], start);
+  zahlIst('Zeile ohne =', ohne.ersterFehler, 0);
+  wahr('mit Hinweis', ohne.zeilen[0].grund.includes('Gleichheitszeichen'));
 });
 
 pruefung('Ist am Ende ein Ergebnis erreicht?', () => {

@@ -260,67 +260,98 @@ export function pruefeRechenweg(zeilen, start = null) {
     return { zeilen: [], ersterFehler: null, leer: true };
   }
 
+  // Die Aufgabe entscheidet, was ein Gleichheitszeichen bedeutet.
+  //
+  //   Bei einer GLEICHUNG ist es die Gleichung selbst: "3x = 9" ist eine
+  //   Zeile mit genau einem "=".
+  //
+  //   Bei einem TERM ist es ein Kettenglied: "√20 = √(4 · 5) = 2√5" ist
+  //   EINE Zeile mit drei Gliedern, die alle denselben Wert haben
+  //   müssen. Genau so schreibt man eine Umformung im Heft, und genau
+  //   das ging vorher schief: Die Zeile wurde als Gleichung gelesen und
+  //   passte dann nicht zur nächsten.
+  const alsGleichungen = start !== null && istGleichung(start);
+
   const geprueft = [];
   let vorige = start;
   let vorigeNummer = 0;
 
   for (let i = 0; i < roh.length; i++) {
     const text = roh[i];
-    let gelesen;
-    try {
-      gelesen = parseEingabe(text);
-    } catch (fehler) {
-      geprueft.push({ nummer: i + 1, text, ok: false, grund: fehler.message });
+    const scheitern = (grund, extra = {}) => {
+      geprueft.push({ nummer: i + 1, text, ok: false, grund, ...extra });
       return { zeilen: geprueft, ersterFehler: i };
+    };
+
+    // Zeile in ihre Glieder zerlegen.
+    const rohteile = alsGleichungen
+      ? [text]
+      : text.split('=').map((t) => t.trim()).filter(Boolean);
+
+    if (rohteile.length === 0) {
+      return scheitern('In dieser Zeile steht nur ein Gleichheitszeichen.');
     }
 
-    // Term und Gleichung dürfen nicht gemischt werden. Wer mittendrin
-    // ein Gleichheitszeichen weglässt, hat sonst plötzlich einen Term,
-    // der zufällig zur Lösung passt.
-    if (vorige !== null && istGleichung(vorige) !== istGleichung(gelesen)) {
-      geprueft.push({
-        nummer: i + 1,
-        text,
-        ok: false,
-        grund: istGleichung(vorige)
-          ? 'Hier fehlt das Gleichheitszeichen — die Zeile darüber war eine Gleichung.'
-          : 'Hier steht plötzlich ein Gleichheitszeichen, darüber war es ein Term.',
-      });
-      return { zeilen: geprueft, ersterFehler: i };
+    const glieder = [];
+    for (const teil of rohteile) {
+      try {
+        glieder.push(parseEingabe(teil));
+      } catch (fehler) {
+        return scheitern(fehler.message);
+      }
     }
 
-    if (vorige === null) {
-      geprueft.push({ nummer: i + 1, text, ok: true, term: gelesen });
-      vorige = gelesen;
-      vorigeNummer = i + 1;
-      continue;
+    if (alsGleichungen && !istGleichung(glieder[0])) {
+      return scheitern(
+        'Hier fehlt das Gleichheitszeichen — bei einer Gleichung gehört in jede Zeile eine.'
+      );
+    }
+    if (!alsGleichungen && glieder.some(istGleichung)) {
+      // Kann nur passieren, wenn jemand "a == b" o. Ä. tippt.
+      return scheitern('Hier steht ein Gleichheitszeichen zu viel.');
     }
 
-    const abweichung = istGleichung(gelesen)
-      ? findeAbweichungGleichung(vorige, gelesen)
-      : findeAbweichung(vorige, gelesen);
-
-    if (abweichung !== null) {
-      geprueft.push({
-        nummer: i + 1,
-        text,
-        ok: false,
-        term: gelesen,
-        grund: abweichungsText(abweichung, vorigeNummer, istGleichung(gelesen)),
-        abweichung,
-      });
-      return { zeilen: geprueft, ersterFehler: i };
+    // Erst die Glieder innerhalb der Zeile gegeneinander, dann die
+    // Zeile gegen das, was darüber stand.
+    let ok = true;
+    for (let k = 1; k < glieder.length && ok; k++) {
+      const abweichung = findeAbweichung(glieder[k - 1], glieder[k]);
+      if (abweichung !== null) {
+        ok = false;
+        return scheitern(
+          abweichungsText(abweichung, null, false, {
+            davor: `das ${k}. Glied dieser Zeile`,
+            danach: `das ${k + 1}.`,
+          }),
+          { term: glieder[k], abweichung }
+        );
+      }
     }
 
-    geprueft.push({ nummer: i + 1, text, ok: true, term: gelesen });
-    vorige = gelesen;
+    if (vorige !== null) {
+      const abweichung = alsGleichungen
+        ? findeAbweichungGleichung(vorige, glieder[0])
+        : findeAbweichung(vorige, glieder[0]);
+
+      if (abweichung !== null) {
+        return scheitern(abweichungsText(abweichung, vorigeNummer, alsGleichungen), {
+          term: glieder[0],
+          abweichung,
+        });
+      }
+    }
+
+    // Weitergerechnet wird mit dem LETZTEN Glied der Zeile — das ist
+    // der Stand, auf dem die nächste Zeile aufbaut.
+    vorige = glieder[glieder.length - 1];
     vorigeNummer = i + 1;
+    geprueft.push({ nummer: i + 1, text, ok: true, term: vorige });
   }
 
   return { zeilen: geprueft, ersterFehler: null, ergebnis: vorige };
 }
 
-function abweichungsText(abweichung, vorigeNummer, alsGleichung) {
+function abweichungsText(abweichung, vorigeNummer, alsGleichung, bezug = null) {
   if (abweichung.grund) {
     return abweichung.grund;
   }
@@ -329,19 +360,23 @@ function abweichungsText(abweichung, vorigeNummer, alsGleichung) {
     abweichung.stelle === null
       ? ''
       : ` bei ${abweichung.name} = ${bruchAlsText(abweichung.stelle)}`;
-  const davor = vorigeNummer === 0 ? 'die Aufgabe' : `Zeile ${vorigeNummer}`;
+
+  // Woran wird gemessen, und was ist "hier"? Innerhalb einer Kette sind
+  // das zwei Glieder derselben Zeile, sonst zwei Zeilen.
+  const davor = bezug?.davor ?? (vorigeNummer === 0 ? 'die Aufgabe' : `Zeile ${vorigeNummer}`);
+  const danach = bezug?.danach ?? 'diese Zeile';
 
   if (alsGleichung) {
     return (
       `Hier ändert sich die Lösungsmenge:${wo} ist ${davor} ` +
-      `${abweichung.vorher ? 'erfüllt' : 'nicht erfüllt'}, diese Zeile ` +
+      `${abweichung.vorher ? 'erfüllt' : 'nicht erfüllt'}, ${danach} ` +
       `${abweichung.nachher ? 'aber schon' : 'aber nicht'}.`
     );
   }
 
   return (
     `Hier ändert sich der Wert:${wo} ergibt ${davor} ${abweichung.links}, ` +
-    `diese Zeile ${abweichung.rechts}.`
+    `${danach} ${abweichung.rechts}.`
   );
 }
 

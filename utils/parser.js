@@ -44,6 +44,11 @@ const HOCHZIFFERN = {
 
 const WURZELGRADE = { '√': 2, '∛': 3, '∜': 4 };
 
+// Ausgeschriebene Namen. Wer sie tippt, meint sicher keine Folge von
+// Variablen.
+const WURZELWOERTER = ['wurzel', 'sqrt', 'quadratwurzel'];
+const BETRAGSWOERTER = ['betrag', 'abs'];
+
 // ---------------------------------------------------------------------
 
 class Leser {
@@ -90,6 +95,35 @@ class Leser {
   schau() {
     this.ueberspringeLeerzeichen();
     return this.zeichen;
+  }
+
+  // Ein zusammenhängendes Wort aus mindestens zwei Buchstaben, dem eine
+  // Klammer folgt. Nur dann ist es ein Funktionsname und keine Kette
+  // aus Variablen: "xy(z)" bleibt x · y · z, "wurzel(4)" wird zur
+  // Wurzel.
+  //
+  // Die Klammerbedingung ist wichtig. Ohne sie wäre "ab" plötzlich ein
+  // unbekanntes Wort statt a · b.
+  nimmWort() {
+    this.ueberspringeLeerzeichen();
+    let ende = this.stelle;
+    while (ende < this.text.length && /[a-zA-Zα-ωΑ-Ω]/.test(this.text[ende])) {
+      ende++;
+    }
+    const laenge = ende - this.stelle;
+    if (laenge < 2) {
+      return null;
+    }
+    let nachWort = ende;
+    while (nachWort < this.text.length && /\s/.test(this.text[nachWort])) {
+      nachWort++;
+    }
+    if (this.text[nachWort] !== '(') {
+      return null;
+    }
+    const wort = this.text.slice(this.stelle, ende);
+    this.stelle = ende;
+    return wort;
   }
 
   fehler(nachricht) {
@@ -259,6 +293,23 @@ function leseGrundwert(leser) {
   // Zahl
   if (/[0-9]/.test(leser.zeichen)) {
     return leseZahl(leser);
+  }
+
+  // Ausgeschriebene Funktionsnamen. Auf einer Handytastatur ist "wurzel"
+  // schneller getippt als das Zeichen gesucht — und wer "wurzel(20)"
+  // schreibt, meint ganz sicher nicht w · u · r · z · e · l · 20.
+  const wort = leser.nimmWort();
+  if (wort !== null) {
+    if (WURZELWOERTER.includes(wort.toLowerCase())) {
+      return wurzel(leseGrundwert(leser), 2);
+    }
+    if (BETRAGSWOERTER.includes(wort.toLowerCase())) {
+      return betrag(leseGrundwert(leser));
+    }
+    leser.fehler(
+      `"${wort}" kenne ich nicht. Bekannt sind wurzel(…) und betrag(…) — ` +
+        'Variablen sind einzelne Buchstaben'
+    );
   }
 
   // Buchstabe. Bewusst genau einer: Sonst wäre "xy" ein Variablenname
