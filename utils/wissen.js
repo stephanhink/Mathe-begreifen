@@ -195,6 +195,47 @@ export const THEMEN = {
   },
 
   // -----------------------------------------------------------------
+  // Geometrie
+  // -----------------------------------------------------------------
+
+  pythagoras: {
+    titel: 'Der Satz des Pythagoras',
+    text: [
+      'In einem rechtwinkligen Dreieck gilt: Die beiden kurzen Seiten, im Quadrat genommen und addiert, ergeben zusammen das Quadrat der langen Seite. Kurz: a² + b² = c².',
+      'Die lange Seite heißt Hypotenuse und liegt immer dem rechten Winkel gegenüber. Die beiden anderen heißen Katheten. Das ist keine Namenskunde, sondern der Grund, warum die Formel nur so herum funktioniert: c ist immer die längste Seite.',
+      'Deshalb lässt sich der Satz auch rückwärts benutzen. Kennt man die Hypotenuse und eine Kathete, bekommt man die andere über a = √(c² − b²). Ist dabei die Kathete länger als die Hypotenuse, gibt es dieses Dreieck nicht — dann steht unter der Wurzel eine negative Zahl.',
+    ],
+    formel: 'a² + b² = c²',
+    beispiel: 'a = 3, b = 4:   c = √(9 + 16) = √25 = 5.   Bei a = 2 und b = 3 kommt √13 heraus — eine Zahl, die sich nicht schöner schreiben lässt.',
+    mehr: ['trigonometrie', 'wurzel', 'potenz'],
+  },
+
+  trigonometrie: {
+    titel: 'Sinus, Kosinus, Tangens',
+    text: [
+      'In einem rechtwinkligen Dreieck hängen die Seitenverhältnisse nur vom Winkel ab — nicht von der Größe. Ein Dreieck mit 30° hat immer dieselben Verhältnisse, ob es zwei Zentimeter oder zwei Kilometer groß ist. Genau das machen Sinus, Kosinus und Tangens nutzbar.',
+      'Vom Winkel α aus gesehen heißt die gegenüberliegende Seite Gegenkathete, die anliegende Ankathete. Dann gilt: sin α = Gegenkathete : Hypotenuse, cos α = Ankathete : Hypotenuse, tan α = Gegenkathete : Ankathete.',
+      'Mit den Umkehrfunktionen sin⁻¹, cos⁻¹ und tan⁻¹ geht es rückwärts: Aus dem Seitenverhältnis bekommt man den Winkel. So findet man aus zwei Seiten alle Winkel.',
+      'Anders als beim Pythagoras kommen dabei fast nie glatte Zahlen heraus. sin 30° ist genau 1/2, sin 37° dagegen lässt sich nicht hinschreiben — dort wird gerundet.',
+    ],
+    formel: 'sin α = Gegenkathete : Hypotenuse',
+    beispiel: 'Eine Leiter von 5 m lehnt in 70° an der Wand. Höhe = 5 · sin 70° ≈ 4,70 m.',
+    mehr: ['pythagoras', 'winkelsumme', 'wurzel'],
+  },
+
+  winkelsumme: {
+    titel: 'Die Winkelsumme im Dreieck',
+    text: [
+      'In jedem Dreieck ergeben die drei Winkel zusammen 180°. Immer — ob spitz, stumpf oder rechtwinklig.',
+      'Daraus folgt sofort etwas Nützliches: Kennt man zwei Winkel, hat man den dritten geschenkt. Im rechtwinkligen Dreieck ist einer schon 90°, für die beiden anderen bleiben zusammen 90° — jeder einzelne muss also kleiner sein.',
+      'Anschaulich sieht man es so: Schneidet man die drei Ecken eines Papierdreiecks ab und legt sie mit den Spitzen aneinander, ergeben sie eine gerade Linie. Und eine gerade Linie ist 180°.',
+    ],
+    formel: 'α + β + γ = 180°',
+    beispiel: 'Rechtwinklig mit α = 30°:   β = 180° − 90° − 30° = 60°.',
+    mehr: ['trigonometrie', 'pythagoras'],
+  },
+
+  // -----------------------------------------------------------------
   // Funktionen
   // -----------------------------------------------------------------
 

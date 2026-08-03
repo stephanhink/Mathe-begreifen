@@ -273,6 +273,19 @@ Gespeichert wird nur, was nötig ist — kein Name, kein Gerät, keine Uhrzeit:
   { "versuche": 3, "richtig": 2, "fach": 2, "zuletzt": "2026-08-03", "faellig": "2026-08-10" } } }
 ```
 
+### Wo exakt gerechnet wird und wo nicht
+`utils/geometrie.js` musste diese Frage zum ersten Mal für drei
+verschiedene Fälle im selben Modul beantworten:
+
+| | |
+|---|---|
+| **Pythagoras** | exakt. `c = √(2² + 3²)` ist `√13`, nicht 3,606 — `term.js` kann Wurzeln, also werden sie benutzt |
+| **Kreis** | exakt bis auf π. Die Fläche bei r = 3 ist `9π`; die Kommazahl steht daneben, nicht anstelle |
+| **Winkel** | numerisch. `sin 30°` ist 1/2, `sin 37°` ist keine Zahl, die sich hinschreiben lässt — dort wird gerundet, und die App sagt es |
+
+Die Trennung ist keine Pedanterie: Wer 3,606 sieht, weiß nicht, ob das
+exakt ist. Wer √13 sieht, weiß es.
+
 ### Zeichnen: die Geometrie gehört in `utils/`, nicht in die Komponente
 `components/Funktionsgraph.js` rechnet nichts aus. Wo die Kurve verläuft,
 wo das Gitter sitzt und wo eine Linie **unterbrochen** werden muss, steht
@@ -756,6 +769,8 @@ Was steht:
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
 - **Der Lernstand bleibt erhalten**: `utils/fortschritt.js` (Lernkartenkasten)
   und `utils/speicher.js` (Adapter auf AsyncStorage)
+- **Der Geometrie-Bildschirm läuft** (Tab „Geom."): `utils/geometrie.js`
+  (Pythagoras, rechtwinklige Dreiecke, Flächen), `components/Dreieck.js`
 - **Der Funktionen-Bildschirm läuft** (Tab „Funkt."): `utils/funktion.js`
   (Nullstellen, Scheitelpunkt, Steigung), `utils/graph.js` (Geometrie),
   `components/Funktionsgraph.js` (SVG)
@@ -802,8 +817,8 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Drei der sieben Screens (Lückenfinder, Zahlen, Rechner und Funktionen
-  stehen).
+- Zwei der sieben Screens (Lückenfinder, Zahlen, Rechner, Funktionen und
+  Geometrie stehen; offen sind Terme und Zufall).
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,

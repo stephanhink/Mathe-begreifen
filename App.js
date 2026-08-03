@@ -14,6 +14,7 @@ import RechnerScreen from './screens/RechnerScreen';
 import LueckenScreen from './screens/LueckenScreen';
 import ZahlenScreen from './screens/ZahlenScreen';
 import FunktionenScreen from './screens/FunktionenScreen';
+import GeometrieScreen from './screens/GeometrieScreen';
 
 // Jeder Tab bekommt einen Schlüssel, ein Label für die Tab-Leiste und die
 // Screen-Komponente, die angezeigt wird. Ein neues Themengebiet bedeutet:
@@ -45,16 +46,7 @@ const TABS = [
   // schon beides: Terme umformen und lineare Gleichungen lösen.
   { key: 'gleichungen', label: 'Gleich.', Screen: RechnerScreen },
   { key: 'funktionen', label: 'Funkt.', Screen: FunktionenScreen },
-  {
-    key: 'geometrie',
-    label: 'Geom.',
-    Screen: () => (
-      <BaustelleScreen
-        titel="Geometrie"
-        inhalt="Pythagoras, Trigonometrie, Flächen und Körper, Vektoren."
-      />
-    ),
-  },
+  { key: 'geometrie', label: 'Geom.', Screen: GeometrieScreen },
   {
     key: 'zufall',
     label: 'Zufall',
