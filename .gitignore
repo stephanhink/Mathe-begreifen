@@ -58,3 +58,4 @@ build-*.apk
 # signieren, die der Play Store als echt akzeptiert.
 credentials.json
 credentials/
+tools/.zwischenstand/

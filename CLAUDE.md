@@ -830,6 +830,42 @@ vollständigen JSON-Beispiel. Was gespeichert wird, gehört dorthin — auch
 wenn es das Gerät nie verlässt. Die Chemie-Vorlage trug dafür sogar schon
 einen Warnkasten: „Falls die App später doch Lernfortschritte speichert …"
 
+### Das Icon: ein Motiv, acht Zuschnitte
+`tools/icon-bauen.py` erzeugt alle Icon-Dateien aus einer einzigen
+Beschreibung — die sechs unter `assets/` und die zwei Store-Grafiken unter
+`docs/store-assets/`. Wer das Zeichen ändern will, ändert es dort einmal,
+nicht in acht PNG-Dateien, die dann auseinanderlaufen.
+
+Das Zeichen ist **x²**, hinterlegt mit dem **Graphen von x²**. Das
+Geschriebene und das Gezeichnete sagen dasselbe — genau darum geht es in
+dieser App. Der Aufbau ist von „Chemie begreifen" übernommen: großes
+weißes Zeichen, angedeutetes Motiv dahinter, kleines Zeichen oben rechts.
+Dort ist es das Elementsymbol mit der Ordnungszahl, hier die Variable mit
+dem Exponenten.
+
+> Das `x` ist kursiv, die `2` aufrecht. So setzt man Mathematik:
+> Variablen kursiv, Zahlen aufrecht. Ein Detail, das kaum jemandem
+> auffällt — und ohne das es falsch wäre.
+
+Gebraucht werden Chrome (zeichnet das SVG) und ImageMagick (misst nach).
+Das Skript hängt bewusst **nicht** in `npm test`: Es erzeugt Dateien, die
+im Repo liegen, statt etwas zu prüfen, das sich ändert. Und die Prüfungen
+sollen ohne Chrome laufen.
+
+#### Die Sicherheitszone wird gemessen, nicht geschätzt
+Android beschneidet das adaptive Icon auf die mittleren 66 % — je nach
+Hersteller rund, quadratisch oder als Kleeblatt. Was außerhalb liegt, ist
+weg. Nach Augenmaß sieht das immer richtig aus, deshalb rechnet das Skript
+es nach: Jedes sichtbare Pixel muss innerhalb von 337,9 px um die Mitte
+liegen, sonst bricht es ab und nennt die Koordinate. Aktuell: 323,0 px.
+
+Gegengeprüft — mit `ZONE = 0.80` statt `0.64` meldet es die herausragende
+Stelle. Der erste Anlauf des Prüfers war allerdings selbst falsch:
+`magick -alpha extract` liefert ein **sRGB-Bild**, durchsichtig steht dort
+als `#000000` und nicht als `gray(0)`. Der Filter traf nie, und gemeldet
+wurde die Bildecke. Aufgefallen ist es nur, weil die Zahl (721 px)
+offensichtlich unmöglich war.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -905,19 +941,17 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- **Für die Veröffentlichung:** `docs/` steht (Datenschutzerklärung und
-  Play-Store-Text). Es fehlen noch die Grafiken (App-Icon 512×512,
-  Feature Graphic 1024×500, Screenshots) und GitHub Pages muss aktiviert
-  werden. Das ist alles, was zwischen dem jetzigen Stand und einer
-  veröffentlichbaren Version steht.
+- **Für die Veröffentlichung:** `docs/` steht (Datenschutzerklärung,
+  Play-Store-Text, App-Icon 512×512 und Feature Graphic). Es fehlen noch
+  die **Screenshots** — die kann nur ein echtes Gerät liefern — und
+  **GitHub Pages muss aktiviert werden**. Das ist alles, was zwischen dem
+  jetzigen Stand und einer veröffentlichbaren Version steht.
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,
   Geometrie, Stochastik und die ganze Oberstufe — jedes neue Thema braucht
   einen Eintrag in `lernpfad.js` UND einen Generator in `aufgaben.js`,
   sonst schlägt die Prüfung fehl
-- App-Icon/Branding noch nicht gestaltet (Standard-Expo-Icons als Platzhalter,
-  Leitfarbe Indigo `#4338CA` steht in `utils/konstanten.js` und `app.json`)
 - GitHub Pages für die Datenschutzerklärung noch nicht aktiviert
   (Repo-Settings → Pages → Branch `main`, Ordner `/docs`). Die URL lautet
   danach `https://stephanhink.github.io/Mathe-begreifen/datenschutz.html`
