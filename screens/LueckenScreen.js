@@ -122,7 +122,7 @@ function Start({ stand, aufStart, vergessen }) {
 
   return (
     <ScreenGeruest titel="Lückenfinder" untertitel="Finden, woran es wirklich hakt">
-      {u.geuebt > 0 ? <Lernstand uebersicht={u} vergessen={vergessen} /> : null}
+      <Lernstand uebersicht={u} vergessen={vergessen} />
       <View style={styles.kasten}>
         <Text style={styles.absatz}>
           Mathematik ist eine Kette. Wer bei der pq-Formel scheitert, hat oft gar kein Problem
@@ -156,24 +156,46 @@ function Start({ stand, aufStart, vergessen }) {
 // Der Lernstand bleibt auf dem Gerät — kein Konto, keine Anmeldung,
 // nichts verlässt das Handy. Deshalb steht hier auch der Knopf zum
 // Löschen: Wer seinen Stand nicht loswerden kann, ist ihm ausgeliefert.
+//
+// Der Kasten steht IMMER da, auch wenn noch nichts geübt wurde. Vorher
+// erschien er erst nach der ersten verbuchten Antwort — mit dem
+// Ergebnis, dass jemand, der nachsehen wollte, ob überhaupt etwas
+// gespeichert wird, eine leere Seite fand. Ein Schalter, den man nur
+// findet, wenn man ihn nicht mehr sucht, ist keiner.
 function Lernstand({ uebersicht: u, vergessen }) {
+  const nochNichts = u.geuebt === 0;
+
   return (
     <View style={styles.standKasten}>
       <Text style={styles.standTitel}>Dein Stand</Text>
-      <Text style={styles.standZeile}>
-        {u.sicher.length} von {u.geuebt} geübten Themen sitzen gerade.
-        {u.faellig.length > 0 ? `  ${u.faellig.length} wären mal wieder dran.` : ''}
-      </Text>
-      <Text style={styles.standZeile}>
-        {u.richtig} von {u.versuche} Aufgaben richtig · zuletzt geübt am{' '}
-        {alsDatum(u.zuletzt)}
-      </Text>
+
+      {nochNichts ? (
+        <Text style={styles.standZeile}>
+          Noch nichts geübt. Sobald du die erste Aufgabe beantwortet hast, steht hier, was
+          sitzt und was mal wieder dran wäre.
+        </Text>
+      ) : (
+        <>
+          <Text style={styles.standZeile}>
+            {u.sicher.length} von {u.geuebt} geübten Themen sitzen gerade.
+            {u.faellig.length > 0 ? `  ${u.faellig.length} wären mal wieder dran.` : ''}
+          </Text>
+          <Text style={styles.standZeile}>
+            {u.richtig} von {u.versuche} Aufgaben richtig · zuletzt geübt am{' '}
+            {alsDatum(u.zuletzt)}
+          </Text>
+        </>
+      )}
+
       <Text style={styles.standKlein}>
         Alles bleibt auf diesem Gerät. Kein Konto, keine Anmeldung.
       </Text>
-      <Pressable onPress={vergessen} style={styles.vergessenKnopf}>
-        <Text style={styles.vergessenText}>Lernstand löschen</Text>
-      </Pressable>
+
+      {nochNichts ? null : (
+        <Pressable onPress={vergessen} style={styles.vergessenKnopf}>
+          <Text style={styles.vergessenText}>Lernstand löschen</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -284,6 +306,19 @@ function Frage({ lauf, setLauf, verbucheAntwort, abbrechen }) {
 
   return (
     <ScreenGeruest titel={`Aufgabe ${nummer}`} untertitel={aufgabe.titel}>
+      {/* Der Verlauf der laufenden Sitzung — ein Haken je beantworteter
+          Aufgabe. Ohne ihn weiß man mitten in der Sitzung nicht, wie
+          weit man ist und wie es lief. */}
+      {zustand.verlauf.length > 0 ? (
+        <View style={styles.verlaufZeile}>
+          {zustand.verlauf.map((v, i) => (
+            <Text key={i} style={v.richtig ? styles.verlaufGut : styles.verlaufSchlecht}>
+              {v.richtig ? '✓' : '✗'}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+
       <View style={styles.frageKasten}>
         <Text style={styles.frage}>{aufgabe.frage}</Text>
         {aufgabe.wissen ? (
@@ -681,6 +716,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: farben.text,
     lineHeight: 21,
+  },
+  verlaufZeile: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginBottom: 14,
+  },
+  verlaufGut: {
+    fontSize: 15,
+    color: farben.richtig,
+  },
+  verlaufSchlecht: {
+    fontSize: 15,
+    color: farben.falsch,
   },
   standKasten: {
     borderWidth: 1,
