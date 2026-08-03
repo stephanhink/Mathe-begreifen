@@ -208,6 +208,59 @@ export const THEMEN = {
   },
 
   // -----------------------------------------------------------------
+  // Zufall
+  // -----------------------------------------------------------------
+
+  laplace: {
+    titel: 'Wahrscheinlichkeit nach Laplace',
+    text: [
+      'Wenn alle Ergebnisse gleich wahrscheinlich sind, zählt man einfach ab: Wie viele Fälle sind günstig, wie viele überhaupt möglich? Der Bruch daraus ist die Wahrscheinlichkeit.',
+      'Beim Würfel gibt es sechs mögliche Ergebnisse, und eines davon ist die Sechs. Also ist die Wahrscheinlichkeit 1/6. Diese App schreibt genau das hin und nicht 0,1667 — an dem Bruch sieht man, worum es geht, an der Kommazahl nicht.',
+      'Eine Wahrscheinlichkeit liegt immer zwischen 0 und 1. Null heißt: kommt nie vor. Eins heißt: kommt sicher vor. Mehr als eins gibt es nicht — wer so etwas ausrechnet, hat sich verzählt.',
+      'Die Gegenwahrscheinlichkeit ergänzt zu 1. Statt „mindestens eine Sechs bei drei Würfen" auszurechnen, ist es oft leichter, „gar keine Sechs" zu nehmen und von 1 abzuziehen.',
+    ],
+    formel: 'P = günstige Fälle : mögliche Fälle',
+    beispiel: 'Eine gerade Zahl beim Würfel: 3 von 6, also 1/2 oder 50 %.',
+    mehr: ['pfadregeln', 'bruch', 'prozent'],
+  },
+
+  pfadregeln: {
+    titel: 'Die Pfadregeln',
+    text: [
+      'Wenn ein Zufallsversuch mehrere Stufen hat, zeichnet man ein Baumdiagramm: Jede Stufe ist eine Verzweigung, jeder Weg von oben nach unten ein Pfad.',
+      'Dann gelten zwei Regeln. Entlang eines Pfades wird MULTIPLIZIERT — beide Dinge müssen nacheinander eintreten. Über mehrere Pfade wird ADDIERT — es reicht, wenn einer davon eintritt.',
+      'Die Probe steckt im Bild: Alle Pfade zusammen müssen 1 ergeben. Irgendein Weg wird schließlich genommen. Kommt etwas anderes heraus, fehlt ein Zweig oder eine Zahl stimmt nicht.',
+      'Der Unterschied zwischen „mit" und „ohne Zurücklegen" sitzt in der zweiten Stufe. Legt man zurück, ändert sich nichts. Legt man nicht zurück, fehlt genau die Kugel, die man gerade gezogen hat — und der Nenner wird um eins kleiner.',
+    ],
+    beispiel: '3 rote, 2 blaue Kugeln, ohne Zurücklegen: P(rot, rot) = 3/5 · 2/4 = 3/10.',
+    mehr: ['laplace', 'kombinatorik', 'bruch'],
+  },
+
+  kombinatorik: {
+    titel: 'Wie viele Möglichkeiten?',
+    text: [
+      'Bevor man Wahrscheinlichkeiten ausrechnet, muss man abzählen können. Dabei entscheiden zwei Fragen alles: Kommt es auf die REIHENFOLGE an, und darf dasselbe MEHRFACH vorkommen?',
+      'Aus den beiden Fragen ergeben sich vier Fälle. Beim Zahlenschloss zählt die Reihenfolge und Ziffern dürfen sich wiederholen. Beim Lotto zählt die Reihenfolge nicht und keine Zahl kommt zweimal. Dazwischen liegen die beiden anderen Fälle.',
+      'Der Binomialkoeffizient „n über k" beantwortet den Lottofall: Wie viele Möglichkeiten gibt es, aus n Dingen k auszuwählen, wenn die Reihenfolge egal ist? Bei 6 aus 49 sind es 13 983 816 — deshalb gewinnt man so selten.',
+    ],
+    formel: 'n über k = n! : (k! · (n−k)!)',
+    beispiel: 'Drei aus acht aufs Treppchen, mit Reihenfolge: 8 · 7 · 6 = 336.',
+    mehr: ['binomialverteilung', 'laplace', 'potenz'],
+  },
+
+  binomialverteilung: {
+    titel: 'Die Binomialverteilung',
+    text: [
+      'Man macht n-mal denselben Versuch, und jedes Mal ist die Trefferwahrscheinlichkeit dieselbe p. Die Frage lautet: Wie wahrscheinlich sind genau k Treffer?',
+      'Die Formel besteht aus drei Teilen, und jeder hat einen Grund. p hoch k ist die Wahrscheinlichkeit für k Treffer, (1−p) hoch (n−k) die für die übrigen Nieten — das ist ein Pfad im Baumdiagramm. Und „n über k" zählt, wie viele solche Pfade es gibt.',
+      'Der Erwartungswert ist n · p. Bei zehn Würfen mit einem Würfel erwartet man 10 · 1/6, also etwa 1,7 Sechsen. Das ist keine eigene Formel zum Auswendiglernen, sondern folgt direkt daraus, dass jeder einzelne Versuch im Schnitt p Treffer bringt.',
+    ],
+    formel: 'P(X = k) = (n über k) · p^k · (1−p)^(n−k)',
+    beispiel: 'Vier Münzwürfe, genau zweimal Kopf: (4 über 2) · (1/2)⁴ = 6/16 = 3/8.',
+    mehr: ['kombinatorik', 'pfadregeln', 'potenz'],
+  },
+
+  // -----------------------------------------------------------------
   // Geometrie
   // -----------------------------------------------------------------
 

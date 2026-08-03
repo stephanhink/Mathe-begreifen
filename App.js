@@ -9,13 +9,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { farben } from './utils/konstanten';
-import BaustelleScreen from './screens/BaustelleScreen';
 import RechnerScreen from './screens/RechnerScreen';
 import LueckenScreen from './screens/LueckenScreen';
 import ZahlenScreen from './screens/ZahlenScreen';
 import FunktionenScreen from './screens/FunktionenScreen';
 import GeometrieScreen from './screens/GeometrieScreen';
 import TermeScreen from './screens/TermeScreen';
+import ZufallScreen from './screens/ZufallScreen';
 
 // Jeder Tab bekommt einen Schlüssel, ein Label für die Tab-Leiste und die
 // Screen-Komponente, die angezeigt wird. Ein neues Themengebiet bedeutet:
@@ -39,16 +39,7 @@ const TABS = [
   { key: 'gleichungen', label: 'Gleich.', Screen: RechnerScreen },
   { key: 'funktionen', label: 'Funkt.', Screen: FunktionenScreen },
   { key: 'geometrie', label: 'Geom.', Screen: GeometrieScreen },
-  {
-    key: 'zufall',
-    label: 'Zufall',
-    Screen: () => (
-      <BaustelleScreen
-        titel="Zufall"
-        inhalt="Laplace, Baumdiagramm, Kombinatorik, Binomialverteilung, Erwartungswert."
-      />
-    ),
-  },
+  { key: 'zufall', label: 'Zufall', Screen: ZufallScreen },
 ];
 
 export default function App() {

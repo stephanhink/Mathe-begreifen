@@ -273,6 +273,27 @@ Gespeichert wird nur, was nötig ist — kein Name, kein Gerät, keine Uhrzeit:
   { "versuche": 3, "richtig": 2, "fach": 2, "zuletzt": "2026-08-03", "faellig": "2026-08-10" } } }
 ```
 
+### Die eingebauten Proben der Stochastik
+`utils/zufall.js` hat zwei Invarianten, die alles auf einmal prüfen — und
+beide sind zugleich das, was man im Unterricht als Kontrolle lernt:
+
+> **Die Summe aller Pfade eines Baumdiagramms ist 1.** Irgendein Weg wird
+> schließlich genommen. Geprüft für alle Urnen bis 6/6 Kugeln, mit und
+> ohne Zurücklegen — ein falscher Zweig fällt sofort auf, egal welcher.
+
+> **Die ganze Binomialverteilung addiert sich zu 1.** Irgendeine
+> Trefferzahl kommt heraus.
+
+Dazu die Regel aus dem Konzept: **eine Wahrscheinlichkeit > 1 gibt es
+nicht.** 7 von 6 günstigen Fällen wäre 1,17 — eine Zahl, die aussieht wie
+ein Ergebnis und keines ist.
+
+> Beim Binomialkoeffizienten wird über das Produkt `(n−k+i)/i` gerechnet,
+> nicht über drei Fakultäten: 50! hat 65 Stellen und sprengt die exakte
+> Rechnung, obwohl „50 über 2" nur 1225 ist. Genau daran ist die erste
+> Fassung der Prüfung gescheitert — dort hatte ich Brüche von Hand
+> addiert statt `plus()` zu benutzen, und die Nenner wuchsen über 2^53.
+
 ### Formeln umstellen ist etwas anderes als Gleichungen lösen
 `gleichung.js` lehnt mehrere Variablen ab, und das zu Recht: Es **sucht
 eine Zahl**. `utils/umstellen.js` hat ein anderes Ziel — die Formel soll
@@ -797,6 +818,9 @@ Was steht:
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
 - **Der Lernstand bleibt erhalten**: `utils/fortschritt.js` (Lernkartenkasten)
   und `utils/speicher.js` (Adapter auf AsyncStorage)
+- **Alle sieben Bildschirme stehen.** Der letzte ist Zufall:
+  `utils/zufall.js` (Laplace, Kombinatorik, Baumdiagramm,
+  Binomialverteilung, Erwartungswert), `components/Baumdiagramm.js`
 - **Der Terme-Bildschirm läuft** (Tab „Terme"): `utils/umstellen.js`
   (Formeln nach einer Größe auflösen, mit Vorbehalten)
 - **Der Geometrie-Bildschirm läuft** (Tab „Geom."): `utils/geometrie.js`
@@ -847,8 +871,10 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Ein Screen fehlt noch: **Zufall**. `BaustelleScreen.js` ist der
-  Platzhalter dafür und verschwindet, wenn er steht.
+- **Für die Veröffentlichung:** `docs/` ist noch leer
+  (Datenschutzerklärung, Play-Store-Text), Icons fehlen, GitHub Pages ist
+  nicht aktiviert. Das ist alles, was zwischen dem jetzigen Stand und
+  einer veröffentlichbaren Version steht.
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,
