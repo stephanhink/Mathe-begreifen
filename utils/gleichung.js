@@ -162,7 +162,9 @@ export function probeAlsText(p) {
 // Lieber vorher sagen, dass es zu viel wird.
 const HOECHSTER_GRAD = 4;
 
-function koeffizienten(term, name) {
+// Wird auch von utils/funktion.js gebraucht: Steigung, Scheitelpunkt und
+// die Art einer Funktion stecken alle in denselben Koeffizienten.
+export function koeffizienten(term, name) {
   // Ein Teilterm ohne jede Variable ist eine Zahl — wenn er sich exakt
   // ausrechnen lässt. √4 geht, √2 nicht: Ein irrationaler Koeffizient
   // wäre kein Bruch mehr, und dann trüge diese Datei eine Genauigkeit
@@ -278,7 +280,7 @@ function falte(a, b) {
   return ergebnis;
 }
 
-function gradVon(koeffs) {
+export function gradVon(koeffs) {
   for (let i = koeffs.length - 1; i >= 0; i--) {
     if (!istNull(koeffs[i])) {
       return i;

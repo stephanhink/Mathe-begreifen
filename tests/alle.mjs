@@ -20,3 +20,4 @@ import './luecken.mjs';
 import './rechenweg.mjs';
 import './zahlen.mjs';
 import './fortschritt.mjs';
+import './funktion.mjs';

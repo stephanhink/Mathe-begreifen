@@ -13,6 +13,7 @@ import BaustelleScreen from './screens/BaustelleScreen';
 import RechnerScreen from './screens/RechnerScreen';
 import LueckenScreen from './screens/LueckenScreen';
 import ZahlenScreen from './screens/ZahlenScreen';
+import FunktionenScreen from './screens/FunktionenScreen';
 
 // Jeder Tab bekommt einen Schlüssel, ein Label für die Tab-Leiste und die
 // Screen-Komponente, die angezeigt wird. Ein neues Themengebiet bedeutet:
@@ -43,16 +44,7 @@ const TABS = [
   // Der erste fertige Screen. Er sitzt beim Tab "Gleichungen", kann aber
   // schon beides: Terme umformen und lineare Gleichungen lösen.
   { key: 'gleichungen', label: 'Gleich.', Screen: RechnerScreen },
-  {
-    key: 'funktionen',
-    label: 'Funkt.',
-    Screen: () => (
-      <BaustelleScreen
-        titel="Funktionen"
-        inhalt="Linear, quadratisch, exponentiell, trigonometrisch — bis zu Ableitung und Integral."
-      />
-    ),
-  },
+  { key: 'funktionen', label: 'Funkt.', Screen: FunktionenScreen },
   {
     key: 'geometrie',
     label: 'Geom.',

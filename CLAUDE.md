@@ -273,6 +273,33 @@ Gespeichert wird nur, was nötig ist — kein Name, kein Gerät, keine Uhrzeit:
   { "versuche": 3, "richtig": 2, "fach": 2, "zuletzt": "2026-08-03", "faellig": "2026-08-10" } } }
 ```
 
+### Zeichnen: die Geometrie gehört in `utils/`, nicht in die Komponente
+`components/Funktionsgraph.js` rechnet nichts aus. Wo die Kurve verläuft,
+wo das Gitter sitzt und wo eine Linie **unterbrochen** werden muss, steht
+in `utils/graph.js` — die Komponente übersetzt es nur in SVG. Damit ist
+der heikle Teil mit blankem node geprüft.
+
+Drei Tücken stecken darin, und jede hat eine eigene Prüfung:
+
+1. **Definitionslücken.** Der Graph wird in ABSCHNITTE zerlegt, nicht in
+   eine Linie. Bei `1 : x` eine Linie von −1000 nach +1000 durch die Null
+   zu ziehen sieht plausibel aus und behauptet, dort läge etwas. Die
+   Prüfung verlangt: `1 : x` zerfällt in genau zwei Äste, einer links,
+   einer rechts der Null.
+2. **Lesbare Achsen.** Ein Gitter im Abstand 0,7143 ist korrekt und
+   unbrauchbar. Erlaubt sind nur 1, 2, 5 und Zehnerpotenzen davon — nur
+   dort kann man Zwischenwerte im Kopf ablesen.
+3. **Die umgedrehte y-Achse.** In der Mathematik zeigt sie nach oben, auf
+   dem Bildschirm nach unten. Diese Umkehrung steckt an genau einer
+   Stelle (`skala({ umgedreht: true })`) und nicht in jeder Zeichenzeile.
+
+> Zwei Funde beim Bauen: Am Gitter stand „0.6000000000000001" — gerundet
+> werden muss das ERGEBNIS, nicht der Faktor, denn schon 3 · 0,2 ergibt
+> in Gleitkommazahlen diesen Staub. Und ein festes Fenster von −6 bis 6
+> ließ bei `x² − 6x + 8` die Parabel am Rand auf 80 steigen, sodass
+> Scheitel und Nullstellen zu einem Strich am unteren Rand wurden. Das
+> Fenster richtet sich jetzt nach den **besonderen Stellen**.
+
 ### Fehlerbilder: sagen, WAS gedacht wurde
 „Der Wert stimmt nicht" ist ehrlich und nutzlos. Wer `1/2 + 1/3` als `2/5`
 beantwortet, hat nicht irgendwie danebengelegen — er hat Zähler und Nenner
@@ -729,6 +756,9 @@ Was steht:
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
 - **Der Lernstand bleibt erhalten**: `utils/fortschritt.js` (Lernkartenkasten)
   und `utils/speicher.js` (Adapter auf AsyncStorage)
+- **Der Funktionen-Bildschirm läuft** (Tab „Funkt."): `utils/funktion.js`
+  (Nullstellen, Scheitelpunkt, Steigung), `utils/graph.js` (Geometrie),
+  `components/Funktionsgraph.js` (SVG)
 - **Der Zahlen-Bildschirm läuft** (Tab „Zahlen"): `utils/bruchrechnung.js`
   (Bruchrechnen mit sichtbarem Gleichnamigmachen) und `utils/prozent.js`
   (die drei Grundaufgaben, Zu-/Abnahme und die Rückwärtsrechnung)
@@ -752,7 +782,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **1561 Prüfungen**
+- Zusammen **1724 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -772,7 +802,8 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Vier der sieben Screens (Lückenfinder, Zahlen und Rechner stehen).
+- Drei der sieben Screens (Lückenfinder, Zahlen, Rechner und Funktionen
+  stehen).
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,

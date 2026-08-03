@@ -195,6 +195,67 @@ export const THEMEN = {
   },
 
   // -----------------------------------------------------------------
+  // Funktionen
+  // -----------------------------------------------------------------
+
+  funktion: {
+    titel: 'Was ist eine Funktion?',
+    text: [
+      'Eine Funktion ist eine Zuordnung: Zu jeder Zahl, die man hineinsteckt, gehört genau eine Zahl, die herauskommt. Man schreibt f(x) und meint damit „das, was bei x herauskommt".',
+      'Der Graph macht das sichtbar. Jeder Punkt darauf hat zwei Angaben: waagerecht das x, senkrecht das dazugehörige f(x). Die Kurve ist nichts anderes als alle diese Punkte zusammen.',
+      'Deshalb kann man einen Graphen auch selbst zeichnen: Wertetabelle anlegen, Punkte eintragen, verbinden. Die App tut genau das, nur mit sehr vielen Punkten.',
+    ],
+    beispiel: 'f(x) = 2x + 3 ordnet der 4 die Zahl 11 zu, denn 2 · 4 + 3 = 11.',
+    mehr: ['wertetabelle', 'steigung', 'nullstelle', 'term'],
+  },
+
+  wertetabelle: {
+    titel: 'Die Wertetabelle',
+    text: [
+      'In einer Wertetabelle stehen ein paar x-Werte und darunter, was die Funktion daraus macht. Sie ist der Zwischenschritt zwischen Formel und Bild.',
+      'Man wählt sich x-Werte, setzt sie ein und rechnet aus. Bei einer Geraden reichen zwei Punkte, bei einer Parabel sollten es fünf bis sieben sein — sonst übersieht man den Scheitel.',
+      'Steht in der Tabelle ein Strich statt einer Zahl, ist die Funktion dort nicht definiert. Bei 1 : x ist das an der Stelle 0 so: Durch null lässt sich nicht teilen, also gibt es dort keinen Punkt.',
+    ],
+    beispiel: 'f(x) = x²:   x = −2 → 4,   x = −1 → 1,   x = 0 → 0,   x = 1 → 1,   x = 2 → 4.',
+    mehr: ['funktion', 'definitionsbereich'],
+  },
+
+  steigung: {
+    titel: 'Die Steigung',
+    text: [
+      'Die Steigung sagt, wie stark eine Gerade ansteigt: Sie ist die Höhe, die man gewinnt, wenn man einen Schritt nach rechts geht.',
+      'Bei f(x) = 2x + 3 ist die Steigung 2 — ein Schritt nach rechts, zwei nach oben. Ist die Steigung negativ, geht es abwärts. Ist sie null, verläuft die Gerade waagerecht.',
+      'In der Physik ist die Steigung fast immer eine Geschwindigkeit oder eine Rate. Im Weg-Zeit-Diagramm gibt sie an, wie viele Meter pro Sekunde zurückgelegt werden — eine steilere Gerade heißt: schneller.',
+    ],
+    formel: 'm = (y₂ − y₁) / (x₂ − x₁)',
+    beispiel: 's = 20t: Die Steigung 20 bedeutet 20 Meter pro Sekunde.',
+    mehr: ['funktion', 'nullstelle', 'variable'],
+  },
+
+  nullstelle: {
+    titel: 'Nullstellen',
+    text: [
+      'Eine Nullstelle ist eine Stelle, an der der Graph die x-Achse schneidet — also ein x, für das f(x) = 0 herauskommt.',
+      'Damit ist die Suche nach Nullstellen nichts Neues: Man setzt die Funktion gleich null und löst die Gleichung. Bei einer Geraden gibt es höchstens eine, bei einer Parabel zwei, eine oder keine.',
+      'Keine Nullstelle zu haben ist kein Fehler. Die Parabel von x² + 1 liegt vollständig oberhalb der x-Achse — sie berührt sie nirgends, und deshalb hat die Gleichung x² + 1 = 0 keine Lösung.',
+    ],
+    beispiel: 'f(x) = x² − 6x + 8 wird null bei x = 2 und x = 4. Der Graph schneidet die x-Achse an diesen beiden Stellen.',
+    mehr: ['funktion', 'gleichung', 'pqFormel', 'scheitelpunkt'],
+  },
+
+  scheitelpunkt: {
+    titel: 'Der Scheitelpunkt',
+    text: [
+      'Der Scheitelpunkt ist der höchste oder tiefste Punkt einer Parabel — die Stelle, an der sie umkehrt.',
+      'Ist die Parabel nach oben geöffnet, ist der Scheitel ihr tiefster Punkt; nach unten geöffnet, ihr höchster. Ob sie nach oben oder unten geht, entscheidet allein das Vorzeichen vor dem x².',
+      'Die Parabel ist symmetrisch zur Senkrechten durch ihren Scheitel. Deshalb liegt der Scheitel immer genau in der Mitte zwischen den beiden Nullstellen — und zwar auch dann, wenn es gar keine gibt.',
+    ],
+    formel: 'x_S = −b / (2a)   bei f(x) = ax² + bx + c',
+    beispiel: 'f(x) = x² − 6x + 8 hat die Nullstellen 2 und 4. In der Mitte liegt x = 3, und dort ist der Scheitel (3 | −1).',
+    mehr: ['nullstelle', 'quadratischeGleichung', 'funktion'],
+  },
+
+  // -----------------------------------------------------------------
   // Gleichungen lösen
   // -----------------------------------------------------------------
 
