@@ -796,6 +796,40 @@ Fehlalarm wäre hier teuer: Wer ihm glaubt, sucht nach einem Problem, das es
 nicht gibt — oder gewöhnt sich an, die Meldung zu ignorieren, und übersieht
 beim nächsten Mal eine echte Berechtigung.
 
+### Der Store-Text darf nur versprechen, was die App kann
+`docs/play-store-listing.md` verzichtet bewusst auf die stärksten
+Suchbegriffe: **„Ableitung" und „Abitur" stehen nicht in der
+Kurzbeschreibung.** Der Lernpfad endet bei Klasse 9, `gleichung.js` löst
+keine Ungleichungen und keine Gleichungssysteme, Analysis gibt es nicht.
+Eine App, deren Beschreibung „sie rät nicht" verspricht, darf im Store
+nicht mit etwas werben, das sie nicht hat. Die fertige Zeile für später
+liegt im Listing unter „Für später" bereit.
+
+Beim Schreiben fielen drei weitere Überversprechen auf, die aus dem
+Konzept statt aus dem Code stammten: „Flächen und Körper" (es gibt nur
+Flächen), „Potenzen, Wurzeln, Zehnerpotenzen" im Zahlen-Tab (dort stehen
+nur Brüche und Prozent) und „Beschleunigung als Ableitung" als
+Physik-Beispiel. **Vor jeder Store-Aktualisierung gegen `utils/` prüfen,
+nicht gegen `CLAUDE.md`.**
+
+### Zielgruppe im Play Store: hier NICHT von Chemie abschreiben
+Chemie richtet sich an die Oberstufe, dort sind „16–17" und „18 und
+älter" richtig. Mathe beginnt bei **Klasse 5**, also bei Zehnjährigen.
+Anzugeben sind deshalb alle Gruppen ab „9–12" — damit gilt die App als
+*Mixed Audience* und fällt unter Googles Families-Richtlinie.
+
+Das kostet hier nichts: keine Werbung, keine In-App-Käufe, keine
+Anmeldung, keine Kommunikation, keine Datenerhebung. Die Entscheidung
+gegen Nutzerkonten zahlt sich an dieser Stelle ein zweites Mal aus.
+
+### Der Lernstand gehört in die Datenschutzerklärung — trotz „keine Daten"
+Bei *Data Safety* bleibt „keine Daten erhoben" richtig: Googles Frage
+zielt auf Daten, die das Gerät verlassen, und der Lernstand tut das nie.
+In `docs/datenschutz.html` steht er trotzdem ausdrücklich, mit dem
+vollständigen JSON-Beispiel. Was gespeichert wird, gehört dorthin — auch
+wenn es das Gerät nie verlässt. Die Chemie-Vorlage trug dafür sogar schon
+einen Warnkasten: „Falls die App später doch Lernfortschritte speichert …"
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -871,10 +905,11 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- **Für die Veröffentlichung:** `docs/` ist noch leer
-  (Datenschutzerklärung, Play-Store-Text), Icons fehlen, GitHub Pages ist
-  nicht aktiviert. Das ist alles, was zwischen dem jetzigen Stand und
-  einer veröffentlichbaren Version steht.
+- **Für die Veröffentlichung:** `docs/` steht (Datenschutzerklärung und
+  Play-Store-Text). Es fehlen noch die Grafiken (App-Icon 512×512,
+  Feature Graphic 1024×500, Screenshots) und GitHub Pages muss aktiviert
+  werden. Das ist alles, was zwischen dem jetzigen Stand und einer
+  veröffentlichbaren Version steht.
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,
@@ -883,8 +918,6 @@ Was steht:
   sonst schlägt die Prüfung fehl
 - App-Icon/Branding noch nicht gestaltet (Standard-Expo-Icons als Platzhalter,
   Leitfarbe Indigo `#4338CA` steht in `utils/konstanten.js` und `app.json`)
-- `docs/` ist noch leer: `datenschutz.html` und `play-store-listing.md` fehlen
-  (Vorlagen liegen im Chemie-Projekt)
 - GitHub Pages für die Datenschutzerklärung noch nicht aktiviert
   (Repo-Settings → Pages → Branch `main`, Ordner `/docs`). Die URL lautet
   danach `https://stephanhink.github.io/Mathe-begreifen/datenschutz.html`
