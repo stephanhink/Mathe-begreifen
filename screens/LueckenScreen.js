@@ -334,11 +334,24 @@ function Frage({ lauf, setLauf, verbucheAntwort, abbrechen }) {
 
           <View style={geprueft.richtig ? styles.richtigKasten : styles.falschKasten}>
             <Text style={geprueft.richtig ? styles.richtigText : styles.falschText}>
-              {geprueft.richtig ? 'Richtig.' : 'Noch nicht.'}
+              {geprueft.richtig
+                ? 'Richtig.'
+                : geprueft.erkannt
+                  ? 'Ich weiß, was passiert ist.'
+                  : 'Noch nicht.'}
             </Text>
             {geprueft.grund ? <Text style={styles.begruendung}>{geprueft.grund}</Text> : null}
             {!geprueft.richtig ? (
               <Text style={styles.begruendung}>Richtig wäre: {aufgabe.loesungText}</Text>
+            ) : null}
+
+            {/* Bei einem erkannten Fehler führt der Weg weiter: Wer
+                weiß, WAS er falsch gedacht hat, kann es nachlesen. */}
+            {!geprueft.richtig && aufgabe.wissen ? (
+              <View style={styles.diagnoseZeile}>
+                <Text style={styles.diagnoseLabel}>Dazu die Erklärung</Text>
+                <InfoButton thema={aufgabe.wissen} />
+              </View>
             ) : null}
           </View>
 
@@ -573,6 +586,16 @@ const styles = StyleSheet.create({
     color: farben.text,
     marginTop: 6,
     lineHeight: 21,
+  },
+  diagnoseZeile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  diagnoseLabel: {
+    fontSize: 13,
+    color: farben.textLeise,
   },
 
   ergebnisKasten: {

@@ -177,6 +177,137 @@ pruefung(`Jede erzeugte Aufgabe ist lösbar (je ${DURCHGAENGE} Stück)`, () => {
   }
 });
 
+// ---------------------------------------------------------------------
+// Fehlerbilder
+// ---------------------------------------------------------------------
+
+pruefung('Ein Fehlerbild trifft nie die richtige Lösung', () => {
+  // Die wichtigste Prüfung an dieser Stelle. Träfe ein Fehlerbild
+  // zufällig die richtige Antwort, würde eine richtige Lösung als
+  // falsch abgewiesen — der schlimmste Fehler, den eine Übungsapp
+  // machen kann.
+  for (const id of alleThemen()) {
+    const naechste = wuerfel(startwertFuer(`fehlerbild-${id}`));
+    let fehler = null;
+
+    for (let i = 0; i < DURCHGAENGE && fehler === null; i++) {
+      const a = erzeugeAufgabe(id, naechste);
+      for (const bild of a.fehlerbilder ?? []) {
+        if (Array.isArray(bild.wert)) {
+          const offen = [...a.loesung];
+          const deckungsgleich =
+            bild.wert.length === offen.length &&
+            bild.wert.every((w) => {
+              const stelle = offen.findIndex((soll) => wertgleich(w, soll));
+              if (stelle === -1) {
+                return false;
+              }
+              offen.splice(stelle, 1);
+              return true;
+            });
+          if (deckungsgleich) {
+            fehler = `"${a.frage}": ein Fehlerbild ist deckungsgleich mit der Lösung`;
+          }
+        } else if (wertgleich(bild.wert, a.loesung)) {
+          fehler = `"${a.frage}": Fehlerbild ${termAlsText(bild.wert)} ist die richtige Lösung`;
+        }
+        if (fehler) {
+          break;
+        }
+      }
+    }
+
+    wahr(`${id}: kein Fehlerbild trifft die Lösung`, fehler === null, fehler ?? undefined);
+  }
+});
+
+pruefung('Ein Fehlerbild wird erkannt und benannt', () => {
+  // Die Diagnose sagt, WAS gedacht wurde — nicht, dass etwas fehlt.
+  const naechste = wuerfel(startwertFuer('diagnose'));
+
+  for (const id of alleThemen()) {
+    const a = erzeugeAufgabe(id, naechste);
+    for (const bild of a.fehlerbilder ?? []) {
+      const eingabe = Array.isArray(bild.wert)
+        ? bild.wert.map(termAlsText).join('; ')
+        : termAlsText(bild.wert);
+      const geprueft = pruefeAntwort(a, eingabe);
+
+      wahr(`${id}: "${eingabe}" gilt als falsch`, !geprueft.richtig);
+      wahr(`${id}: und wird als bekannter Fehler erkannt`, geprueft.erkannt === true, geprueft.grund);
+      wahr(
+        `${id}: mit einer Begründung, die etwas erklärt`,
+        typeof geprueft.grund === 'string' && geprueft.grund.length > 40,
+        String(geprueft.grund)
+      );
+    }
+  }
+});
+
+pruefung('Auch die Diagnosen benutzen das richtige Minus', () => {
+  // "−12x" im Term und "-12x" in der Erklärung darunter sehen nach
+  // Fehler aus. Dieselbe Regel wie überall sonst in der App.
+  for (const id of alleThemen()) {
+    const naechste = wuerfel(startwertFuer(`minus-${id}`));
+    let mitBindestrich = null;
+    for (let i = 0; i < 50 && mitBindestrich === null; i++) {
+      const a = erzeugeAufgabe(id, naechste);
+      for (const bild of a.fehlerbilder ?? []) {
+        // Gemeint ist nur der Bindestrich als MINUSZEICHEN, also einer
+        // direkt vor einer Ziffer. In "3-mal" und "x-Gliedern" gehört
+        // er dahin.
+        if (/-\d/.test(bild.diagnose)) {
+          mitBindestrich = bild.diagnose;
+          break;
+        }
+      }
+    }
+    wahr(`${id}: kein Bindestrich in den Diagnosen`, mitBindestrich === null, mitBindestrich ?? undefined);
+  }
+});
+
+pruefung('Die klassischen Fehler', () => {
+  // Feste Beispiele, damit die Diagnosen nicht nur irgendwie vorhanden
+  // sind, sondern die richtigen.
+  const faelle = [
+    {
+      aufgabe: { art: 'zahl', loesung: zahl(bruch(5, 6)), fehlerbilder: [] },
+      erwartet: null,
+    },
+  ];
+  // 1/2 + 1/3 als 2/5: Zähler und Nenner einzeln addiert.
+  const bruchAufgabe = {
+    art: 'zahl',
+    loesung: zahl(bruch(5, 6)),
+    fehlerbilder: [{ wert: zahl(bruch(2, 5)), diagnose: 'Zähler und Nenner einzeln addiert.' }],
+  };
+  const g1 = pruefeAntwort(bruchAufgabe, '2/5');
+  wahr('2/5 wird erkannt', g1.erkannt === true);
+  gleichText('mit der richtigen Diagnose', g1.grund, 'Zähler und Nenner einzeln addiert.');
+
+  // Eine unbekannte falsche Antwort bekommt die schlichte Auskunft.
+  const g2 = pruefeAntwort(bruchAufgabe, '7/9');
+  wahr('7/9 gilt als falsch', !g2.richtig);
+  wahr('aber nicht als erkannter Fehler', g2.erkannt !== true);
+
+  // Und die richtige Antwort bleibt richtig.
+  wahr('5/6 ist weiterhin richtig', pruefeAntwort(bruchAufgabe, '5/6').richtig);
+  wahr('auch anders geschrieben', pruefeAntwort(bruchAufgabe, '10/12').richtig);
+  zahlIst('unbenutzte Fälle', faelle.length, 1);
+});
+
+pruefung('Bei zwei Lösungen zählt jede einzeln', () => {
+  const aufgabe = { art: 'zahlen', loesung: [zahl(3), zahl(-1)], fehlerbilder: [] };
+
+  const halb = pruefeAntwort(aufgabe, '3; 5');
+  wahr('eine richtig, eine falsch', !halb.richtig);
+  wahr('und das steht auch da', halb.grund.includes('die andere stimmt aber'));
+
+  const ganz = pruefeAntwort(aufgabe, '7; 5');
+  wahr('beide falsch', !ganz.richtig);
+  wahr('ohne Trostpflaster', !ganz.grund.includes('die andere stimmt aber'));
+});
+
 pruefung('Die Zahlen sind gebaut, nicht gewürfelt', () => {
   // Bei einer Gleichungsaufgabe soll eine handhabbare Lösung
   // herauskommen — sonst scheitert der Schüler am Bruchrechnen statt an

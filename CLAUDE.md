@@ -273,6 +273,35 @@ Gespeichert wird nur, was nötig ist — kein Name, kein Gerät, keine Uhrzeit:
   { "versuche": 3, "richtig": 2, "fach": 2, "zuletzt": "2026-08-03", "faellig": "2026-08-10" } } }
 ```
 
+### Fehlerbilder: sagen, WAS gedacht wurde
+„Der Wert stimmt nicht" ist ehrlich und nutzlos. Wer `1/2 + 1/3` als `2/5`
+beantwortet, hat nicht irgendwie danebengelegen — er hat Zähler und Nenner
+einzeln addiert. Das ist eine bestimmte Vorstellung davon, wie Brüche
+funktionieren, und man kann sie benennen.
+
+Jeder Generator in `aufgaben.js` liefert deshalb neben der Lösung die
+typischen **falschen** Antworten mit ihrer Ursache:
+
+| Aufgabe | Antwort | Diagnose |
+|---|---|---|
+| `1/2 + 1/3` | `2/5` | Zähler und Nenner einzeln addiert |
+| `5⁴` | `20` | Basis und Exponent malgenommen |
+| `2⁻³` | `−8` | negativer Exponent als negatives Ergebnis gelesen |
+| `(x − 6)²` | `x² + 36` | das mittlere Glied fehlt |
+| `x² − 6x + 8 = 0` | `−2; −4` | beide Vorzeichen vertauscht (−p/2, nicht +p/2) |
+
+> **Ein Fehlerbild darf nie die richtige Lösung treffen.** Bei bestimmten
+> Zufallszahlen fällt der typische Fehler mit dem Richtigen zusammen: `√4`
+> halbiert ist 2, und das stimmt; `x² · x²` mit malgenommenen Exponenten
+> ergibt ebenfalls x⁴. Bliebe so ein Bild stehen, würde eine richtige
+> Antwort als typischer Fehler abgewiesen — das Schlimmste, was eine
+> Übungsapp tun kann. `erzeugeAufgabe` filtert solche Bilder deshalb
+> zentral heraus, und `tests/aufgaben.mjs` prüft das für jede erzeugte
+> Aufgabe.
+
+Die Diagnose sagt, WAS gedacht wurde, nicht was fehlt — nicht „du hast
+falsch gerechnet", sondern „du hast Zähler und Nenner einzeln addiert".
+
 ### Der Lernkartenkasten
 Jedes Thema hat ein Fach (1–5) und ein Fälligkeitsdatum, nach dem Prinzip
 von Sebastian Leitner: richtig → ein Fach weiter, längere Pause; falsch →
@@ -723,7 +752,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **1419 Prüfungen**
+- Zusammen **1561 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft

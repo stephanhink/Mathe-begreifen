@@ -44,6 +44,57 @@ function xHoch(n) {
   return n === 1 ? x : potenz(x, zahl(n));
 }
 
+// ---------------------------------------------------------------------
+// Fehlerbilder
+// ---------------------------------------------------------------------
+//
+// "Der Wert stimmt nicht" ist ehrlich und nutzlos. Wer 1/2 + 1/3 als 2/5
+// beantwortet, hat nicht irgendwie danebengelegen — er hat Zähler und
+// Nenner einzeln addiert. Das ist eine BESTIMMTE Vorstellung davon, wie
+// Brüche funktionieren, und man kann sie benennen.
+//
+// Jeder Generator liefert deshalb neben der Lösung auch die typischen
+// FALSCHEN Antworten mit ihrer Ursache. Trifft die Eingabe eine davon,
+// sagt die App nicht "falsch", sondern was passiert ist.
+//
+// Zwei Regeln dafür:
+//
+//   1. Ein Fehlerbild darf nie zufällig die richtige Antwort treffen.
+//      Sonst gälte eine richtige Lösung als falsch — der schlimmste
+//      Fehler, den eine Übungsapp machen kann. tests/aufgaben.mjs prüft
+//      das für jede erzeugte Aufgabe.
+//   2. Die Diagnose sagt, WAS gedacht wurde, nicht was fehlt. Nicht
+//      "du hast falsch gerechnet", sondern "du hast Zähler und Nenner
+//      einzeln addiert".
+function fehlerbild(wert, diagnose) {
+  return { wert, diagnose };
+}
+
+// Eine Zahl im Fließtext. Auch hier gilt das typografische Minus —
+// "−12x" und "-12x" nebeneinander sehen nach Fehler aus.
+function zahlText(wert) {
+  return String(wert).replace('-', '−');
+}
+
+// Ein Koeffizient, wie man ihn schreibt: "x" statt "1x", "−x" statt
+// "−1x".
+function koeffizientText(wert) {
+  if (wert === 1) {
+    return '';
+  }
+  return wert === -1 ? '−' : zahlText(wert);
+}
+
+// Ein Faktor, der weder 0 noch 1 noch −1 ist. "Multipliziere aus:
+// 1 · (x + 3)" ist keine Aufgabe, sondern eine Abschrift.
+function echterFaktor(naechste, bis) {
+  const wert = naechste(2 * bis) - bis;
+  if (wert === 0 || wert === 1) {
+    return 2;
+  }
+  return wert === -1 ? -2 : wert;
+}
+
 // Eine Zufallszahl aus einem Bereich, ohne die Null. "Berechne 0 · 7"
 // ist keine Aufgabe.
 function ohneNull(naechste, bis) {
@@ -78,6 +129,12 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(a + b + c),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(Math.abs(a) + Math.abs(b) + Math.abs(c)),
+          'Du hast die Vorzeichen übersehen und alles zusammengezählt. Ein Minus vor einer Zahl gehört zu ihr dazu.'
+        ),
+      ],
     };
   },
 
@@ -93,6 +150,13 @@ const GENERATOREN = {
         art: 'zahl',
         term: t,
         loesung: zahl(a * b),
+        fehlerbilder: [
+          fehlerbild(
+            zahl(-a * b),
+            'Das Vorzeichen stimmt nicht. Minus mal Plus gibt Minus, Minus mal Minus gibt Plus.'
+          ),
+          fehlerbild(zahl(a + b), 'Hier wird malgenommen, nicht addiert.'),
+        ],
       };
     }
     const t = quotient(zahl(a * b), zahl(b));
@@ -101,6 +165,12 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(a),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(-a),
+          'Das Vorzeichen stimmt nicht. Minus geteilt durch Plus gibt Minus, Minus durch Minus gibt Plus.'
+        ),
+      ],
     };
   },
 
@@ -114,6 +184,15 @@ const GENERATOREN = {
       frage: `Kürze so weit wie möglich: ${gekuerzt.z * faktor}/${gekuerzt.n * faktor}`,
       art: 'zahl',
       loesung: t,
+      fehlerbilder:
+        faktor % 2 === 0
+          ? [
+              fehlerbild(
+                zahl(bruch(gekuerzt.z * (faktor / 2), gekuerzt.n * (faktor / 2))),
+                'Du bist auf dem richtigen Weg, aber noch nicht am Ende: Zähler und Nenner haben immer noch einen gemeinsamen Teiler.'
+              ),
+            ]
+          : [],
     };
   },
 
@@ -126,6 +205,16 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(bruch(a.z * b.n + b.z * a.n, a.n * b.n)),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(a.z + b.z, a.n + b.n)),
+          'Du hast Zähler und Nenner einzeln addiert. So geht es nicht: Erst müssen beide Brüche denselben Nenner bekommen, dann werden nur die Zähler addiert.'
+        ),
+        fehlerbild(
+          zahl(bruch(a.z + b.z, a.n)),
+          'Die Nenner sind verschieden — du kannst die Zähler erst addieren, wenn beide Brüche gleichnamig sind.'
+        ),
+      ],
     };
   },
 
@@ -138,6 +227,16 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(bruch(a.z * b.z, a.n * b.n)),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(a.z * b.z, a.n + b.n)),
+          'Beim Malnehmen wird auch der Nenner malgenommen, nicht addiert. Gleichnamig machen muss man nur beim Addieren.'
+        ),
+        fehlerbild(
+          zahl(bruch(a.z * b.n, a.n * b.z)),
+          'Du hast über Kreuz gerechnet — das gehört zum Teilen. Beim Malnehmen: Zähler mal Zähler, Nenner mal Nenner.'
+        ),
+      ],
     };
   },
 
@@ -150,6 +249,12 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(bruch(a.z * b.n, a.n * b.z)),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(a.z * b.z, a.n * b.n)),
+          'Du hast einfach malgenommen. Beim Teilen muss der zweite Bruch zuerst umgedreht werden — Zähler und Nenner tauschen.'
+        ),
+      ],
     };
   },
 
@@ -162,6 +267,12 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(basis ** e),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(basis * e),
+          `Du hast Basis und Exponent malgenommen. ${basis}^${e} heißt aber: ${basis} ${e}-mal mit sich selbst malnehmen.`
+        ),
+      ],
     };
   },
 
@@ -174,6 +285,12 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: xHoch(a + b),
+      fehlerbilder: [
+        fehlerbild(
+          xHoch(a * b),
+          'Du hast die Exponenten malgenommen. Beim Malnehmen von Potenzen werden sie addiert — malgenommen werden sie erst bei einer Potenz von einer Potenz.'
+        ),
+      ],
     };
   },
 
@@ -186,6 +303,16 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: xHoch(a - b),
+      fehlerbilder: [
+        fehlerbild(
+          xHoch(b - a),
+          'Du hast in die falsche Richtung subtrahiert: Vom Exponenten oben wird der untere abgezogen, nicht umgekehrt.'
+        ),
+        fehlerbild(
+          xHoch(a + b),
+          'Addiert wird beim Malnehmen. Beim Teilen werden die Exponenten subtrahiert.'
+        ),
+      ],
     };
   },
 
@@ -198,6 +325,16 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(bruch(1, basis ** e)),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(-(basis ** e)),
+          `Ein negativer Exponent macht das Ergebnis nicht negativ, sondern zu einem Kehrwert: ${basis}^−${e} ist 1 geteilt durch ${basis}^${e}.`
+        ),
+        fehlerbild(
+          zahl(basis ** e),
+          'Das Minus im Exponenten ist nicht verschwunden — es bedeutet den Kehrwert.'
+        ),
+      ],
       hinweis: 'Ein negativer Exponent bedeutet einen Kehrwert, kein negatives Ergebnis.',
     };
   },
@@ -210,6 +347,12 @@ const GENERATOREN = {
       art: 'zahl',
       term: t,
       loesung: zahl(w),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(w * w, 2)),
+          'Die Wurzel ist nicht die Hälfte. Gesucht ist die Zahl, die MIT SICH SELBST malgenommen den Radikanden ergibt.'
+        ),
+      ],
     };
   },
 
@@ -222,6 +365,16 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: produkt(zahl(heraus), wurzel(zahl(rest))),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(heraus * rest),
+          `Die ${rest} steht noch unter der Wurzel — herauskommen darf nur der Faktor, der ein Quadrat ist.`
+        ),
+        fehlerbild(
+          produkt(zahl(rest), wurzel(zahl(heraus))),
+          'Du hast die beiden Faktoren vertauscht. Aus der Wurzel kommt die Wurzel des Quadratfaktors heraus, der Rest bleibt drin.'
+        ),
+      ],
     };
   },
 
@@ -235,6 +388,16 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: summe(produkt(zahl(a + c), x), zahl(b)),
+      fehlerbilder: [
+        fehlerbild(
+          produkt(zahl(a + b + c), x),
+          `Die ${zahlText(Math.abs(b))} hat kein x und gehört deshalb nicht zu den x-Gliedern. Drei Äpfel plus zwei Birnen sind nicht fünf Äpfel.`
+        ),
+        fehlerbild(
+          summe(produkt(zahl(a + c), potenz(x, zahl(2))), zahl(b)),
+          'Beim Zusammenfassen werden nur die Zahlen davor addiert. Der Buchstabenteil bleibt, wie er ist: 3x + 2x sind 5x, nicht 5x².'
+        ),
+      ],
     };
   },
 
@@ -248,11 +411,21 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: summe(produkt(zahl(a + c), potenz(x, zahl(2))), produkt(zahl(b), x)),
+      fehlerbilder: [
+        fehlerbild(
+          produkt(zahl(a + b + c), potenz(x, zahl(2))),
+          'x und x² sind nicht gleichartig und lassen sich nicht zusammenfassen — genauso wenig wie Meter und Quadratmeter.'
+        ),
+        fehlerbild(
+          produkt(zahl(a + b + c), x),
+          'x und x² sind nicht gleichartig. Zusammenfassen darf man nur, was denselben Buchstabenteil hat.'
+        ),
+      ],
     };
   },
 
   ausmultiplizieren(naechste) {
-    const a = ohneNull(naechste, 7);
+    const a = echterFaktor(naechste, 7);
     const b = ohneNull(naechste, 9);
     const t = produkt(zahl(a), summe(x, zahl(b)));
     return {
@@ -260,6 +433,16 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: summe(produkt(zahl(a), x), zahl(a * b)),
+      fehlerbilder: [
+        fehlerbild(
+          summe(produkt(zahl(a), x), zahl(b)),
+          `Nur der erste Summand wurde malgenommen. Die ${zahlText(a)} gilt für ALLES in der Klammer, also auch für die ${zahlText(b)}.`
+        ),
+        fehlerbild(
+          summe(x, zahl(a * b)),
+          'Der zweite Summand wurde malgenommen, der erste nicht. Der Faktor vor der Klammer gilt für jeden Summanden darin.'
+        ),
+      ],
     };
   },
 
@@ -271,6 +454,16 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: summe(potenz(x, zahl(2)), produkt(zahl(2 * b), x), zahl(b * b)),
+      fehlerbilder: [
+        fehlerbild(
+          summe(potenz(x, zahl(2)), zahl(b * b)),
+          'Das mittlere Glied fehlt. Beim Ausmultiplizieren zweier Klammern entstehen VIER Produkte, nicht zwei — und die beiden gemischten ergeben zusammen das Glied mit x.'
+        ),
+        fehlerbild(
+          summe(potenz(x, zahl(2)), produkt(zahl(b), x), zahl(b * b)),
+          `Das gemischte Glied kommt zweimal vor: einmal x · ${zahlText(b)} und einmal ${zahlText(b)} · x. Zusammen sind das ${zahlText(2 * b)}x.`
+        ),
+      ],
     };
   },
 
@@ -284,6 +477,16 @@ const GENERATOREN = {
       art: 'term',
       term: t,
       loesung: produkt(zahl(faktor), summe(produkt(zahl(a), x), zahl(b))),
+      fehlerbilder: [
+        fehlerbild(
+          produkt(zahl(faktor), summe(produkt(zahl(a), x), zahl(faktor * b))),
+          `Beim Ausklammern muss JEDER Summand durch ${faktor} geteilt werden — auch der hintere. Die Probe durch Ausmultiplizieren zeigt es sofort.`
+        ),
+        fehlerbild(
+          produkt(zahl(faktor), summe(produkt(zahl(faktor * a), x), zahl(b))),
+          `Beim Ausklammern muss JEDER Summand durch ${faktor} geteilt werden — auch der vordere.`
+        ),
+      ],
     };
   },
 
@@ -296,6 +499,12 @@ const GENERATOREN = {
       start: g,
       art: 'zahl',
       loesung: zahl(loesung),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(loesung + 2 * b),
+          `Du hast die ${zahlText(Math.abs(b))} auf der falschen Seite verrechnet. Was links addiert wird, muss rechts abgezogen werden — nicht noch einmal dazu.`
+        ),
+      ],
     };
   },
 
@@ -318,6 +527,12 @@ const GENERATOREN = {
       start: g,
       art: 'zahl',
       loesung: zahl(loesung),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch((a - c) * loesung, a + c)),
+          `Du hast die x-Glieder addiert statt subtrahiert. Wenn ${koeffizientText(c)}x auf die andere Seite soll, wird es auf BEIDEN Seiten abgezogen.`
+        ),
+      ],
     };
   },
 
@@ -331,6 +546,12 @@ const GENERATOREN = {
       start: g,
       art: 'zahl',
       loesung: zahl(loesung),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(a * (loesung + b) - b),
+          `Du hast die Klammer nicht ausmultipliziert. Die ${zahlText(a)} gilt für x UND für die ${zahlText(b)}.`
+        ),
+      ],
     };
   },
 
@@ -344,6 +565,12 @@ const GENERATOREN = {
       start: g,
       art: 'zahl',
       loesung: zahl(loesung),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(loesung / nenner),
+          `Du hast vergessen, am Ende mit ${nenner} malzunehmen. Wenn x geteilt durch ${nenner} bekannt ist, ist x selbst ${nenner}-mal so groß.`
+        ),
+      ],
     };
   },
 
@@ -371,6 +598,12 @@ const GENERATOREN = {
       start: g,
       art: 'zahlen',
       loesung: [zahl(Math.max(r1, r2)), zahl(Math.min(r1, r2))],
+      fehlerbilder: [
+        fehlerbild(
+          [zahl(-r1), zahl(-r2)],
+          'Beide Vorzeichen stimmen nicht. In der pq-Formel steht −p/2, nicht +p/2 — das Minus davor wird leicht übersehen.'
+        ),
+      ],
       hinweis: 'Es gibt zwei Lösungen. Schreibe beide, getrennt durch ein Semikolon.',
     };
   },
@@ -391,11 +624,29 @@ export function erzeugeAufgabe(themaId, naechste = zufall) {
   const thema = holeThema(themaId);
   const roh = generator(naechste);
 
+  // Fehlerbilder, die zufällig die richtige Antwort treffen, fliegen
+  // raus. Das ist keine Kosmetik, sondern notwendig:
+  //
+  //   √4 — "die Wurzel ist die Hälfte" ergibt hier 2, und das STIMMT.
+  //   x² · x² — Exponenten malgenommen ergibt x⁴, genau wie addiert.
+  //   x² − 36 = 0 — beide Vorzeichen vertauscht ergibt dieselbe Menge.
+  //
+  // Bliebe so ein Bild stehen, würde eine richtige Antwort als
+  // typischer Fehler abgewiesen — das Schlimmste, was eine Übungsapp
+  // tun kann. Statt in jedem Generator die entarteten Zahlen zu
+  // vermeiden, wird hier zentral geprüft: Wo sich der Fehler nicht vom
+  // Richtigen unterscheiden lässt, gibt es für diese Aufgabe eben keine
+  // Diagnose.
+  const fehlerbilder = (roh.fehlerbilder ?? []).filter(
+    (bild) => !trifftLoesung(bild.wert, roh.loesung)
+  );
+
   return Object.freeze({
     thema: themaId,
     titel: thema?.titel ?? themaId,
     wissen: thema?.wissen ?? null,
     ...roh,
+    fehlerbilder,
     // Womit der Rechenweg anfängt. Bei einer Gleichung ist das die
     // Gleichung, bei einer Umformung der Term. Wer selbst rechnet,
     // beginnt hier — und die erste eigene Zeile wird dagegen geprüft.
@@ -403,6 +654,29 @@ export function erzeugeAufgabe(themaId, naechste = zufall) {
     loesungText: Array.isArray(roh.loesung)
       ? roh.loesung.map(termAlsText).join('; ')
       : termAlsText(roh.loesung),
+  });
+}
+
+// Deckt sich ein Fehlerbild mit der Lösung? Bei mehreren Lösungen zählt
+// die Menge, nicht die Reihenfolge.
+function trifftLoesung(wert, loesung) {
+  if (Array.isArray(wert) !== Array.isArray(loesung)) {
+    return false;
+  }
+  if (!Array.isArray(wert)) {
+    return wertgleich(wert, loesung);
+  }
+  if (wert.length !== loesung.length) {
+    return false;
+  }
+  const offen = [...loesung];
+  return wert.every((w) => {
+    const stelle = offen.findIndex((soll) => wertgleich(w, soll));
+    if (stelle === -1) {
+      return false;
+    }
+    offen.splice(stelle, 1);
+    return true;
   });
 }
 
@@ -520,6 +794,15 @@ export function pruefeAntwort(aufgabe, eingabe) {
   }
 
   if (!wertgleich(antwort, aufgabe.loesung)) {
+    // Erst nachsehen, ob das ein BEKANNTER Fehler ist. "Der Wert stimmt
+    // nicht" hilft niemandem weiter; "du hast Zähler und Nenner einzeln
+    // addiert" schon.
+    const bild = (aufgabe.fehlerbilder ?? []).find(
+      (f) => !Array.isArray(f.wert) && wertgleich(antwort, f.wert)
+    );
+    if (bild) {
+      return { richtig: false, grund: bild.diagnose, erkannt: true };
+    }
     return { richtig: false, grund: 'Der Wert stimmt nicht.' };
   }
 
@@ -556,16 +839,50 @@ function pruefeMehrere(aufgabe, text) {
     }
   }
 
+  // Ein bekanntes Fehlerbild — hier trifft es die ganze Menge auf
+  // einmal, etwa wenn beide Vorzeichen vertauscht sind.
+  for (const bild of aufgabe.fehlerbilder ?? []) {
+    if (!Array.isArray(bild.wert) || bild.wert.length !== antworten.length) {
+      continue;
+    }
+    const offen = [...bild.wert];
+    const passtAlles = antworten.every((antwort) => {
+      const stelle = offen.findIndex((soll) => wertgleich(antwort, soll));
+      if (stelle === -1) {
+        return false;
+      }
+      offen.splice(stelle, 1);
+      return true;
+    });
+    if (passtAlles) {
+      return { richtig: false, grund: bild.diagnose, erkannt: true };
+    }
+  }
+
   // Die Reihenfolge ist egal — es ist eine Menge, keine Liste.
   const offen = [...aufgabe.loesung];
+  const daneben = [];
   for (const antwort of antworten) {
     const stelle = offen.findIndex((soll) => wertgleich(antwort, soll));
     if (stelle === -1) {
-      return { richtig: false, grund: `${termAlsText(antwort)} ist keine Lösung.` };
+      daneben.push(antwort);
+    } else {
+      offen.splice(stelle, 1);
     }
-    offen.splice(stelle, 1);
   }
-  return { richtig: true };
+
+  if (daneben.length === 0) {
+    return { richtig: true };
+  }
+  // Eine von zweien richtig zu haben ist etwas anderes, als beide zu
+  // verfehlen — und das soll auch dastehen.
+  if (daneben.length < antworten.length) {
+    return {
+      richtig: false,
+      grund: `${termAlsText(daneben[0])} ist keine Lösung — die andere stimmt aber. Es fehlt noch eine.`,
+    };
+  }
+  return { richtig: false, grund: `${termAlsText(daneben[0])} ist keine Lösung.` };
 }
 
 // Für Prüfungen und für die Übersicht: Zu welchen Themen gibt es
