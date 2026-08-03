@@ -350,6 +350,23 @@ Stand 2026-08-01 werden dabei rund 15.800 Stellen tatsächlich verglichen.
 Die Prüfung ist gegengeprüft: Eine absichtlich falsch gebaute Regel wird
 erkannt, und die Meldung nennt Regel, Term vorher/nachher und die Stelle.
 
+### Warum `bruchrechnung.js` neben `term.js` steht
+`term.js` kann `1/2 + 1/3` längst ausrechnen — aber in einem einzigen
+Schritt („Zahlen zusammenrechnen"). Genau das hilft niemandem: Wer Brüche
+nicht addieren kann, scheitert am **Gleichnamigmachen**, und dieser
+Schritt ist dort unsichtbar.
+
+`bruchrechnung.js` rechnet deshalb bewusst NICHT mit `bruch.js`-Werten,
+sondern mit ungekürzten Paaren `{ z, n }`: `bruch()` kürzt sofort, und der
+Zwischenstand `3/6 + 2/6` würde beim Bauen zu `1/2 + 1/3` zurückgekürzt
+und wäre nicht mehr zu sehen. Geprüft wird trotzdem gegen `bruch.js` —
+jeder Zwischenschritt muss denselben Wert haben wie das Ergebnis.
+
+> Diese Prüfung hat sofort einen Fehler gefunden: Bei „durch einen Bruch
+> teilen heißt mit dem Kehrwert malnehmen" hatte ich den Wert der linken
+> Seite notiert statt den der ganzen Rechnung. Nach dem Schritt steht
+> `2/3 · 5/4` da, und das ist 5/6 — nicht 2/3.
+
 ### Dieselben Invarianten prüfen auch den Schüler
 `utils/rechenweg.js` dreht die beiden tragenden Invarianten um: Statt die
 eigenen Umformungen zu prüfen, prüft es die des Menschen. Wer seinen
@@ -615,6 +632,9 @@ Was steht:
 - **Der Lückenfinder läuft** (Tab „Lücken", ganz links): `utils/lernpfad.js`
   (Themengraph, 22 Themen), `utils/aufgaben.js` (ein Generator je Thema),
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
+- **Der Zahlen-Bildschirm läuft** (Tab „Zahlen"): `utils/bruchrechnung.js`
+  (Bruchrechnen mit sichtbarem Gleichnamigmachen) und `utils/prozent.js`
+  (die drei Grundaufgaben, Zu-/Abnahme und die Rückwärtsrechnung)
 - **Der Rechner läuft**: `screens/RechnerScreen.js` (Tab „Gleich.").
   Eingabefeld für Term oder Gleichung, Rechenweg mit benannten Schritten,
   Lösungsmenge, Probe, Info-Knöpfe. Der Screen rechnet nichts — er ruft
@@ -635,7 +655,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **1233 Prüfungen**
+- Zusammen **1334 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
@@ -655,7 +675,7 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Fünf der sieben Screens (Lückenfinder und Rechner stehen).
+- Vier der sieben Screens (Lückenfinder, Zahlen und Rechner stehen).
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,

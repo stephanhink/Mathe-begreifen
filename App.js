@@ -12,6 +12,7 @@ import { farben } from './utils/konstanten';
 import BaustelleScreen from './screens/BaustelleScreen';
 import RechnerScreen from './screens/RechnerScreen';
 import LueckenScreen from './screens/LueckenScreen';
+import ZahlenScreen from './screens/ZahlenScreen';
 
 // Jeder Tab bekommt einen Schlüssel, ein Label für die Tab-Leiste und die
 // Screen-Komponente, die angezeigt wird. Ein neues Themengebiet bedeutet:
@@ -28,16 +29,7 @@ const TABS = [
   // Der eigentliche Einstieg: Wer nicht weiß, wo seine Lücke sitzt,
   // kann sich auch keinen Tab aussuchen.
   { key: 'luecken', label: 'Lücken', Screen: LueckenScreen },
-  {
-    key: 'zahlen',
-    label: 'Zahlen',
-    Screen: () => (
-      <BaustelleScreen
-        titel="Zahlen"
-        inhalt="Brüche, Prozent, Potenzen, Wurzeln, Logarithmus, Zehnerpotenzen und Größenordnungen."
-      />
-    ),
-  },
+  { key: 'zahlen', label: 'Zahlen', Screen: ZahlenScreen },
   {
     key: 'terme',
     label: 'Terme',

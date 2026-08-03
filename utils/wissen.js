@@ -122,7 +122,30 @@ export const THEMEN = {
       'Deshalb steht in den Ergebnissen 2/3 und nicht 0,667. Das ist nicht Sturheit, sondern der exakte Wert — 0,667 wäre schon gerundet.',
     ],
     beispiel: '1/2 + 1/3 = 5/6. Mit Kommazahlen: 0,5 + 0,333… — und schon muss man runden.',
-    mehr: ['term'],
+    mehr: ['prozent', 'term'],
+  },
+
+  prozent: {
+    titel: 'Prozentrechnung',
+    text: [
+      'Prozent heißt „von hundert". 19 % sind 19 von 100 Teilen — also der Bruch 19/100.',
+      'Immer sind drei Größen im Spiel, und man muss wissen, welche gesucht ist. Der Grundwert G ist das Ganze, also die 100 %. Der Prozentsatz p sagt, wie viel Prozent. Der Prozentwert W ist der Teil davon.',
+      'Wer die drei auseinanderhält, hat das Wesentliche. Die Formel folgt dann von selbst — und man kann sie nach jeder der drei Größen umstellen, genau wie jede andere Formel auch.',
+    ],
+    formel: 'W = G · p/100',
+    beispiel: '19 % von 250 €: W = 250 · 19/100 = 47,50 €.',
+    mehr: ['prozentFalle', 'bruch', 'termUmformen'],
+  },
+
+  prozentFalle: {
+    titel: 'Die Prozentfalle',
+    text: [
+      'Ein Pullover kostet nach 19 % Aufschlag 119 €. Was war der Preis vorher? Die naheliegende Rechnung „119 minus 19 %" ergibt 96,39 € — und ist falsch. Richtig sind 100 €.',
+      'Der Grund: Die 19 % beziehen sich auf den ALTEN Preis, nicht auf den neuen. Der alte Preis ist 100 %, der neue also 119 %. Man muss deshalb durch 119 teilen und mit 100 malnehmen, nicht 19 % vom neuen Wert abziehen.',
+      'Dieselbe Falle steckt hinter der Frage, warum ein Preis nach „+10 % und dann −10 %" nicht wieder derselbe ist: 100 → 110 → 99. Die zweiten 10 % sind mehr wert als die ersten, weil sie sich auf eine größere Zahl beziehen.',
+    ],
+    beispiel: '119 € nach +19 %:  119 · 100/119 = 100 €.   Nicht 119 − 19 % = 96,39 €.',
+    mehr: ['prozent', 'termUmformen'],
   },
 
   potenz: {
