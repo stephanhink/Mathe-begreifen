@@ -29,7 +29,19 @@ import {
   vereinfache,
 } from '../utils/term.js';
 import { alsText as gleichungAlsText, loese } from '../utils/gleichung.js';
-import { parseTerm, parseGleichung, parseEingabe } from '../utils/parser.js';
+import {
+  parseTerm,
+  parseGleichung,
+  parseUngleichung,
+  parseEingabe,
+  hatVergleich,
+} from '../utils/parser.js';
+import {
+  alsText as ungleichungAlsText,
+  loese as loeseUngleichung,
+  loesungAlsText,
+  ZEICHEN,
+} from '../utils/ungleichung.js';
 
 const x = variable('x');
 
@@ -175,6 +187,67 @@ pruefung('Gleichungen lesen', () => {
   // parseEingabe entscheidet selbst, was es ist.
   wahr('parseEingabe erkennt eine Gleichung', 'links' in parseEingabe('x = 1'));
   wahr('und einen Term', !('links' in parseEingabe('x + 1')));
+});
+
+pruefung('Ungleichungen lesen', () => {
+  gleichText(
+    '3x + 5 < 14',
+    ungleichungAlsText(parseUngleichung('3x + 5 < 14')),
+    '3x + 5 < 14'
+  );
+
+  // Auf einer Handytastatur gibt es kein ≤. Beides muss gehen, und
+  // beides muss dasselbe ergeben.
+  for (const [getippt, gesetzt] of [
+    ['x <= 3', 'x ≤ 3'],
+    ['x >= 3', 'x ≥ 3'],
+    ['x =< 3', 'x ≤ 3'],
+    ['x => 3', 'x ≥ 3'],
+    ['x ≤ 3', 'x ≤ 3'],
+    ['x ≥ 3', 'x ≥ 3'],
+  ]) {
+    gleichText(getippt, ungleichungAlsText(parseUngleichung(getippt)), gesetzt);
+  }
+
+  // Der Weg von der Eingabe bis zur Lösungsmenge, in einem Stück.
+  gleichText(
+    'und die Lösung stimmt',
+    loesungAlsText(loeseUngleichung(parseUngleichung('−3x + 5 < 14'))),
+    'x > −3'
+  );
+
+  wirft('ohne Vergleichszeichen ist es keine', () => parseUngleichung('3x + 5'));
+});
+
+pruefung('parseEingabe hält die drei auseinander', () => {
+  wahr('Term', !('links' in parseEingabe('x + 1')));
+  wahr('Gleichung', !('zeichen' in parseEingabe('x = 1')) && 'links' in parseEingabe('x = 1'));
+  wahr('Ungleichung', parseEingabe('x < 1').zeichen === '<');
+
+  // Der Fall, an dem die naheliegende Reihenfolge scheitert: "x <= 3"
+  // ENTHÄLT ein Gleichheitszeichen. Wer zuerst darauf prüft, liest eine
+  // Gleichung und scheitert dann am eigenen "<".
+  wahr('"x <= 3" ist eine Ungleichung, keine Gleichung', parseEingabe('x <= 3').zeichen === '≤');
+  wahr('hatVergleich sieht das auch so', hatVergleich('x <= 3') && !hatVergleich('x = 3'));
+
+  // Und alle vier Zeichen kommen heil durch.
+  for (const z of ZEICHEN) {
+    gleichText(`x ${z} 1`, parseEingabe(`x ${z} 1`).zeichen, z);
+  }
+});
+
+pruefung('Ketten wie 1 < x < 5 werden abgelehnt — mit Ansage', () => {
+  // Das ist eine übliche Schreibweise und trotzdem etwas anderes: zwei
+  // Bedingungen auf einmal. Sie stillschweigend als "x < 5" zu lesen
+  // wäre die schlimmste aller Antworten.
+  let nachricht = '';
+  try {
+    parseEingabe('1 < x < 5');
+  } catch (fehler) {
+    nachricht = fehler.message;
+  }
+  wahr('wird abgelehnt', nachricht !== '');
+  wahr('und sagt warum', nachricht.includes('Zwei Vergleichszeichen'), nachricht);
 });
 
 pruefung('Was der Parser ablehnt', () => {

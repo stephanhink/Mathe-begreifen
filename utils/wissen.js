@@ -405,6 +405,20 @@ export const THEMEN = {
     mehr: ['pqFormel', 'ausklammern', 'potenz', 'loesungsmenge'],
   },
 
+  ungleichung: {
+    titel: 'Ungleichungen',
+    text: [
+      'Eine Ungleichung sagt nicht, WELCHE Zahl es ist, sondern in welchem Bereich sie liegt. Statt „x = 3" steht da „x < 3" — und das erfüllen unendlich viele Zahlen auf einmal.',
+      'Umgeformt wird fast wie bei einer Gleichung: Was man tut, tut man auf beiden Seiten. Addieren und subtrahieren ändern nichts am Vergleich, und mit einer positiven Zahl darf man auch malnehmen und teilen.',
+      'Eine Sache ist anders, und sie ist der ganze Unterschied: MULTIPLIZIERT ODER DIVIDIERT MAN MIT EINER NEGATIVEN ZAHL, DREHT SICH DAS VERGLEICHSZEICHEN UM. Aus < wird >, aus ≤ wird ≥.',
+      'Warum? 2 < 3 stimmt. Nimmt man beide Seiten mal (−1), stünde da −2 < −3 — und das ist falsch, denn −2 liegt rechts von −3. Richtig ist −2 > −3. Das Malnehmen mit einer negativen Zahl klappt die Zahlengerade um, und damit kehrt sich auch jedes „links davon" in ein „rechts davon".',
+      'Der Unterschied zwischen < und ≤ ist keine Feinheit: Bei < gehört die Grenze nicht dazu, bei ≤ schon. Auf dem Zahlenstrahl zeigt das ein offener beziehungsweise ein gefüllter Kreis.',
+    ],
+    formel: 'a < b  ⟹  a · (−1) > b · (−1)',
+    beispiel: '−3x + 5 < 14 | beide Seiten − 5 → −3x < 9 | beide Seiten : (−3) → x > −3. Probe mit x = 0: −3 · 0 + 5 = 5, und 5 < 14 stimmt.',
+    mehr: ['gleichung', 'beideSeiten', 'loesungsmenge'],
+  },
+
   loesungsmenge: {
     titel: 'Die Lösungsmenge L',
     text: [

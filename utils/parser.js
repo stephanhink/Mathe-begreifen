@@ -20,6 +20,7 @@
 import { bruch, negativ } from './bruch.js';
 import { zahl, variable, summe, produkt, potenz, quotient, wurzel, betrag } from './term.js';
 import { gleichung } from './gleichung.js';
+import { ungleichung } from './ungleichung.js';
 
 // Was der Mensch tippt und was die App schreibt, ist nicht dasselbe
 // Zeichen: Auf der Tastatur liegt der Bindestrich, gesetzt wird das
@@ -27,6 +28,21 @@ import { gleichung } from './gleichung.js';
 const MINUSZEICHEN = /[-−–—]/;
 const MALZEICHEN = /[*·×]/;
 const GETEILTZEICHEN = /[:/÷]/;
+
+// Die vier Vergleichszeichen — jeweils in der Form, die gesetzt wird,
+// und in der, die man auf einer Handytastatur überhaupt tippen kann.
+// Die zweizeichigen stehen VORNE: Wer "<=" liest und zuerst auf "<"
+// prüft, verbraucht das Kleiner und lässt ein "=" liegen.
+const VERGLEICHE = [
+  ['<=', '≤'],
+  ['>=', '≥'],
+  ['=<', '≤'],
+  ['=>', '≥'],
+  ['≤', '≤'],
+  ['≥', '≥'],
+  ['<', '<'],
+  ['>', '>'],
+];
 
 const HOCHZIFFERN = {
   '⁰': '0',
@@ -415,6 +431,46 @@ export function parseTerm(text) {
   return ergebnis;
 }
 
+// Steht hier ein Vergleichszeichen? Dann verbrauchen und in der
+// gesetzten Form zurückgeben.
+function nimmVergleich(leser) {
+  leser.ueberspringeLeerzeichen();
+  for (const [getippt, gesetzt] of VERGLEICHE) {
+    if (leser.text.startsWith(getippt, leser.stelle)) {
+      leser.stelle += getippt.length;
+      return gesetzt;
+    }
+  }
+  return null;
+}
+
+// Eine Ungleichung lesen. Ohne Vergleichszeichen ist es keine.
+export function parseUngleichung(text) {
+  const leser = new Leser(text);
+  if (leser.amEnde) {
+    throw new Error('Da steht noch nichts');
+  }
+
+  const links = leseSumme(leser);
+  const zeichen = nimmVergleich(leser);
+  if (!zeichen) {
+    leser.fehler('Hier fehlt ein Vergleichszeichen (< ≤ > ≥)');
+  }
+  const rechts = leseSumme(leser);
+
+  if (!leser.amEnde) {
+    const weiteres = nimmVergleich(leser);
+    if (weiteres) {
+      leser.fehler(
+        'Zwei Vergleichszeichen in einer Zeile kann ich noch nicht — ' +
+          'schreibe die beiden Bedingungen einzeln hin'
+      );
+    }
+    leser.fehler(`Mit "${leser.zeichen}" kann ich hier nichts anfangen`);
+  }
+  return ungleichung(links, zeichen, rechts);
+}
+
 // Eine Gleichung lesen. Ohne "=" ist es keine.
 export function parseGleichung(text) {
   const leser = new Leser(text);
@@ -434,8 +490,18 @@ export function parseGleichung(text) {
   return gleichung(links, rechts);
 }
 
-// Für ein Eingabefeld, in dem beides stehen darf: Steht ein "=" darin,
-// ist es eine Gleichung, sonst ein Term.
+// Steht irgendwo ein Vergleichszeichen? Der Test muss VOR dem auf "="
+// laufen: "x <= 3" enthält ein Gleichheitszeichen und wäre sonst als
+// Gleichung gelesen worden — und dann an ihrem eigenen "<" gescheitert.
+export function hatVergleich(text) {
+  return /[<>≤≥]/.test(String(text));
+}
+
+// Für ein Eingabefeld, in dem alles drei stehen darf.
 export function parseEingabe(text) {
-  return String(text).includes('=') ? parseGleichung(text) : parseTerm(text);
+  const roh = String(text);
+  if (hatVergleich(roh)) {
+    return parseUngleichung(roh);
+  }
+  return roh.includes('=') ? parseGleichung(roh) : parseTerm(roh);
 }

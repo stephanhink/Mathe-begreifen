@@ -9,7 +9,14 @@ import { farben } from '../utils/konstanten';
 import { alsText as bruchAlsText } from '../utils/bruch';
 import { alsText as termAlsText, multipliziereAus } from '../utils/term';
 import { alsText as gleichungAlsText, loese, probe } from '../utils/gleichung';
+import {
+  alsText as ungleichungAlsText,
+  loese as loeseUngleichung,
+  loesungAlsText,
+} from '../utils/ungleichung';
 import { parseEingabe } from '../utils/parser';
+import Zahlenstrahl from '../components/Zahlenstrahl';
+import { auswerte } from '../utils/term';
 
 // Der Rechner: Man tippt einen Term oder eine Gleichung, und die App
 // zeigt den Weg — nicht nur das Ergebnis.
@@ -30,6 +37,11 @@ const BEISPIELE = [
   'x^2 + 1 = 0',
   '(x + 3)^2',
   '3x + 5 + 2x',
+  '3x + 5 < 14',
+  '-3x + 5 < 14',
+  '2x + 1 <= 5x + 7',
+  'x^2 < 4',
+  'x^2 > 4',
   '√50',
   '√(x^2)',
   'x + 1 = x + 2',
@@ -51,6 +63,10 @@ function rechne(eingabe) {
   }
 
   try {
+    // Die Reihenfolge zählt: Eine Ungleichung hat auch eine linke Seite.
+    if ('zeichen' in gelesen) {
+      return { art: 'ungleichung', eingelesen: gelesen, ergebnis: loeseUngleichung(gelesen) };
+    }
     if ('links' in gelesen) {
       const ergebnis = loese(gelesen);
       return { art: 'gleichung', eingelesen: gelesen, ergebnis };
@@ -68,12 +84,12 @@ export default function RechnerScreen() {
 
 
   return (
-    <ScreenGeruest titel="Rechner" untertitel="Term oder Gleichung — mit Rechenweg">
+    <ScreenGeruest titel="Rechner" untertitel="Term, Gleichung oder Ungleichung — mit Rechenweg">
       <FeldLabel thema="term">Deine Eingabe</FeldLabel>
       <MatheFeld
         wert={eingabe}
         setWert={setEingabe}
-        platzhalter="z. B. 3x + 5 = 14"
+        platzhalter="z. B. 3x + 5 = 14 oder 2x − 1 < 7"
         mehrzeilig
       />
 
@@ -93,7 +109,8 @@ export default function RechnerScreen() {
           Die Leiste über den Beispielen setzt die Zeichen, die auf der Handytastatur
           fehlen. Es geht aber auch ohne: ^ für Potenzen (x^2 ist dasselbe wie x²),
           * oder gar nichts für Mal (3x, 2(x+1)), / oder : für Geteilt, - für Minus.
-          Komma und Punkt gelten beide als Dezimaltrennzeichen.
+          Komma und Punkt gelten beide als Dezimaltrennzeichen. Für Ungleichungen
+          gehen &lt;= und &gt;= genauso wie ≤ und ≥.
         </Text>
       </View>
     </ScreenGeruest>
@@ -114,10 +131,90 @@ function Ausgabe({ ergebnis }) {
     );
   }
 
+  if (ergebnis.art === 'ungleichung') {
+    return <UngleichungsWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />;
+  }
   return ergebnis.art === 'gleichung' ? (
     <GleichungsWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />
   ) : (
     <TermWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />
+  );
+}
+
+// --------------------------------------------------------------------
+// Eine Ungleichung
+// --------------------------------------------------------------------
+//
+// Fast wie eine Gleichung — bis auf zwei Dinge, und beide sind der
+// eigentliche Lernstoff: der Schritt, bei dem sich das Zeichen dreht,
+// und die Lösungsmenge als Bereich statt als Zahl.
+
+function UngleichungsWeg({ eingelesen, ergebnis }) {
+  return (
+    <View style={styles.wegKasten}>
+      <FeldLabel thema="ungleichung">Rechenweg</FeldLabel>
+
+      <Text style={styles.zeile}>{ungleichungAlsText(eingelesen)}</Text>
+
+      {ergebnis.schritte.map((s, i) => (
+        <View key={i}>
+          {/* Der drehende Schritt wird hervorgehoben. Er im Fließtext
+              mitlaufen zu lassen wäre das Gegenteil dessen, was diese
+              App tut: Genau hier geht es schief, also gehört genau hier
+              die Aufmerksamkeit hin. */}
+          <Text style={[styles.regel, s.dreht && styles.regelDreht]}>| {s.operation}</Text>
+          <Text style={styles.zeile}>{s.text}</Text>
+        </View>
+      ))}
+
+      <UngleichungsLoesung ergebnis={ergebnis} />
+    </View>
+  );
+}
+
+function UngleichungsLoesung({ ergebnis }) {
+  if (ergebnis.art === 'unklar') {
+    return (
+      <View style={styles.unklarKasten}>
+        <View style={styles.zeileMitKnopf}>
+          <Text style={styles.unklarTitel}>Das kann ich noch nicht lösen</Text>
+          <InfoButton thema="ungleichung" />
+        </View>
+        <Text style={styles.unklarText}>{ergebnis.grund}</Text>
+      </View>
+    );
+  }
+
+  // Für das Bild werden die Grenzen zu Zahlen — gezeichnet wird ohnehin
+  // in Pixeln. Angeschrieben bleiben sie exakt: √5 steht als √5 da.
+  const intervalle = (ergebnis.intervalle ?? []).map((iv) => ({
+    von: iv.von === null ? null : auswerte(iv.von),
+    vonOffen: iv.vonOffen,
+    bis: iv.bis === null ? null : auswerte(iv.bis),
+    bisOffen: iv.bisOffen,
+  }));
+  const fuersBild =
+    ergebnis.art === 'alle'
+      ? [{ von: null, vonOffen: false, bis: null, bisOffen: false }]
+      : intervalle;
+
+  return (
+    <View style={styles.ergebnisKasten}>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.ergebnis}>{loesungAlsText(ergebnis)}</Text>
+        <InfoButton thema="loesungsmenge" />
+      </View>
+      {ergebnis.grund ? <Text style={styles.begruendung}>{ergebnis.grund}</Text> : null}
+
+      <Zahlenstrahl intervalle={fuersBild} />
+
+      {ergebnis.art === 'keine' ? null : (
+        <Text style={styles.begruendung}>
+          Ein offener Kreis heißt: die Grenze gehört nicht dazu. Ein gefüllter heißt:
+          sie gehört dazu.
+        </Text>
+      )}
+    </View>
   );
 }
 
@@ -293,6 +390,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: farben.text,
     marginBottom: 2,
+  },
+  regelDreht: {
+    color: farben.warnung,
+    fontWeight: '700',
   },
   regel: {
     fontSize: 13,

@@ -28,6 +28,8 @@ import {
   passenderBereich,
   xBereichUm,
   funktionsvariable,
+  zahlenstrahl,
+  zahlenstrahlBereich,
 } from '../utils/graph.js';
 
 // ---------------------------------------------------------------------
@@ -278,4 +280,78 @@ pruefung('Zahlen im Text tragen das richtige Minus', () => {
   const b = beschreibe(parseTerm('x^2 - 6x + 8'));
   const alles = b.angaben.map((a) => `${a.wert} ${a.erklaerung}`).join(' ');
   wahr('kein Bindestrich vor einer Ziffer', !/-\d/.test(alles), alles);
+});
+
+// ---------------------------------------------------------------------
+// Der Zahlenstrahl
+// ---------------------------------------------------------------------
+
+pruefung('Der Zahlenstrahl zeigt, was die Ungleichung meint', () => {
+  const strahl = (intervalle) => {
+    const grenzen = intervalle.flatMap((i) => [i.von, i.bis]).filter((v) => v !== null);
+    const bereich = zahlenstrahlBereich(grenzen);
+    return zahlenstrahl({ intervalle, pixel: 300, ...bereich });
+  };
+
+  // x > −3: ein Balken nach rechts, mit Pfeil, offener Kreis bei −3.
+  const rechts = strahl([{ von: -3, vonOffen: true, bis: null, bisOffen: false }]);
+  zahlIst('ein Balken', rechts.balken.length, 1);
+  wahr('läuft nach rechts hinaus', rechts.balken[0].pfeilRechts);
+  wahr('und links nicht', !rechts.balken[0].pfeilLinks);
+  zahlIst('ein Kreis', rechts.punkte.length, 1);
+  zahlIst('bei −3', rechts.punkte[0].wert, -3);
+
+  // Zwei Intervalle bleiben zwei — sie zu einem zu verschmelzen würde
+  // behaupten, dazwischen läge auch etwas.
+  const zwei = strahl([
+    { von: null, vonOffen: false, bis: -2, bisOffen: true },
+    { von: 2, vonOffen: true, bis: null, bisOffen: false },
+  ]);
+  zahlIst('zwei Balken', zwei.balken.length, 2);
+  wahr('einer läuft links hinaus', zwei.balken[0].pfeilLinks);
+  wahr('einer rechts', zwei.balken[1].pfeilRechts);
+  wahr('und dazwischen ist nichts', zwei.balken[0].x2 < zwei.balken[1].x1);
+});
+
+pruefung('Offen und geschlossen ist der ganze Unterschied', () => {
+  // Das ist die eine Aussage, für die das Bild überhaupt gemacht wird:
+  // Gehört die Grenze dazu oder nicht? Ein voller und ein leerer Kreis
+  // sind dafür zuständig, nicht eine Farbe und nicht eine Beschriftung.
+  const bereich = zahlenstrahlBereich([3]);
+
+  const streng = zahlenstrahl({
+    intervalle: [{ von: null, vonOffen: false, bis: 3, bisOffen: true }],
+    pixel: 300,
+    ...bereich,
+  });
+  const mitGrenze = zahlenstrahl({
+    intervalle: [{ von: null, vonOffen: false, bis: 3, bisOffen: false }],
+    pixel: 300,
+    ...bereich,
+  });
+
+  wahr('x < 3 hat einen offenen Kreis', streng.punkte[0].offen);
+  wahr('x ≤ 3 einen gefüllten', !mitGrenze.punkte[0].offen);
+  zahlIst('und beide sitzen an derselben Stelle', streng.punkte[0].x, mitGrenze.punkte[0].x);
+});
+
+pruefung('Ohne Grenzen bleibt ein Stück Zahlengerade', () => {
+  // "jede Zahl" und "keine Zahl" haben keine Grenze, an der man das
+  // Fenster ausrichten könnte. Dann steht die Null in der Mitte, statt
+  // dass die Skala willkürlich wird.
+  const b = zahlenstrahlBereich([]);
+  wahr('die Null liegt im Fenster', b.von < 0 && b.bis > 0);
+
+  const alles = zahlenstrahl({
+    intervalle: [{ von: null, vonOffen: false, bis: null, bisOffen: false }],
+    pixel: 300,
+    ...b,
+  });
+  zahlIst('ein durchgehender Balken', alles.balken.length, 1);
+  wahr('mit Pfeilen an beiden Enden', alles.balken[0].pfeilLinks && alles.balken[0].pfeilRechts);
+  zahlIst('und ohne Kreise', alles.punkte.length, 0);
+
+  const nichts = zahlenstrahl({ intervalle: [], pixel: 300, ...b });
+  zahlIst('leere Lösungsmenge: kein Balken', nichts.balken.length, 0);
+  wahr('aber die Skala steht trotzdem', nichts.striche.length > 0);
 });

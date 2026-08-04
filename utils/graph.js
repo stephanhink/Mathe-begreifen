@@ -256,3 +256,90 @@ export function funktionsvariable(term) {
   }
   return namen[0] ?? 'x';
 }
+
+// ---------------------------------------------------------------------
+// Der Zahlenstrahl
+// ---------------------------------------------------------------------
+//
+// So wird eine Ungleichung im Unterricht gezeigt, und zu Recht: "x > −3"
+// ist eine Behauptung über eine Zahl, "der Strahl rechts von −3" ist ein
+// Bild. Wer nur das eine hat, hat es halb.
+//
+// Zwei Dinge daran sind nicht Geschmack, sondern Bedeutung:
+//
+//   Ein OFFENER Kreis heißt: die Grenze gehört nicht dazu (< und >).
+//   Ein GEFÜLLTER Kreis heißt: sie gehört dazu (≤ und ≥).
+//
+// Das ist genau der Unterschied, um den es bei Ungleichungen geht, und
+// er steckt hier in einem Wahrheitswert statt in einer Farbe.
+//
+// Wie überall in dieser Datei wird nur gerechnet, nicht gezeichnet: Was
+// herauskommt, sind Zahlen in Pixeln. Die Komponente übersetzt sie in
+// SVG, und dadurch ist der heikle Teil mit blankem node zu prüfen.
+
+// Ein Fenster, in dem alle Grenzen mit Luft drumherum Platz haben.
+//
+// Ohne Grenzen — bei "jede Zahl" oder "keine Zahl" — gibt es nichts zu
+// zentrieren; dann steht schlicht ein Stück Zahlengerade um die Null.
+export function zahlenstrahlBereich(grenzen, { mindestBreite = 8 } = {}) {
+  const brauchbar = grenzen.filter((g) => Number.isFinite(g));
+  if (brauchbar.length === 0) {
+    return { von: -mindestBreite / 2, bis: mindestBreite / 2 };
+  }
+  return xBereichUm(brauchbar, { mindestBreite });
+}
+
+// Die Geometrie eines Zahlenstrahls mit eingezeichneter Lösungsmenge.
+//
+// `intervalle` sind { von, bis, vonOffen, bisOffen } mit ZAHLEN (nicht
+// Termen) als Grenzen; `null` heißt unbeschränkt. Zurück kommen Balken
+// in Pixeln, dazu die Kreise an den Grenzen und die Teilstriche.
+export function zahlenstrahl({ intervalle, pixel, von, bis, zielAnzahl = 6 }) {
+  if (!(pixel > 0)) {
+    throw new Error('graph: die Pixelbreite muss positiv sein');
+  }
+  const nachPixel = skala({ von, bis, pixel });
+
+  const balken = [];
+  const punkte = [];
+
+  for (const iv of intervalle) {
+    const linksWert = iv.von === null ? von : iv.von;
+    const rechtsWert = iv.bis === null ? bis : iv.bis;
+
+    // Ein Intervall, das gar nicht ins Fenster ragt, wird weggelassen —
+    // ein Balken der Breite null sähe aus wie ein Zeichenfehler.
+    if (rechtsWert < von || linksWert > bis) {
+      continue;
+    }
+
+    balken.push({
+      x1: nachPixel(Math.max(linksWert, von)),
+      x2: nachPixel(Math.min(rechtsWert, bis)),
+      // Läuft der Balken über den Rand hinaus? Dann gehört ein Pfeil hin
+      // statt eines Endes — sonst behauptet das Bild eine Grenze, die es
+      // nicht gibt.
+      pfeilLinks: iv.von === null,
+      pfeilRechts: iv.bis === null,
+    });
+
+    for (const [wert, offen] of [
+      [iv.von, iv.vonOffen],
+      [iv.bis, iv.bisOffen],
+    ]) {
+      if (wert !== null && wert >= von && wert <= bis) {
+        punkte.push({ x: nachPixel(wert), wert, offen });
+      }
+    }
+  }
+
+  return {
+    von,
+    bis,
+    breite: pixel,
+    balken,
+    punkte,
+    striche: teilstriche(von, bis, zielAnzahl).striche.map((wert) => ({ wert, x: nachPixel(wert) })),
+    nullX: von <= 0 && 0 <= bis ? nachPixel(0) : null,
+  };
+}
