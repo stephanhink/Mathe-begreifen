@@ -930,7 +930,8 @@ das weg.
 
 ## Status
 
-Stand 2026-08-01: **Gerüst steht, erste Fachlogik fertig.**
+Stand 2026-08-04: **Version 1.0.0 ist beim Play Store eingereicht.**
+Alle sieben Bildschirme stehen, 2126 Prüfungen, versionCode 3.
 
 Was steht:
 - Expo-Projekt SDK 57, Tab-Leiste, Ordnerstruktur
@@ -957,7 +958,7 @@ Was steht:
   Lösungsmenge, Probe, Info-Knöpfe. Der Screen rechnet nichts — er ruft
   `utils/` auf und stellt dar
 - `utils/parser.js` — getippten Text einlesen („3x + 5 = 14")
-- `utils/wissen.js` — 16 Erklärtexte für die Info-Knöpfe
+- `utils/wissen.js` — 33 Erklärtexte für die Info-Knöpfe
 - `utils/bruch.js` — exakte Bruchrechnung
 - `utils/term.js` — Terme darstellen, exakt auswerten, umformen mit
   benannten Schritten. Regeln: neutrale Elemente, Zahlen zusammenrechnen,
@@ -972,15 +973,65 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **1724 Prüfungen**
+- Zusammen **2126 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
-- **Die Veröffentlichungskette ist einmal komplett durchgelaufen:** verknüpft
-  mit `@heilpraktikerdk/mathe`, Keystore bei Expo, `npm run build:android`
-  erfolgreich (versionCode 2, signiertes AAB, 51 MB, ~4 Minuten
-  Gradle-Laufzeit). Im AAB steht als einzige angeforderte Berechtigung
-  INTERNET. Damit ist bewiesen, dass die Kette trägt — bevor sie unter
-  Zeitdruck das erste Mal gebraucht wird.
+- **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
+  (deutsch und englisch), App-Icon, Feature Graphic und acht Screenshots;
+  GitHub Pages liefert die Datenschutzerklärung aus. Das eingereichte
+  Artefakt ist `build-1785814748548.aab`: versionCode 3, versionName
+  1.0.0, signiert mit dem Keystore bei Expo, als einzige angeforderte
+  Berechtigung INTERNET — alles am Artefakt selbst nachgeprüft, nicht am
+  Build-Log geglaubt.
+
+### Was in der Play Console anders steht als bei Chemie
+Drei Angaben, die man beim Abschreiben falsch macht:
+
+| | Chemie | Mathe |
+|---|---|---|
+| Zielaltersgruppe | 16–17 und älter | **9–12 aufwärts** — die App beginnt bei Klasse 5 |
+| Familienrichtlinie | greift nicht | **greift**, Hinweis im Datensicherheits-Abschnitt bejaht |
+| Prüfung durch Pädagogen | — | **bejaht** |
+
+Die Verpflichtung auf die Familienrichtlinie ist keine freiwillige Zusage:
+Sie gilt, sobald Kinder als Zielgruppe angegeben sind. Die Frage in der
+Console entscheidet nur, ob die Zeile den Nutzern angezeigt wird. Sie
+kostet hier nichts — im Code steht kein `fetch`, kein `Linking`, keine
+WebView, keine Werbe- oder Analyse-Bibliothek; die sieben Abhängigkeiten
+sind alle rein technisch.
+
+### Eine App bis zum Abitur, keine zweite
+Am 2026-08-04 entschieden, nachdem die Frage aufkam, ob der
+Oberstufenstoff in eine „Mathe begreifen 2" gehört (Klasse 5–9 und
+10–13 getrennt). **Nein — eine App.**
+
+Der Grund ist nicht Bequemlichkeit, sondern dass ein Schnitt genau das
+Feature zerstörte, für das das Projekt existiert: Der Lückenfinder läuft
+den Graphen NACH UNTEN. Läge die Kettenregel in App 2 und lägen die
+Potenzgesetze in App 1, wäre der Kernbefund dieser App — „dein Problem
+ist nicht die Ableitung, dein Problem sind die Potenzgesetze" — nicht
+mehr formulierbar. App 2 müsste sagen: „Deine Lücke liegt vermutlich in
+der anderen App." Das ist keine Diagnose.
+
+Dazu kommt: Die ausdrücklich mitgedachte Zielgruppe — wer in den ersten
+Jahren nicht aufgepasst hat und jetzt am höheren Stoff scheitert — ist
+per Definition in beiden Hälften gleichzeitig.
+
+Größe ist kein Gegenargument. Lernpfad, Erklärtexte und
+Aufgabengeneratoren sind zusammen **76 KB**, die gesamte Fachlogik samt
+Oberfläche 468 KB. Das AAB ist 49 MB, praktisch alles
+React-Native-Laufzeit. Der Inhalt könnte sich verzehnfachen und die App
+wüchse um unter ein Prozent.
+
+Die berechtigte Sorge — ein Fünftklässler wird vom Oberstufenstoff
+erschlagen — wird IN der App gelöst, nicht durch Teilen: Die sieben Tabs
+bleiben, neuer Stoff erweitert vorhandene Bereiche (Funktionen bekommen
+Ableitung und Integral, Geometrie die Vektoren, Zufall den
+Hypothesentest), und innerhalb eines Bereichs wird nach Stufe gruppiert.
+Der Lückenfinder braucht ohnehin keine Klassenangabe.
+
+Was tatsächlich zu groß wird, sind `wissen.js` und `lernpfad.js`. Das ist
+eine interne Aufteilung in Unterdateien, keine Produktaufteilung.
 
 ## Offene Punkte
 - `gleichung.js` kann Gleichungen ersten und zweiten Grades mit einer
@@ -992,18 +1043,24 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- **Für die Veröffentlichung ist alles beisammen:** `docs/` enthält
-  Datenschutzerklärung, Play-Store-Text, App-Icon, Feature Graphic und
-  acht Screenshots; GitHub Pages ist aktiv und liefert die
-  Datenschutzerklärung aus. Offen ist nur noch das Google-Play-Konto
-  und die Erstveröffentlichung selbst.
-  `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
-  letzte steht
-- Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,
-  Geometrie, Stochastik und die ganze Oberstufe — jedes neue Thema braucht
-  einen Eintrag in `lernpfad.js` UND einen Generator in `aufgaben.js`,
-  sonst schlägt die Prüfung fehl
-- Google-Play-Konto/Erstveröffentlichung noch nicht eingerichtet
+- Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlt die ganze
+  Oberstufe. Reihenfolge, weil jeder Block auf dem vorigen steht:
+  1. **Ungleichungen und Gleichungssysteme** — schließt `gleichung.js` ab
+  2. **Ableitung** — das eigentliche Ziel, und der Grund, warum der ganze
+     Graph darunter überhaupt existiert
+  3. **Integral**
+  4. **Vektorgeometrie und Hypothesentest**
+
+  Jedes neue Thema braucht einen Eintrag in `lernpfad.js` UND einen
+  Generator in `aufgaben.js`, sonst schlägt die Prüfung fehl. Genau dieses
+  Geländer hält den Graphen beim Wachsen ehrlich.
+- Sobald Ableitung und Integral stehen: die Kurzbeschreibung im
+  Play-Store-Listing austauschen. Die Fassung mit „Ableitung" und
+  „Abitur" liegt dort unter „Für später" fertig bereit — vorher wäre sie
+  eine Werbung für etwas, das es nicht gibt.
+- Warten auf die Freigabe durch Google. Danach: Bewertungen und Abstürze
+  im Auge behalten, und die erste Rückmeldung echter Schüler abwarten,
+  bevor größere Umbauten anfangen.
 
 `EXPO_TOKEN` steht hier bewusst NICHT mehr — der Cloud-Build-Workflow bleibt
 ungenutzt, siehe Workflow-Abschnitt. Das ist eine Entscheidung, kein
