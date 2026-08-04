@@ -1103,6 +1103,89 @@ Der Lückenfinder braucht ohnehin keine Klassenangabe.
 Was tatsächlich zu groß wird, sind `wissen.js` und `lernpfad.js`. Das ist
 eine interne Aufteilung in Unterdateien, keine Produktaufteilung.
 
+## Geplant: „Wozu braucht man das?"
+
+Aufgekommen am 2026-08-04, **nicht jetzt zu bauen** — aber die
+Entscheidung, WIE es gebaut wird, gehört vor die erste Zeile Code.
+
+Der Anlass ist die Frage, an der Mathematik in der Schule am häufigsten
+scheitert, und sie kam vom Nutzer selbst: *„Ich habe mich in der Schule
+immer gefragt, wozu man die Mathematik eigentlich braucht. Es fehlte am
+praktischen Nutzen."* Genannt: Optionspreise, Zinseszins, exponentielles
+Wachstum.
+
+### Die Regel, die das Ganze trägt
+> **Eine Anwendung wendet die Formel nicht an — sie bringt sie hervor.**
+
+Das ist der Unterschied zwischen einer Textaufgabe und einer Einsicht.
+Zinseszins ist kein Beispiel FÜR die Exponentialfunktion; Zinseszins IST
+der Ort, an dem sie entsteht: nach einem Jahr K · 1,03, nach zwei Jahren
+K · 1,03², nach n Jahren K · 1,03ⁿ. Wer das einmal selbst hingeschrieben
+hat, braucht die Exponentialfunktion nicht mehr erklärt zu bekommen.
+
+Wird es andersherum gebaut — erst die Formel, dann ein hübsches Beispiel
+—, entsteht genau das, woran Schulmathematik krankt: der Bauer mit den
+37 Melonen. Eine erfundene Verpackung um eine Rechnung, die man auch ohne
+sie gemacht hätte.
+
+### Die zweite Regel: sagen, was das Modell NICHT weiß
+Dieselbe Ehrlichkeit wie überall sonst. `umstellen.js` führt die
+Vorbehalte mit (`t ≠ 0`), `geometrie.js` sagt, wo gerundet wird — eine
+Anwendung muss sagen, was sie verschweigt:
+
+- Zinseszins mit festem Satz kennt keine Inflation und keine Steuer
+- Exponentielles Wachstum hört in der Wirklichkeit irgendwann auf; kein
+  Bakterium füllt das Weltall
+- Das Optionsmodell setzt voraus, dass sich mit dem Nachbau kein Geld
+  verdienen lässt
+
+Eine App, die „sie rät nicht" verspricht und dann ein Modell für die
+Wirklichkeit ausgibt, hätte ihr eigenes Versprechen gebrochen. Und
+gerade dieser Absatz ist das Wertvollste daran: Zu verstehen, wo ein
+Modell aufhört zu gelten, ist mehr wert als die Formel selbst.
+
+### Wo es hingehört: NICHT in einen eigenen Tab
+Der achte Tab wäre der bequeme Weg und der falsche. Er trennte das
+Wozu vom Stoff — und damit müsste man danach suchen, statt darüber zu
+stolpern. Es ist dasselbe Argument wie beim Info-Knopf: *Die Erklärung
+steht dort, wo der Begriff auftaucht.*
+
+Vorgesehen ist deshalb:
+
+1. **Ein Feld `anwendung` in `wissen.js`**, neben `beispiel`. Kurz, ein
+   Absatz, mit dem Satz „dafür braucht man das" statt einer Rechnung.
+   Kostet nichts und wirkt sofort — 34 Erklärtexte sind schon da.
+2. **Für die, die einen Rechner verdienen: `utils/anwendung.js`.** Reine
+   Fachlogik ohne React, prüfbar wie alles andere. Sie liefert den
+   Rechenweg mit benannten Schritten — sonst verstieße ausgerechnet der
+   Anwendungsteil gegen die eiserne Regel der App.
+3. **Ein sichtbarer Haken im Screen**, kein zweiter Info-Knopf. Ein
+   schmaler Streifen „Wozu braucht man das?" unter dem Ergebnis, der
+   sich aufklappt. Sichtbar, ohne zu drängeln.
+
+### Womit anfangen — nach Wirkung sortiert
+| Anwendung | Bringt hervor | Braucht | Wert |
+|---|---|---|---|
+| **Zinseszins** | die Exponentialfunktion | nur Potenzen | am höchsten: geht ab Klasse 9 UND ist die nützlichste Mathematik, die ein Mensch privat je braucht |
+| **Exponentielles Wachstum** | Wachstumsfaktor, Halbwertszeit | Potenzen, später Logarithmus | der Schock-Effekt: ein Cent, 30 Tage verdoppelt, sind über 5 Millionen € |
+| **Optionspreis** | Binomialverteilung mit Sinn | Stochastik, Oberstufe | die Krone — der Erwartungswert wird mit der FALSCHEN Wahrscheinlichkeit gerechnet, und gerade deshalb stimmt er |
+
+Die ersten beiden hängen nur an den Potenzen und könnten schon vor der
+Oberstufe kommen. Der Optionspreis steht in Teilen bereits im Eintrag
+`binomialverteilung` — dort ist die Machart schon einmal vorgeführt und
+kann als Muster dienen.
+
+Weitere Kandidaten, wenn das Muster trägt: Kredit und Tilgung
+(Gleichungssysteme), Dreisatz und Skalierung (Prozent), Fehlerfortpflanzung
+beim Messen (Physik), Wahlprognosen und Stichprobenfehler (Binomial),
+Kompression und Bits (Logarithmus).
+
+### Warum es die App tragen würde
+Der Lückenfinder beantwortet „woran hakt es". Die Anwendungen beantworten
+„warum sollte mich das kümmern". Das sind die beiden Fragen, an denen
+Mathematikunterricht scheitert, und keine Lern-App beantwortet bisher
+beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
+
 ## Offene Punkte
 - `gleichung.js` kann Gleichungen ersten und zweiten Grades mit einer
   Variablen. Noch offen: Gleichungssysteme, Ungleichungen (dort dreht
@@ -1116,8 +1199,19 @@ eine interne Aufteilung in Unterdateien, keine Produktaufteilung.
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlt die ganze
   Oberstufe. Reihenfolge, weil jeder Block auf dem vorigen steht:
   1. ~~Ungleichungen~~ **stehen** (2026-08-04), mit zwei Themen im
-     Lernpfad und zwei Aufgabengeneratoren. Offen bleiben
-     **Gleichungssysteme**, dann ist dieser Block abgeschlossen
+     Lernpfad und zwei Aufgabengeneratoren.
+
+     **HIER GEHT ES WEITER: Gleichungssysteme.** Zwei Gleichungen, zwei
+     Unbekannte. Zu bauen als `utils/system.js` neben `gleichung.js` —
+     dieselbe Begründung wie bei `ungleichung.js`: Die tragende
+     Invariante ist wieder eine andere. Bei einem System ist die Lösung
+     ein PAAR, und die Umformung darf die Lösungsmenge des Systems nicht
+     ändern, nicht die einer einzelnen Zeile. Drei Verfahren, die im
+     Unterricht alle drei vorkommen und alle drei einen Namen haben:
+     Einsetzen, Gleichsetzen, Addieren. Erkennen muss es „keine Lösung"
+     (parallele Geraden) und „unendlich viele" (dieselbe Gerade) — beides
+     sieht man am Schnittpunkt zweier Geraden, und `graph.js` kann das
+     schon zeichnen. Danach ist `gleichung.js` als Block abgeschlossen
   2. **Ableitung** — das eigentliche Ziel, und der Grund, warum der ganze
      Graph darunter überhaupt existiert
   3. **Integral**
