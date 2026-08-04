@@ -1305,16 +1305,16 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
 
 ## Offene Punkte
 - `gleichung.js` kann Gleichungen ersten und zweiten Grades mit einer
-  Variablen. Noch offen: Gleichungssysteme, Ungleichungen (dort dreht
-  sich beim Multiplizieren mit einer negativen Zahl das Zeichen um —
-  eine eigene, prüfbare Regel), Gleichungen dritten Grades
+  Variablen; Ungleichungen und Gleichungssysteme stehen daneben in
+  eigenen Dateien. Noch offen: Gleichungen dritten Grades
 - Der Satz vom Nullprodukt wird noch nicht als eigener Weg gezeigt:
   (x + 1)(x − 3) = 0 wird ausmultipliziert und dann über pq gelöst,
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlt die ganze
-  Oberstufe. Reihenfolge, weil jeder Block auf dem vorigen steht:
+- Der Lernpfad reicht inzwischen bis Klasse 11 (Ableitung). Für „bis
+  Abitur" fehlt der Rest der Oberstufe. Reihenfolge, weil jeder Block
+  auf dem vorigen steht:
   1. ~~Ungleichungen~~ **stehen** (2026-08-04), mit zwei Themen im
      Lernpfad und zwei Aufgabengeneratoren.
 
