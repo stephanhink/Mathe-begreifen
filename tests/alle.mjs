@@ -15,6 +15,7 @@ import './wissen.mjs';
 // Aufgaben, dann die Suche — in dieser Reihenfolge bauen sie
 // aufeinander auf.
 import './lernpfad.mjs';
+import './ableitung.mjs';
 import './aufgaben.mjs';
 import './luecken.mjs';
 import './rechenweg.mjs';
