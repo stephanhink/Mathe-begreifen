@@ -17,6 +17,7 @@ import './wissen.mjs';
 import './lernpfad.mjs';
 import './ableitung.mjs';
 import './integral.mjs';
+import './vektor.mjs';
 import './aufgaben.mjs';
 import './luecken.mjs';
 import './rechenweg.mjs';
