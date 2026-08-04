@@ -50,6 +50,7 @@ import { parseTerm, parseUngleichung, hatVergleich } from './parser.js';
 // Definition; ein zweiter handgebauter Weg brächte keine Sicherheit
 // dazu, sondern nur eine zweite Fehlerquelle.
 import { ableite } from './ableitung.js';
+import { integriere, bestimmtesIntegral } from './integral.js';
 import {
   system,
   istSystem,
@@ -635,6 +636,56 @@ const GENERATOREN = {
         ),
       ],
       hinweis: 'Es gibt zwei Lösungen. Schreibe beide, getrennt durch ein Semikolon.',
+    };
+  },
+
+  // Die Umkehrung: Stammfunktion bilden. Die Musterlösung kommt von
+  // integriere() selbst — geprüft ist das Modul dadurch, dass Ableiten
+  // der Stammfunktion die Ausgangsfunktion ergibt.
+  stammfunktion(naechste) {
+    const grad = naechste(3) + 1;                 // 1 bis 3
+    const a = ohneNull(naechste, 4);
+    const b = naechste(11) - 5;
+    const glieder = [produkt(zahl(a), potenz(x, zahl(grad)))];
+    if (b !== 0) {
+      glieder.push(zahl(b));
+    }
+    const f = glieder.length === 1 ? glieder[0] : summe(...glieder);
+    const F = integriere(f).stammfunktion;
+
+    return {
+      frage: `Bilde eine Stammfunktion: f(x) = ${termAlsText(f)}`,
+      term: f,
+      art: 'term',
+      loesung: F,
+      fehlerbilder: [
+        fehlerbild(
+          ableite(f).ableitung,
+          'Das ist die ABLEITUNG, nicht die Stammfunktion. Beim Integrieren wird der Exponent GRÖSSER und man teilt durch den neuen Exponenten — genau andersherum.'
+        ),
+      ],
+      hinweis: 'Das + C darfst du weglassen, gemeint ist es trotzdem.',
+    };
+  },
+
+  bestimmtesIntegral(naechste) {
+    const grad = naechste(2) + 1;                 // 1 oder 2
+    const a = naechste(3) + 1;
+    const bis = naechste(3) + 2;                  // 2 bis 4
+    const f = produkt(zahl(a), potenz(x, zahl(grad)));
+    const e = bestimmtesIntegral(f, bruch(0), bruch(bis));
+
+    return {
+      frage: `Berechne: ∫ von 0 bis ${bis} über ${termAlsText(f)} dx`,
+      term: f,
+      art: 'zahl',
+      loesung: zahl(e.wert),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(auswerteExakt(f, { x: bruch(bis) })),
+          'Das ist der FUNKTIONSWERT an der oberen Grenze, nicht das Integral. Eingesetzt wird in die Stammfunktion F, nicht in f.',
+        ),
+      ],
     };
   },
 

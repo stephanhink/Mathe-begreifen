@@ -1095,6 +1095,59 @@ Beides ist derselbe Fehlertyp: **eine offene Frage mit einem sachlichen
 Nein zu beantworten.** Steht als Warnung schon in CLAUDE.md, war aber an
 diesen zwei Stellen noch nicht umgesetzt.
 
+### Das Integral: die Prüfung schreibt sich von selbst
+Integrieren ist die Umkehrung des Ableitens, also lautet die tragende
+Prüfung:
+
+> **Leitet man die Stammfunktion wieder ab, muss die Ausgangsfunktion
+> herauskommen.**
+
+Das ist keine bequeme Abkürzung, sondern der stärkste Prüfstein im
+Projekt — `ableitung.js` ist seinerseits gegen den
+Differenzenquotienten geprüft. Damit hängt alles an derselben Kette:
+
+```
+Integral → Ableitung → Differenzenquotient → Definition
+```
+
+Dazu eine zweite, davon **unabhängige** Kontrolle: Das bestimmte
+Integral wird gegen numerische Integration nach Simpson verglichen. Sie
+weiß nichts von Stammfunktionen. Wären beide Wege über dieselbe
+Stammfunktion gelaufen, prüfte der Vergleich nichts — sie machten
+denselben Fehler.
+
+#### Das + C ist kein Schmuck
+Beim Ableiten fällt jede Konstante weg; rückwärts weiß man deshalb
+nicht, welche es war. Es gibt nicht DIE Stammfunktion, sondern
+unendlich viele. Beim bestimmten Integral hebt sich das C auf, weil es
+in beiden Klammern steht — **deshalb ist die Fläche eindeutig, obwohl
+die Stammfunktion es nicht ist.** Das ist der Hauptsatz in einem Satz.
+
+#### Die Potenzregel hat eine Lücke, und der Nachbar darf nicht mitleiden
+`xⁿ⁺¹/(n+1)` versagt bei n = −1: Der Nenner wäre null. Die App sagt
+das und nennt `ln|x|` als richtige Antwort, statt zu raten.
+
+Beim Bauen ging genau der Nachbarfall schief: **`1 : x²` wurde
+fälschlich mit derselben Begründung abgelehnt.** Der Grund war, dass
+`c : g` zu `c · g⁻¹` umgeschrieben wird — aus `1 : x²` wurde `(x²)⁻¹`,
+und der Exponent −1 sah aus wie der Sonderfall. Er gehört aber zu `x²`,
+nicht zu `x`. Erst das Zusammenziehen der Potenzen (`(x²)⁻¹ = x⁻²`)
+macht den Unterschied sichtbar — dasselbe Potenzgesetz, das der
+Lernpfad zwei Ebenen tiefer abfragt.
+
+#### Fläche ist nicht dasselbe wie Integral
+Von −1 bis 1 über x³ kommt **null** heraus, obwohl dort Fläche liegt —
+die Hälften heben sich auf. Die App trennt an den Nullstellen, addiert
+die Beträge und warnt ausdrücklich, wenn beide Zahlen auseinandergehen.
+Welches von beiden gemeint ist, steht nicht in der Formel, sondern in
+der Frage.
+
+#### Es gibt keine Produktregel fürs Integrieren
+Wo Ausmultiplizieren hilft — `x · (x + 1)` —, wird es als benannter
+Schritt getan. Wo nicht, wird die partielle Integration genannt und die
+Aufgabe abgelehnt. Das ist die Stelle, an der Integrieren tatsächlich
+schwerer ist als Ableiten, und das darf man nicht verstecken.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1143,6 +1196,8 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/integral.js` — Stammfunktionen, das bestimmte Integral und der
+  Unterschied zwischen Integral und Flächeninhalt
 - `utils/ableitung.js` — ableiten mit dem Namen jeder Regel, höhere
   Ableitungen und die Tangente. Damit beginnt die Oberstufe
 - `utils/system.js` — lineare Gleichungssysteme mit zwei Unbekannten,
@@ -1160,7 +1215,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **2614 Prüfungen**
+- Zusammen **2759 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1325,8 +1380,11 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
      Produkt-, Quotienten- und Kettenregel, höhere Ableitungen,
      Tangente, drei Themen im Lernpfad.
 
-     **HIER GEHT ES WEITER: das Integral.** Danach Vektorgeometrie und
-     Hypothesentest
+     ~~Integral~~ **steht** (2026-08-04): Stammfunktion, bestimmtes
+     Integral, Fläche, zwei Themen im Lernpfad.
+
+     **HIER GEHT ES WEITER: Vektorgeometrie**, danach der
+     Hypothesentest. Damit wäre „bis Abitur" eingelöst
   2. **Integral**
   4. **Vektorgeometrie und Hypothesentest**
 

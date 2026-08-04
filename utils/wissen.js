@@ -246,6 +246,32 @@ export const THEMEN = {
     mehr: ['ableitung', 'steigung', 'funktion'],
   },
 
+  integral: {
+    titel: 'Das Integral',
+    text: [
+      'Integrieren ist Ableiten rückwärts. Gesucht ist eine Funktion, deren Ableitung die gegebene ist — sie heißt Stammfunktion und wird groß geschrieben: F.',
+      'Die Regel dafür ist die Potenzregel rückwärts: Der Exponent wird um eins GRÖSSER, und durch den neuen Exponenten wird geteilt. Aus x² wird x³ : 3. Die Probe geht immer: Leite dein Ergebnis ab, dann muss die Ausgangsfunktion herauskommen.',
+      'Das + C ist kein Schmuck. Beim Ableiten fällt jede Konstante weg — aus x³ + 5 und aus x³ + 100 wird beide Male 3x². Rückwärts kann man deshalb nicht wissen, welche Konstante es war. Es gibt nicht DIE Stammfunktion, sondern unendlich viele, die alle gleich aussehen und nur verschieden hoch liegen.',
+      'Eine Lücke hat die Regel: Bei x hoch minus eins wäre der neue Exponent null, und man müsste durch null teilen. Für 1 : x gilt die Regel also nicht — dort ist die Stammfunktion der natürliche Logarithmus. Das ist keine Schlamperei der Formel, sondern ein echter Sonderfall.',
+      'Beim BESTIMMTEN Integral setzt man zwei Grenzen ein und zieht ab: F(b) − F(a). Dabei fällt das C weg, weil es in beiden Klammern steht. Deshalb ist der Wert eindeutig, obwohl die Stammfunktion es nicht ist — das ist der Hauptsatz in einem Satz.',
+    ],
+    formel: '∫ xⁿ dx = xⁿ⁺¹ : (n + 1) + C,   n ≠ −1',
+    beispiel: '∫ von 0 bis 3 über x²: F(x) = x³ : 3, also F(3) − F(0) = 9 − 0 = 9.',
+    mehr: ['ableitung', 'flaeche', 'potenz'],
+  },
+
+  flaeche: {
+    titel: 'Fläche und Integral',
+    text: [
+      'Das bestimmte Integral misst die Fläche zwischen Kurve und x-Achse — aber MIT VORZEICHEN. Wo die Kurve unter der Achse verläuft, zählt es negativ.',
+      'Deshalb sind Fläche und Integral nicht dasselbe, und das ist der Fehler, den fast jeder einmal macht. Von −1 bis 1 über x³ kommt null heraus. Dort liegt aber sehr wohl Fläche — die eine Hälfte unter der Achse hebt die andere darüber genau auf.',
+      'Will man den Flächeninhalt, muss man an den Nullstellen trennen, jedes Stück einzeln ausrechnen und die BETRÄGE addieren. Will man die Bilanz — etwa den zurückgelegten Weg mit Hin und Zurück —, ist das Integral genau das Richtige.',
+      'Welches von beiden gemeint ist, steht nicht in der Formel, sondern in der Frage. Das ist der Grund, warum diese App beide Zahlen zeigt und sagt, wenn sie auseinandergehen.',
+    ],
+    beispiel: '∫ von −1 bis 1 über x³ ist 0. Der Flächeninhalt dagegen ist 1/4 + 1/4 = 1/2.',
+    mehr: ['integral', 'nullstelle', 'ableitung'],
+  },
+
   // -----------------------------------------------------------------
   // Zufall
   // -----------------------------------------------------------------

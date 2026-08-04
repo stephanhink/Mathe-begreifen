@@ -12,6 +12,7 @@ import { auswerteExakt } from '../utils/term';
 import { funktionsvariable, passenderBereich, xBereichUm } from '../utils/graph';
 import { beschreibe, nullstellen, scheitelpunkt, yAchsenabschnitt, wertetabelle } from '../utils/funktion';
 import { ableite, ableiteMehrfach, tangente, REGELN } from '../utils/ableitung';
+import { integriere, bestimmtesIntegral, flaeche } from '../utils/integral';
 import { alsText as termAlsText } from '../utils/term';
 import { alsText as bruchAlsText, ausText as bruchAusText } from '../utils/bruch';
 
@@ -199,6 +200,118 @@ function Ableitung({ analysis, stelleText, setStelleText, name }) {
   );
 }
 
+// Stammfunktion, bestimmtes Integral und der Unterschied zur Fläche.
+function untersucheIntegral(term, name, vonText, bisText, punkte) {
+  const F = integriere(term, name);
+  if (F.art !== 'stammfunktion') {
+    return { unklar: F.grund };
+  }
+
+  let von = null;
+  let bis = null;
+  try {
+    von = bruchAusText(String(vonText).trim().replace('−', '-'));
+    bis = bruchAusText(String(bisText).trim().replace('−', '-'));
+  } catch {
+    return { F };
+  }
+  if (von.z / von.n >= bis.z / bis.n) {
+    return { F, hinweis: 'Die untere Grenze muss kleiner sein als die obere.' };
+  }
+
+  let integral = null;
+  let bereich = null;
+  try {
+    integral = bestimmtesIntegral(term, von, bis, name);
+    // Die Nullstellen im Bereich trennen die Stücke über und unter der
+    // Achse. Ohne sie wäre die Flächenangabe falsch — und zwar genau
+    // dort, wo die meisten sich vertun.
+    const stellen = punkte.filter((p) => Math.abs(p.y) < 1e-12).map((p) => p.x);
+    bereich = flaeche(term, von, bis, stellen, name);
+  } catch {
+    integral = null;
+  }
+
+  return { F, integral, bereich, von, bis };
+}
+
+function Integral({ stammfunktion, vonText, setVonText, bisText, setBisText, name }) {
+  if (!stammfunktion) {
+    return null;
+  }
+  if (stammfunktion.unklar) {
+    return (
+      <View style={styles.abschnitt}>
+        <View style={styles.angabeKopf}>
+          <Text style={styles.abschnittTitel}>Stammfunktion</Text>
+          <InfoButton thema="integral" />
+        </View>
+        <Text style={styles.angabeErklaerung}>{stammfunktion.unklar}</Text>
+      </View>
+    );
+  }
+
+  const { F, integral, bereich } = stammfunktion;
+
+  return (
+    <View style={styles.abschnitt}>
+      <View style={styles.angabeKopf}>
+        <Text style={styles.abschnittTitel}>Stammfunktion</Text>
+        <InfoButton thema="integral" />
+      </View>
+      <Text style={styles.ableitungZeile}>
+        F({name}) = {F.alsText}
+      </Text>
+      <Text style={styles.angabeErklaerung}>
+        Das + C gehört dazu: Beim Ableiten fällt jede Konstante weg, rückwärts weiß man
+        deshalb nicht, welche es war. Beim bestimmten Integral hebt es sich auf.
+      </Text>
+
+      <View style={styles.stelleReihe}>
+        <Text style={styles.stelleLabel}>∫ von</Text>
+        <TextInput style={styles.stelleFeld} value={vonText} onChangeText={setVonText} />
+        <Text style={styles.stelleLabel}>bis</Text>
+        <TextInput style={styles.stelleFeld} value={bisText} onChangeText={setBisText} />
+      </View>
+
+      {stammfunktion.hinweis ? (
+        <Text style={styles.angabeErklaerung}>{stammfunktion.hinweis}</Text>
+      ) : null}
+
+      {integral && integral.art === 'integral' ? (
+        <View style={styles.tangenteKasten}>
+          <Text style={styles.angabeWert}>
+            F({bruchAlsText(integral.bis)}) − F({bruchAlsText(integral.von)}) ={' '}
+            {bruchAlsText(integral.oben)} − {bruchAlsText(integral.unten)} ={' '}
+            {bruchAlsText(integral.wert)}
+          </Text>
+
+          {/* Der Punkt, an dem sich fast jeder einmal vertut. */}
+          {bereich && bereich.unterschied ? (
+            <View style={styles.warnKasten}>
+              <View style={styles.angabeKopf}>
+                <Text style={styles.warnTitel}>Fläche ist hier NICHT das Integral</Text>
+                <InfoButton thema="flaeche" />
+              </View>
+              <Text style={styles.angabeErklaerung}>
+                Ein Stück der Kurve liegt unter der x-Achse und zählt deshalb negativ. Das
+                Integral ist {bruchAlsText(integral.wert)}, der Flächeninhalt dagegen{' '}
+                {String(Math.round(bereich.inhalt * 1e6) / 1e6).replace('.', ',')}. Für die
+                Fläche muss man an den Nullstellen trennen und die Beträge addieren.
+              </Text>
+            </View>
+          ) : bereich ? (
+            <Text style={styles.angabeErklaerung}>
+              Hier liegt nichts unter der x-Achse — Integral und Flächeninhalt sind
+              dasselbe.
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 // Nullstellen, Scheitel und der Schnittpunkt mit der y-Achse — die
 // Punkte, die man im Heft einzeichnet.
 function besonderePunkte(term, name) {
@@ -232,12 +345,21 @@ export default function FunktionenScreen() {
   // und nicht zur Funktion: Man will dieselbe Kurve an verschiedenen
   // Stellen anfassen — genau darum heißt die App "begreifen".
   const [stelleText, setStelleText] = useState('1');
+  const [vonText, setVonText] = useState('0');
+  const [bisText, setBisText] = useState('2');
   const { width } = useWindowDimensions();
 
   const ergebnis = useMemo(() => untersuche(eingabe), [eingabe]);
   const analysis = useMemo(
     () => (ergebnis.term ? untersucheAbleitung(ergebnis.term, ergebnis.name, stelleText) : null),
     [ergebnis.term, ergebnis.name, stelleText]
+  );
+  const stammfunktion = useMemo(
+    () =>
+      ergebnis.term
+        ? untersucheIntegral(ergebnis.term, ergebnis.name, vonText, bisText, ergebnis.punkte)
+        : null,
+    [ergebnis.term, ergebnis.name, vonText, bisText, ergebnis.punkte]
   );
   const breite = Math.min(width - 48, 420);
 
@@ -286,6 +408,14 @@ export default function FunktionenScreen() {
             analysis={analysis}
             stelleText={stelleText}
             setStelleText={setStelleText}
+            name={ergebnis.name}
+          />
+          <Integral
+            stammfunktion={stammfunktion}
+            vonText={vonText}
+            setVonText={setVonText}
+            bisText={bisText}
+            setBisText={setBisText}
             name={ergebnis.name}
           />
           <Beschreibung beschreibung={ergebnis.beschreibung} />
@@ -452,6 +582,17 @@ const styles = StyleSheet.create({
   },
   tangenteKasten: {
     marginTop: 8,
+  },
+  warnKasten: {
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: farben.warnungHintergrund,
+  },
+  warnTitel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: farben.warnung,
   },
   angabeKopf: {
     flexDirection: 'row',

@@ -257,6 +257,20 @@ export const THEMEN = {
     wissen: 'kettenregel',
   },
 
+  stammfunktion: {
+    titel: 'Eine Stammfunktion bilden',
+    klasse: 12,
+    voraussetzungen: ['ableitungPotenzregel'],
+    wissen: 'integral',
+  },
+
+  bestimmtesIntegral: {
+    titel: 'Ein bestimmtes Integral berechnen',
+    klasse: 12,
+    voraussetzungen: ['stammfunktion'],
+    wissen: 'integral',
+  },
+
   gleichungssystem: {
     titel: 'Ein Gleichungssystem lösen',
     klasse: 9,
