@@ -43,6 +43,12 @@ import {
   drehe,
 } from './ungleichung.js';
 import { parseTerm, parseUngleichung, hatVergleich } from './parser.js';
+import {
+  system,
+  istSystem,
+  alsText as systemAlsText,
+  loese as loeseSystem,
+} from './system.js';
 import { alleThemen, holeThema } from './lernpfad.js';
 
 const x = variable('x');
@@ -616,6 +622,41 @@ const GENERATOREN = {
     };
   },
 
+  // Zwei Gleichungen, zwei Unbekannte. Gebaut wird rückwärts aus einer
+  // ganzzahligen Lösung — sonst kämen Brüche heraus, und die Aufgabe
+  // prüfte das Bruchrechnen statt das Verfahren.
+  gleichungssystem(naechste) {
+    const y = variable('y');
+    const x0 = ohneNull(naechste, 6);
+    const y0 = ohneNull(naechste, 6);
+    const a1 = ohneNull(naechste, 4);
+    const b1 = ohneNull(naechste, 4);
+    let a2 = ohneNull(naechste, 4);
+    let b2 = ohneNull(naechste, 4);
+    // Nicht parallel — sonst gäbe es keine eindeutige Lösung.
+    if (a1 * b2 - a2 * b1 === 0) {
+      b2 = b2 + (b2 > 0 ? 1 : -1);
+    }
+
+    const zeile = (a, b, c) =>
+      gleichung(summe(produkt(zahl(a), x), produkt(zahl(b), y)), zahl(c));
+    const s = system(zeile(a1, b1, a1 * x0 + b1 * y0), zeile(a2, b2, a2 * x0 + b2 * y0));
+
+    return {
+      frage: `Löse das Gleichungssystem:\n${systemAlsText(s)}`,
+      start: s,
+      art: 'paar',
+      loesung: { x: zahl(x0), y: zahl(y0) },
+      fehlerbilder: [
+        fehlerbild(
+          { x: zahl(y0), y: zahl(x0) },
+          'Die beiden Zahlen stimmen, sie stehen nur vertauscht. Am Ende muss man aufschreiben, WELCHE Unbekannte welchen Wert hat — die Probe zeigt es sofort: Setze dein Paar in Zeile I ein.'
+        ),
+      ],
+      hinweis: 'Schreibe beide Werte, zum Beispiel x = 2; y = −1.',
+    };
+  },
+
   // ax + b < c mit POSITIVEM a — hier dreht sich nichts. Diese Aufgabe
   // ist absichtlich harmlos: Sie stellt fest, ob das Umformen an sich
   // sitzt, bevor die Aufgabe darüber den Dreh verlangt. Wer hier
@@ -719,6 +760,12 @@ function loesungAlsAntwort(loesung) {
   if (istUngleichung(loesung)) {
     return loesungAlsText(loeseUngleichung(loesung));
   }
+  if (istPaar(loesung)) {
+    return Object.keys(loesung)
+      .sort()
+      .map((n) => `${n} = ${termAlsText(loesung[n])}`)
+      .join('; ');
+  }
   return Array.isArray(loesung)
     ? loesung.map(termAlsText).join('; ')
     : termAlsText(loesung);
@@ -726,7 +773,30 @@ function loesungAlsAntwort(loesung) {
 
 // Deckt sich ein Fehlerbild mit der Lösung? Bei mehreren Lösungen zählt
 // die Menge, nicht die Reihenfolge.
+// Ein Paar { x: Term, y: Term } — kein Term, kein Array, keine
+// Ungleichung.
+function istPaar(wert) {
+  return (
+    typeof wert === 'object' &&
+    wert !== null &&
+    !Array.isArray(wert) &&
+    typeof wert.art !== 'string' &&
+    !istUngleichung(wert) &&
+    Object.values(wert).every(istTermWert)
+  );
+}
+
 function trifftLoesung(wert, loesung) {
+  if (istPaar(loesung) || istPaar(wert)) {
+    if (!istPaar(loesung) || !istPaar(wert)) {
+      return false;
+    }
+    const namen = Object.keys(loesung);
+    return (
+      namen.length === Object.keys(wert).length &&
+      namen.every((n) => n in wert && wertgleich(wert[n], loesung[n]))
+    );
+  }
   // Bei einer Ungleichung ist die "Lösung" kein Term, sondern ein
   // Bereich — verglichen wird die Lösungsmenge. Auch hier gilt der
   // Zweck dieses Filters: Fiele der typische Fehler mit dem Richtigen
@@ -862,6 +932,9 @@ export function pruefeAntwort(aufgabe, eingabe) {
   if (aufgabe.art === 'ungleichung') {
     return pruefeUngleichung(aufgabe, String(eingabe).trim());
   }
+  if (aufgabe.art === 'paar') {
+    return pruefePaar(aufgabe, String(eingabe).trim());
+  }
 
   let antwort;
   try {
@@ -898,6 +971,56 @@ export function pruefeAntwort(aufgabe, eingabe) {
   }
 
   return { richtig: true };
+}
+
+// Bei einem System ist die Antwort ein PAAR, und es genügt nicht, die
+// beiden Zahlen zu kennen — man muss auch wissen, welche zu welcher
+// Unbekannten gehört. Genau das ist der häufigste Fehler, und deshalb
+// wird hier nach Namen verlangt statt nach einer Reihenfolge.
+function pruefePaar(aufgabe, text) {
+  const namen = Object.keys(aufgabe.loesung).sort();
+  const gefunden = {};
+
+  for (const stueck of text.split(/[;,\n]|\bund\b/)) {
+    const treffer = /^\s*([a-zA-Z])\s*=\s*(.+)$/.exec(stueck.trim());
+    if (!treffer) {
+      continue;
+    }
+    try {
+      gefunden[treffer[1]] = parseTerm(treffer[2]);
+    } catch (fehler) {
+      return { richtig: false, grund: `Das kann ich nicht lesen: ${fehler.message}` };
+    }
+  }
+
+  const fehlend = namen.filter((n) => !(n in gefunden));
+  if (fehlend.length > 0) {
+    return {
+      richtig: false,
+      grund:
+        gefunden[namen[0]] || gefunden[namen[1]]
+          ? `Es fehlt noch ${fehlend.join(' und ')}. Bei einem System gehören beide Werte zur Lösung.`
+          : `Schreibe beide Werte mit Namen, zum Beispiel ${namen[0]} = 2; ${namen[1]} = −1.`,
+    };
+  }
+
+  const passt = (soll) => namen.every((n) => wertgleich(gefunden[n], soll[n]));
+  if (passt(aufgabe.loesung)) {
+    return { richtig: true };
+  }
+
+  for (const bild of aufgabe.fehlerbilder ?? []) {
+    if (bild.wert && !Array.isArray(bild.wert) && !istTermWert(bild.wert) && passt(bild.wert)) {
+      return { richtig: false, grund: bild.diagnose, erkannt: true };
+    }
+  }
+  return { richtig: false, grund: 'Dieses Paar löst das System nicht.' };
+}
+
+// Ein Fehlerbild kann ein Term sein oder ein Paar. Unterscheiden lassen
+// sie sich am `art`-Feld, das jeder Term hat und ein Paar nicht.
+function istTermWert(wert) {
+  return typeof wert === 'object' && wert !== null && typeof wert.art === 'string';
 }
 
 // Bei einer Ungleichung ist die Antwort keine Zahl, sondern ein

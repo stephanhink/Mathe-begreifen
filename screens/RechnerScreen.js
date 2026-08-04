@@ -14,6 +14,14 @@ import {
   loese as loeseUngleichung,
   loesungAlsText,
 } from '../utils/ungleichung';
+import {
+  alsText as systemAlsText,
+  loese as loeseSystem,
+  loesungAlsText as systemLoesungAlsText,
+  probe as systemProbe,
+  VERFAHREN,
+  ZEILEN,
+} from '../utils/system';
 import { parseEingabe } from '../utils/parser';
 import Zahlenstrahl from '../components/Zahlenstrahl';
 import { auswerte } from '../utils/term';
@@ -42,6 +50,10 @@ const BEISPIELE = [
   '2x + 1 <= 5x + 7',
   'x^2 < 4',
   'x^2 > 4',
+  '3x + 2y = 7\nx - y = 1',
+  'x + 2y = 4\n3x - y = 5',
+  'x + y = 3\nx + y = 5',
+  'x + y = 3\n2x + 2y = 6',
   '√50',
   '√(x^2)',
   'x + 1 = x + 2',
@@ -49,7 +61,7 @@ const BEISPIELE = [
 
 // Aus der Eingabe wird entweder ein Rechenweg oder ein Fehler. Beides
 // wird hier einmal berechnet und dann nur noch angezeigt.
-function rechne(eingabe) {
+function rechne(eingabe, verfahren = 'addition') {
   const text = eingabe.trim();
   if (text === '') {
     return { leer: true };
@@ -63,6 +75,9 @@ function rechne(eingabe) {
   }
 
   try {
+    if ('gleichungen' in gelesen) {
+      return { art: 'system', eingelesen: gelesen, ergebnis: loeseSystem(gelesen, verfahren) };
+    }
     // Die Reihenfolge zählt: Eine Ungleichung hat auch eine linke Seite.
     if ('zeichen' in gelesen) {
       return { art: 'ungleichung', eingelesen: gelesen, ergebnis: loeseUngleichung(gelesen) };
@@ -80,11 +95,14 @@ function rechne(eingabe) {
 
 export default function RechnerScreen() {
   const [eingabe, setEingabe] = useState('3x + 5 = 14');
-  const ergebnis = useMemo(() => rechne(eingabe), [eingabe]);
+  // Welches Verfahren gewählt ist, gehört zum Bildschirm und nicht zur
+  // Eingabe: Man will dieselbe Aufgabe auf allen drei Wegen ansehen.
+  const [verfahren, setVerfahren] = useState('addition');
+  const ergebnis = useMemo(() => rechne(eingabe, verfahren), [eingabe, verfahren]);
 
 
   return (
-    <ScreenGeruest titel="Rechner" untertitel="Term, Gleichung oder Ungleichung — mit Rechenweg">
+    <ScreenGeruest titel="Rechner" untertitel="Term, Gleichung, Ungleichung oder System">
       <FeldLabel thema="term">Deine Eingabe</FeldLabel>
       <MatheFeld
         wert={eingabe}
@@ -101,6 +119,10 @@ export default function RechnerScreen() {
         ))}
       </View>
 
+      {ergebnis.art === 'system' ? (
+        <VerfahrenWahl gewaehlt={verfahren} setzen={setVerfahren} />
+      ) : null}
+
       <Ausgabe ergebnis={ergebnis} />
 
       <View style={styles.hilfeKasten}>
@@ -110,7 +132,8 @@ export default function RechnerScreen() {
           fehlen. Es geht aber auch ohne: ^ für Potenzen (x^2 ist dasselbe wie x²),
           * oder gar nichts für Mal (3x, 2(x+1)), / oder : für Geteilt, - für Minus.
           Komma und Punkt gelten beide als Dezimaltrennzeichen. Für Ungleichungen
-          gehen &lt;= und &gt;= genauso wie ≤ und ≥.
+          gehen &lt;= und &gt;= genauso wie ≤ und ≥. Ein Gleichungssystem schreibt man
+          als zwei Zeilen untereinander.
         </Text>
       </View>
     </ScreenGeruest>
@@ -131,6 +154,9 @@ function Ausgabe({ ergebnis }) {
     );
   }
 
+  if (ergebnis.art === 'system') {
+    return <SystemWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />;
+  }
   if (ergebnis.art === 'ungleichung') {
     return <UngleichungsWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />;
   }
@@ -138,6 +164,128 @@ function Ausgabe({ ergebnis }) {
     <GleichungsWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />
   ) : (
     <TermWeg eingelesen={ergebnis.eingelesen} ergebnis={ergebnis.ergebnis} />
+  );
+}
+
+// --------------------------------------------------------------------
+// Ein Gleichungssystem
+// --------------------------------------------------------------------
+//
+// Im Unterricht heißt es "nimm das Additionsverfahren", und niemand
+// sagt, warum. Hier kann man dieselbe Aufgabe auf allen drei Wegen
+// ansehen — und sieht dabei, dass alle drei dasselbe Ergebnis liefern
+// und sich nur im Aufwand unterscheiden.
+
+function VerfahrenWahl({ gewaehlt, setzen }) {
+  return (
+    <View style={styles.verfahrenKasten}>
+      <FeldLabel thema="gleichungssystem">Verfahren</FeldLabel>
+      <View style={styles.verfahrenReihe}>
+        {Object.entries(VERFAHREN).map(([id, v]) => (
+          <Pressable
+            key={id}
+            style={[styles.verfahren, gewaehlt === id && styles.verfahrenAktiv]}
+            onPress={() => setzen(id)}
+          >
+            <Text style={[styles.verfahrenText, gewaehlt === id && styles.verfahrenTextAktiv]}>
+              {v.name.replace('verfahren', '')}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.hilfe}>{VERFAHREN[gewaehlt].wann}</Text>
+    </View>
+  );
+}
+
+function SystemWeg({ eingelesen, ergebnis }) {
+  return (
+    <View style={styles.wegKasten}>
+      <FeldLabel thema="gleichungssystem">{ergebnis.verfahrenName}</FeldLabel>
+
+      <SystemZeilen text={systemAlsText(eingelesen)} />
+
+      {ergebnis.schritte.map((s, i) => (
+        <View key={i}>
+          <Text style={styles.regel}>| {s.operation}</Text>
+          <SystemZeilen text={s.text} />
+        </View>
+      ))}
+
+      <SystemLoesung eingelesen={eingelesen} ergebnis={ergebnis} />
+    </View>
+  );
+}
+
+// Die Zeilennummern I und II stehen in einer eigenen, schmalen Spalte —
+// sonst rutschen die Gleichungen gegeneinander und man sieht nicht mehr,
+// was untereinander steht.
+function SystemZeilen({ text }) {
+  return (
+    <View style={styles.systemBlock}>
+      {text.split('\n').map((zeile, i) => {
+        const teile = zeile.split(/\s{2}/);
+        return (
+          <View key={i} style={styles.systemZeile}>
+            <Text style={styles.systemNummer}>{teile[0]}</Text>
+            <Text style={styles.zeile}>{teile.slice(1).join('  ')}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function SystemLoesung({ eingelesen, ergebnis }) {
+  if (ergebnis.art === 'unklar') {
+    return (
+      <View style={styles.unklarKasten}>
+        <View style={styles.zeileMitKnopf}>
+          <Text style={styles.unklarTitel}>Das kann ich noch nicht lösen</Text>
+          <InfoButton thema="gleichungssystem" />
+        </View>
+        <Text style={styles.unklarText}>{ergebnis.grund}</Text>
+      </View>
+    );
+  }
+
+  if (ergebnis.art === 'keine' || ergebnis.art === 'alle') {
+    return (
+      <View style={styles.ergebnisKasten}>
+        <View style={styles.zeileMitKnopf}>
+          <Text style={styles.ergebnis}>
+            {ergebnis.art === 'keine' ? 'L = { }' : 'unendlich viele Lösungen'}
+          </Text>
+          <InfoButton thema="loesungsmenge" />
+        </View>
+        <Text style={styles.begruendung}>{ergebnis.grund}</Text>
+      </View>
+    );
+  }
+
+  const namen = Object.keys(ergebnis.loesung).sort();
+  const p = systemProbe(eingelesen, ergebnis.loesung);
+
+  return (
+    <View style={styles.ergebnisKasten}>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.ergebnis}>L = &#123; ({systemLoesungAlsText(ergebnis)}) &#125;</Text>
+        <InfoButton thema="loesungsmenge" />
+      </View>
+
+      <View style={[styles.zeileMitKnopf, styles.probeUeberschrift]}>
+        <Text style={styles.probeTitel}>Probe</Text>
+        <InfoButton thema="probe" />
+      </View>
+      {/* Beide Zeilen einzeln — bei einem System reicht es nicht, dass
+          EINE stimmt. Genau das ist der Unterschied zur Gleichung. */}
+      {p.map((zeile, i) => (
+        <Text key={i} style={styles.probeZeile}>
+          {ZEILEN[i]}: links {bruchAlsText(zeile.links)}, rechts {bruchAlsText(zeile.rechts)}
+          {zeile.stimmt ? ' ✓' : ' ✗'}
+        </Text>
+      ))}
+    </View>
   );
 }
 
@@ -390,6 +538,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: farben.text,
     marginBottom: 2,
+  },
+  verfahrenKasten: {
+    marginTop: 16,
+  },
+  verfahrenReihe: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  verfahren: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: farben.trenner,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  verfahrenAktiv: {
+    backgroundColor: farben.primaer,
+    borderColor: farben.primaer,
+  },
+  verfahrenText: {
+    fontSize: 13,
+    color: farben.primaer,
+    fontWeight: '600',
+  },
+  verfahrenTextAktiv: {
+    color: farben.weiss,
+  },
+  systemBlock: {
+    marginVertical: 2,
+  },
+  systemZeile: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  systemNummer: {
+    width: 30,
+    fontSize: 13,
+    color: farben.textSehrLeise,
+    fontWeight: '600',
   },
   regelDreht: {
     color: farben.warnung,

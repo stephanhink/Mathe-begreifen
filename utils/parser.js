@@ -21,6 +21,7 @@ import { bruch, negativ } from './bruch.js';
 import { zahl, variable, summe, produkt, potenz, quotient, wurzel, betrag } from './term.js';
 import { gleichung } from './gleichung.js';
 import { ungleichung } from './ungleichung.js';
+import { system } from './system.js';
 
 // Was der Mensch tippt und was die App schreibt, ist nicht dasselbe
 // Zeichen: Auf der Tastatur liegt der Bindestrich, gesetzt wird das
@@ -490,6 +491,45 @@ export function parseGleichung(text) {
   return gleichung(links, rechts);
 }
 
+// Ein Gleichungssystem: zwei Gleichungen, eine pro Zeile. So schreibt
+// man es im Heft, und so tippt man es auch — mit Zeilenumbruch statt
+// mit einem Trennzeichen, das man erst lernen müsste.
+//
+// Führende Zeilennummern werden geschluckt: Wer "I  3x + 2y = 7"
+// abtippt, meint die Gleichung und nicht ein I mal irgendwas.
+export function parseSystem(text) {
+  const zeilen = String(text)
+    .split(/\r?\n/)
+    .map((z) => z.replace(/^\s*(I{1,3}|\d)\s*[).:]?\s+/, '').trim())
+    .filter((z) => z !== '');
+
+  if (zeilen.length !== 2) {
+    const fehler = new Error(
+      zeilen.length < 2
+        ? 'Ein Gleichungssystem braucht zwei Gleichungen — schreibe die zweite in die nächste Zeile'
+        : `Hier stehen ${zeilen.length} Zeilen. Gelöst werden Systeme aus genau zwei Gleichungen`
+    );
+    throw fehler;
+  }
+
+  return system(parseGleichung(zeilen[0]), parseGleichung(zeilen[1]));
+}
+
+// Mehrere Zeilen, in jeder ein Gleichheitszeichen? Dann ist ein System
+// gemeint.
+//
+// Absichtlich schon ab ZWEI Zeilen, nicht erst bei genau zwei: Wer drei
+// Gleichungen hinschreibt, soll "das kann ich noch nicht" hören und
+// nicht "Mit = kann ich hier nichts anfangen an Stelle 17". Die
+// Absicht ist erkennbar, nur die Antwort fehlt.
+export function istSystemEingabe(text) {
+  const zeilen = String(text)
+    .split(/\r?\n/)
+    .map((z) => z.trim())
+    .filter((z) => z !== '');
+  return zeilen.length >= 2 && zeilen.every((z) => z.includes('='));
+}
+
 // Steht irgendwo ein Vergleichszeichen? Der Test muss VOR dem auf "="
 // laufen: "x <= 3" enthält ein Gleichheitszeichen und wäre sonst als
 // Gleichung gelesen worden — und dann an ihrem eigenen "<" gescheitert.
@@ -500,6 +540,11 @@ export function hatVergleich(text) {
 // Für ein Eingabefeld, in dem alles drei stehen darf.
 export function parseEingabe(text) {
   const roh = String(text);
+  // Das System zuerst: Es enthält Gleichheitszeichen und würde sonst
+  // als eine einzige (kaputte) Gleichung gelesen.
+  if (istSystemEingabe(roh)) {
+    return parseSystem(roh);
+  }
   if (hatVergleich(roh)) {
     return parseUngleichung(roh);
   }

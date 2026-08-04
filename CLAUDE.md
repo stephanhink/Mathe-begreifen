@@ -983,6 +983,60 @@ Ungleichung darüber, sondern `ganzeZahlenMultiplizieren`. Wer nicht
 sicher weiß, dass −2 größer ist als −3, kann den Dreh nicht verstehen,
 sondern nur auswendig lernen.
 
+### Gleichungssysteme: die Invariante gilt fürs System, nicht für die Zeile
+`utils/system.js` steht aus demselben Grund neben `gleichung.js` wie
+`ungleichung.js`: Die tragende Aussage ist wieder eine andere.
+
+| Datei | Was jeder Schritt gleich lassen muss |
+|---|---|
+| `term.js` | den **Wert** |
+| `gleichung.js` | die **Lösungsmenge** |
+| `ungleichung.js` | dieselbe, aber ein Zeichen darf sich drehen |
+| `system.js` | die Lösungsmenge des **Systems** — und die besteht aus **Paaren** |
+
+Der Unterschied ist nicht akademisch: Eine einzelne Zeile **darf** sich
+ändern. Aus II wird I + II, und das ist eine ganz andere Gleichung.
+Erlaubt ist es, weil das Paar, das beide Zeilen zugleich löst, dasselbe
+bleibt. Wer hier die einzelne Zeile prüfte, hielte jeden richtigen
+Schritt für falsch.
+
+Damit das prüfbar bleibt, ist **jeder Zwischenstand wieder ein System**,
+nie eine einzelne Gleichung — auch „y = 3" steht als zweite Zeile eines
+Systems da. Das kostet nichts und macht den ganzen Weg mit einer
+einzigen Invariante prüfbar.
+
+#### Zufällige Punkte taugen hier GAR nicht
+Bei `gleichung.js` war die Stichprobe schon schwach (zwei Gleichungen
+sind an einer beliebigen Stelle fast immer beide unerfüllt). Bei einem
+System ist sie wertlos: Ein beliebiges Paar (x | y) löst so gut wie nie
+ein System — vorher nicht und nachher auch nicht. Die Prüfung sähe
+überall „nicht erfüllt" und meldete nie etwas.
+
+Geprüft wird deshalb **an den Lösungen**, und in beide Richtungen:
+1. Die Lösung des ursprünglichen Systems muss auch das umgeformte lösen.
+2. Was das umgeformte System löst, muss auch das ursprüngliche lösen.
+
+#### Der gefährliche Schritt ist nicht der, den man vermutet
+Beim Schreiben der Gegenprobe kam ein Fund heraus, der auch fachlich
+lehrreich ist. Naheliegend als „typischer Fehler" wäre: statt `II + I`
+wird `II − I` gerechnet. **Das ist gar kein Fehler.** Jede *umkehrbare*
+Zeilenkombination erhält die Lösungsmenge — das Lösungspaar erfüllt
+beide Zeilen und damit auch jede Summe und jede Differenz von ihnen.
+
+Gefährlich ist der Schritt, der sich NICHT rückgängig machen lässt: eine
+Zeile mit **null** multiplizieren oder durch eine Kopie der anderen
+ersetzen. Dabei geht Information verloren, und es kommen Lösungen DAZU,
+die keine sind. Genau dagegen prüft die zweite Richtung oben.
+
+#### Drei Verfahren als Quervergleich
+Einsetzen, Gleichsetzen und Addieren sind im Unterricht drei Wege zum
+selben Ziel — und in den Prüfungen ein zusätzliches Sicherheitsnetz:
+Rechnet eines von ihnen falsch, weichen die Antworten voneinander ab,
+auch wenn jede für sich plausibel aussieht. Im Rechner kann man
+zwischen ihnen umschalten und dieselbe Aufgabe dreimal ansehen. Im
+Unterricht heißt es „nimm das Additionsverfahren", und niemand sagt
+warum.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1031,6 +1085,9 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/system.js` — lineare Gleichungssysteme mit zwei Unbekannten,
+  in allen drei Verfahren des Unterrichts: Einsetzen, Gleichsetzen,
+  Addieren
 - `utils/ungleichung.js` — Ungleichungen ersten und zweiten Grades,
   samt der einen Regel, die alles umkehrt: Beim Multiplizieren mit
   einer negativen Zahl dreht sich das Vergleichszeichen um.
@@ -1043,7 +1100,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **2303 Prüfungen**
+- Zusammen **2410 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1201,17 +1258,12 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
   1. ~~Ungleichungen~~ **stehen** (2026-08-04), mit zwei Themen im
      Lernpfad und zwei Aufgabengeneratoren.
 
-     **HIER GEHT ES WEITER: Gleichungssysteme.** Zwei Gleichungen, zwei
-     Unbekannte. Zu bauen als `utils/system.js` neben `gleichung.js` —
-     dieselbe Begründung wie bei `ungleichung.js`: Die tragende
-     Invariante ist wieder eine andere. Bei einem System ist die Lösung
-     ein PAAR, und die Umformung darf die Lösungsmenge des Systems nicht
-     ändern, nicht die einer einzelnen Zeile. Drei Verfahren, die im
-     Unterricht alle drei vorkommen und alle drei einen Namen haben:
-     Einsetzen, Gleichsetzen, Addieren. Erkennen muss es „keine Lösung"
-     (parallele Geraden) und „unendlich viele" (dieselbe Gerade) — beides
-     sieht man am Schnittpunkt zweier Geraden, und `graph.js` kann das
-     schon zeichnen. Danach ist `gleichung.js` als Block abgeschlossen
+     ~~Gleichungssysteme~~ **stehen ebenfalls** (2026-08-04). Damit ist
+     dieser Block abgeschlossen.
+
+     **HIER GEHT ES WEITER: die Ableitung.** Damit beginnt die
+     Oberstufe — und der Punkt, ab dem die Kurzbeschreibung im
+     Play-Store-Listing ausgetauscht werden kann
   2. **Ableitung** — das eigentliche Ziel, und der Grund, warum der ganze
      Graph darunter überhaupt existiert
   3. **Integral**

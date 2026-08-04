@@ -22,6 +22,19 @@ import {
   loesungAlsText,
 } from '../utils/ungleichung.js';
 
+// Ein Paar { x: Term, y: Term } — kein Term, kein Array, keine
+// Ungleichung. Erkennbar daran, dass ihm das art-Feld fehlt, das jeder
+// Term hat.
+function istPaar(wert) {
+  return (
+    typeof wert === 'object' &&
+    wert !== null &&
+    !Array.isArray(wert) &&
+    typeof wert.art !== 'string' &&
+    !istUngleichung(wert)
+  );
+}
+
 // Zwei Ungleichungen beschreiben denselben Bereich? Strukturell
 // verglichen, nicht über Stichproben: x < 3 und x ≤ 3 sähen an
 // zufälligen Stellen fast immer gleich aus, und genau der Unterschied
@@ -65,7 +78,7 @@ pruefung('Eine Aufgabe ist vollständig', () => {
     wahr(`${id}: hat eine Frage`, typeof a.frage === 'string' && a.frage.length > 5);
     wahr(
       `${id}: hat eine bekannte Art`,
-      ['zahl', 'term', 'zahlen', 'ungleichung'].includes(a.art)
+      ['zahl', 'term', 'zahlen', 'ungleichung', 'paar'].includes(a.art)
     );
     wahr(`${id}: hat eine Lösung`, Boolean(a.loesung));
     wahr(`${id}: nennt den Titel des Themas`, Boolean(a.titel));
@@ -230,6 +243,14 @@ pruefung('Ein Fehlerbild trifft nie die richtige Lösung', () => {
           if (deckungsgleich) {
             fehler = `"${a.frage}": ein Fehlerbild ist deckungsgleich mit der Lösung`;
           }
+        } else if (istPaar(a.loesung)) {
+          // Bei einem System ist die Lösung ein Paar. Deckungsgleich
+          // wäre das Vertausch-Fehlerbild genau dann, wenn beide Werte
+          // zufällig gleich sind — (2 | 2) vertauscht bleibt (2 | 2).
+          const namen = Object.keys(a.loesung);
+          if (namen.every((n) => wertgleich(bild.wert[n], a.loesung[n]))) {
+            fehler = `"${a.frage}": das vertauschte Paar ist die richtige Lösung`;
+          }
         } else if (istUngleichung(a.loesung)) {
           // Bei einer Ungleichung ist die Lösung ein Bereich. Zwei
           // Bereiche mit derselben Grenze können sich allein im Zeichen
@@ -259,7 +280,12 @@ pruefung('Ein Fehlerbild wird erkannt und benannt', () => {
   for (const id of alleThemen()) {
     const a = erzeugeAufgabe(id, naechste);
     for (const bild of a.fehlerbilder ?? []) {
-      const eingabe = istUngleichung(bild.wert)
+      const eingabe = istPaar(bild.wert)
+        ? Object.keys(bild.wert)
+            .sort()
+            .map((n) => `${n} = ${termAlsText(bild.wert[n])}`)
+            .join('; ')
+        : istUngleichung(bild.wert)
         ? ungleichungAlsText(bild.wert)
         : Array.isArray(bild.wert)
           ? bild.wert.map(termAlsText).join('; ')

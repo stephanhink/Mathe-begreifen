@@ -419,6 +419,21 @@ export const THEMEN = {
     mehr: ['gleichung', 'beideSeiten', 'loesungsmenge'],
   },
 
+  gleichungssystem: {
+    titel: 'Gleichungssysteme',
+    text: [
+      'Bei einem Gleichungssystem müssen ZWEI Gleichungen gleichzeitig stimmen — und gesucht ist nicht eine Zahl, sondern ein Zahlenpaar. Zwei Unbekannte, zwei Bedingungen.',
+      'Der Grund, warum man zwei Gleichungen braucht: Mit einer allein gibt es unendlich viele Paare, die passen. x + y = 5 erfüllen (1|4), (2|3), (0|5) und beliebig viele andere. Erst die zweite Bedingung engt es auf ein einziges Paar ein.',
+      'Am besten sieht man das als Bild: Jede der beiden Gleichungen beschreibt eine Gerade. Die Lösung ist ihr Schnittpunkt. Daraus folgen sofort die beiden Sonderfälle — sind die Geraden parallel, gibt es keinen Schnittpunkt und keine Lösung; sind es dieselben Geraden, schneiden sie sich überall und es gibt unendlich viele.',
+      'Drei Verfahren führen zum Ziel, und alle drei liefern dasselbe Ergebnis. Beim EINSETZUNGSVERFAHREN löst man eine Zeile nach einer Unbekannten auf und setzt den Ausdruck in die andere ein. Beim GLEICHSETZUNGSVERFAHREN löst man beide nach derselben Unbekannten auf; dann müssen die rechten Seiten übereinstimmen. Beim ADDITIONSVERFAHREN erweitert man so, dass bei einer Unbekannten entgegengesetzt gleiche Zahlen stehen, und addiert beide Zeilen — dabei fällt sie heraus.',
+      'Welches man nimmt, ist eine Frage der Bequemlichkeit, nicht der Richtigkeit. Steht eine Zeile schon als y = … da, ist Einsetzen am kürzesten. Stehen die Unbekannten in beiden Zeilen ordentlich untereinander, ist Addieren am kürzesten.',
+      'Die Probe muss BEIDE Zeilen prüfen. Ein Paar, das nur die erste erfüllt, ist keine Lösung des Systems — das ist der Unterschied zu einer einzelnen Gleichung.',
+    ],
+    formel: 'I  a₁x + b₁y = c₁    II  a₂x + b₂y = c₂',
+    beispiel: 'I 3x + 2y = 7, II x − y = 1. Aus II folgt x = y + 1; eingesetzt in I: 3(y+1) + 2y = 7, also 5y = 4 und y = 4/5, damit x = 9/5.',
+    mehr: ['gleichung', 'beideSeiten', 'loesungsmenge', 'steigung'],
+  },
+
   loesungsmenge: {
     titel: 'Die Lösungsmenge L',
     text: [

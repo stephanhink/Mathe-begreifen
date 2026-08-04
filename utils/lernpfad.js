@@ -231,6 +231,13 @@ export const THEMEN = {
     wissen: 'ungleichung',
   },
 
+  gleichungssystem: {
+    titel: 'Ein Gleichungssystem lösen',
+    klasse: 9,
+    voraussetzungen: ['gleichungMitKlammern', 'termZusammenfassen'],
+    wissen: 'gleichungssystem',
+  },
+
   ungleichungMitDreh: {
     titel: 'Eine Ungleichung mit negativem Vorfaktor lösen',
     klasse: 8,
