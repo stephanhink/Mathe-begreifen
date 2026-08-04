@@ -866,10 +866,29 @@ als `#000000` und nicht als `gray(0)`. Der Filter traf nie, und gemeldet
 wurde die Bildecke. Aufgefallen ist es nur, weil die Zahl (721 px)
 offensichtlich unmöglich war.
 
-### Screenshots kommen aus dem Emulator, nicht vom Handy
+### Screenshots: aus dem echten Build, NICHT aus Expo Go
+Der erste Satz Screenshots war unbrauchbar, und es fiel erst beim
+Gegenlesen der Familienrichtlinie auf: Auf allen acht Bildern saß oben
+rechts ein grauer Zahnrad-Knopf. **Der gehört nicht zur App** — es ist der
+„Tools"-Knopf von Expo Go. Die App hat gar keine Kopfzeile mit
+Bedienelement; `App.js` rendert nur Inhalt und Tab-Leiste.
+
+Ein Store-Eintrag hätte damit etwas gezeigt, das kein Nutzer je sieht.
+Deshalb: **Screenshots immer aus einem installierten Build**, nie aus
+Expo Go. Der Weg dahin:
+
+```
+eas build --local --platform android --profile preview   # ergibt ein APK
+adb install -r build-*.apk
+adb shell monkey -p com.hink.mathe -c android.intent.category.LAUNCHER 1
+```
+
+Danach steht im Fokus `com.hink.mathe/com.hink.mathe.MainActivity` statt
+`host.exp.exponent` — das ist die Probe, dass man die richtige App
+fotografiert.
+
 Aufgenommen mit `adb exec-out screencap` auf dem AVD
-`Medium_Phone_API_36.1` (1080×2400), während die App über
-`npx expo start --android` aus Expo Go lief. Durchgeklickt wurde mit
+`Medium_Phone_API_36.1` (1080×2400). Durchgeklickt wurde mit
 `adb shell input tap`; die Koordinaten liefert **`uiautomator dump`**, denn
 aus einem verkleinerten Bildschirmfoto abgeschätzte Werte treffen den
 Info-Knopf um über hundert Pixel daneben.
@@ -887,6 +906,9 @@ Drei Fallen, alle drei zuerst hineingetappt:
    Lückenfinders stand danach eine Lücke, die es nicht gibt. Seitdem prüft
    das Tippen selbst nach, ob der Text im Feld steht, und wiederholt sich
    sonst.
+
+Gegengeprüft wird der Zuschnitt an der Stelle, an der der Expo-Go-Knopf
+saß: Ist das Pixel dort weiß, ist kein Rest davon im Bild.
 
 Das Ergebnis muss auf **1:2** gebracht werden: Der Emulator liefert
 1:2,22, Google lässt höchstens 1:2 zu. Gestaucht litte die Schrift, also
