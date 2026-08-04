@@ -275,10 +275,19 @@ export function auswerteExakt(term, belegung = {}) {
     case 'potenz': {
       const e = auswerteExakt(term.exponent, belegung);
       if (!istGanz(e)) {
-        throw new Error(
+        // Gekennzeichnet als `irrational`, nicht kennzeichenlos. Ein
+        // gebrochener Exponent IST eine Wurzel — also "das ist kein
+        // Bruch, aber es gibt es", und damit dieselbe Sorte Fehler wie
+        // bei √2. Wer das nicht kennzeichnet, zwingt jeden Aufrufer,
+        // den Fall wie einen echten Rechenfehler zu behandeln: Genau
+        // daran ist wertgleich() in aufgaben.js gescheitert und hat die
+        // richtige Antwort 2x^(−1/2) als falsch abgewiesen.
+        const fehler = new Error(
           `auswerteExakt: Exponent ${bruchAlsText(e)} ist keine ganze Zahl — ` +
             'gebrochene Exponenten sind Wurzeln und im Allgemeinen keine Brüche'
         );
+        fehler.irrational = true;
+        throw fehler;
       }
       return hoch(auswerteExakt(term.basis, belegung), e.z);
     }

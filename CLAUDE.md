@@ -1037,6 +1037,64 @@ zwischen ihnen umschalten und dieselbe Aufgabe dreimal ansehen. Im
 Unterricht heißt es „nimm das Additionsverfahren", und niemand sagt
 warum.
 
+### Die Ableitung: geprüft gegen ihre eigene Definition
+Für `utils/ableitung.js` gilt eine Prüfung, die keine einzige Regel
+kennt und trotzdem alle prüft:
+
+> **f′(x) ≈ (f(x + h) − f(x − h)) / (2h)**
+
+Wäre die Potenzregel falsch abgeschrieben, ein Vorzeichen verdreht oder
+die innere Ableitung vergessen — der Differenzenquotient fiele sofort
+auf, weil er nichts von Regeln weiß. Dreifach gegengeprüft, jedes Mal
+mit konkreten Zahlen.
+
+> Benutzt wird der **symmetrische** Differenzenquotient, nicht der
+> einseitige aus dem Schulbuch. Sein Fehler ist von der Ordnung h²
+> statt h; bei h = 1e-5 sind das etwa zehn genaue Stellen statt fünf.
+> Mit dem einseitigen wäre die Toleranz so weit, dass echte Fehler
+> durchrutschten.
+
+#### Es gibt keine Wurzelregel und keine Kehrwertregel
+√x IST x^(1/2), und 1:x IST x⁻¹. Das Umschreiben ist ein **eigener,
+sichtbarer Schritt** und keine stille Vorbereitung — genau daran hängt
+der ganze Lernpfad. Wer es sieht, versteht, warum in der Ableitung von
+√x ein Bruch im Exponenten steht. Wer es nicht sieht, lernt eine Formel,
+die vom Himmel fällt.
+
+Ebenso: Durch eine **Zahl** zu teilen ist die Faktorregel, nicht die
+Quotientenregel — der häufigste unnötige Rechenweg im Unterricht.
+
+#### Die kürzere Schreibweise gewinnt
+Beim Aufräumen gibt es zwei Wege, und keiner gewinnt immer:
+
+| | ausmultipliziert | nur zusammengefasst |
+|---|---|---|
+| `(2x+1)³` | 24x² + 24x + 6 | **6(2x + 1)²** |
+| `x²·(x+1)` | **3x² + 2x** | 2x · (x + 1) + x² |
+
+Bei der Kettenregel ist die Klammerform die, die man im Heft stehen
+lässt; beim Produkt die ausmultiplizierte. Da beide wertgleich sind —
+dafür sorgt die tragende Prüfung in `term.js` —, ändert die Wahl nichts
+am Ergebnis, nur an der Lesbarkeit. Also entscheidet die Länge.
+
+#### Zwei Funde, die älteren Code betrafen
+Die neuen Bruchexponenten haben zwei Stellen aufgedeckt, die vorher nie
+erreicht wurden:
+
+1. **`term.js` warf bei einem gebrochenen Exponenten einen Fehler OHNE
+   Kennzeichen.** Nach der eigenen Regel des Projekts ist das
+   `irrational` — „das ist kein Bruch, aber es gibt es", dieselbe Sorte
+   wie bei √2. Ohne Kennzeichen musste jeder Aufrufer den Fall wie
+   einen echten Rechenfehler behandeln.
+2. Daran gescheitert ist `wertgleich()` in `aufgaben.js`: Es wies die
+   **richtige** Antwort `2x^(−1/2)` als falsch ab. Zusätzlich verglich
+   es an Stellen, wo beide Seiten `NaN` sind — und `NaN ≠ NaN` las es
+   als „verschieden" statt als „hier nicht vergleichbar".
+
+Beides ist derselbe Fehlertyp: **eine offene Frage mit einem sachlichen
+Nein zu beantworten.** Steht als Warnung schon in CLAUDE.md, war aber an
+diesen zwei Stellen noch nicht umgesetzt.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1085,6 +1143,8 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/ableitung.js` — ableiten mit dem Namen jeder Regel, höhere
+  Ableitungen und die Tangente. Damit beginnt die Oberstufe
 - `utils/system.js` — lineare Gleichungssysteme mit zwei Unbekannten,
   in allen drei Verfahren des Unterrichts: Einsetzen, Gleichsetzen,
   Addieren
@@ -1100,7 +1160,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **2410 Prüfungen**
+- Zusammen **2614 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1261,19 +1321,20 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
      ~~Gleichungssysteme~~ **stehen ebenfalls** (2026-08-04). Damit ist
      dieser Block abgeschlossen.
 
-     **HIER GEHT ES WEITER: die Ableitung.** Damit beginnt die
-     Oberstufe — und der Punkt, ab dem die Kurzbeschreibung im
-     Play-Store-Listing ausgetauscht werden kann
-  2. **Ableitung** — das eigentliche Ziel, und der Grund, warum der ganze
-     Graph darunter überhaupt existiert
-  3. **Integral**
+     ~~Ableitung~~ **steht** (2026-08-04): Potenz-, Faktor-, Summen-,
+     Produkt-, Quotienten- und Kettenregel, höhere Ableitungen,
+     Tangente, drei Themen im Lernpfad.
+
+     **HIER GEHT ES WEITER: das Integral.** Danach Vektorgeometrie und
+     Hypothesentest
+  2. **Integral**
   4. **Vektorgeometrie und Hypothesentest**
 
   Jedes neue Thema braucht einen Eintrag in `lernpfad.js` UND einen
   Generator in `aufgaben.js`, sonst schlägt die Prüfung fehl. Genau dieses
   Geländer hält den Graphen beim Wachsen ehrlich.
-- Sobald Ableitung und Integral stehen: die Kurzbeschreibung im
-  Play-Store-Listing austauschen. Die Fassung mit „Ableitung" und
+- **Jetzt möglich:** die Kurzbeschreibung im Play-Store-Listing
+  austauschen — „Ableitung" darf seit dem 2026-08-04 darin stehen. Die Fassung mit „Ableitung" und
   „Abitur" liegt dort unter „Für später" fertig bereit — vorher wäre sie
   eine Werbung für etwas, das es nicht gibt.
 - Warten auf die Freigabe durch Google. Danach: Bewertungen und Abstürze

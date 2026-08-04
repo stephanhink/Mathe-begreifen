@@ -401,9 +401,25 @@ function wurzelRegel(term, name, schritte) {
 // mit denselben Werkzeugen wie überall — nicht mit einer eigenen
 // Vereinfachung, die anders rechnen könnte als der Rest der App.
 
+// Zwei Wege, und keiner gewinnt immer:
+//
+//   ausmultipliziert   (2x+1)³ → 24x² + 24x + 6      x²·(x+1) → 3x² + 2x
+//   nur zusammengefasst (2x+1)³ → 6(2x + 1)²          x²·(x+1) → 2x · (x + 1) + x²
+//
+// Bei der Kettenregel ist die Klammerform die, die man im Heft
+// stehen lässt; beim Produkt ist die ausmultiplizierte die, die man
+// hinschreibt. Da BEIDE wertgleich sind — dafür sorgt die tragende
+// Prüfung in term.js —, ändert die Wahl nichts am Ergebnis, nur an der
+// Lesbarkeit. Also entscheidet die kürzere Schreibweise.
 function aufraeumen(term) {
-  const ausmultipliziert = multipliziereAus(term).term;
-  return vereinfache(ausmultipliziert).term;
+  const knapp = vereinfache(term).term;
+  let breit;
+  try {
+    breit = vereinfache(multipliziereAus(term).term).term;
+  } catch {
+    return knapp;
+  }
+  return termAlsText(breit).length < termAlsText(knapp).length ? breit : knapp;
 }
 
 // ---------------------------------------------------------------------

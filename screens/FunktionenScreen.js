@@ -9,9 +9,11 @@ import Funktionsgraph from '../components/Funktionsgraph';
 import { farben } from '../utils/konstanten';
 import { parseTerm } from '../utils/parser';
 import { auswerteExakt } from '../utils/term';
-import { bruch } from '../utils/bruch';
 import { funktionsvariable, passenderBereich, xBereichUm } from '../utils/graph';
 import { beschreibe, nullstellen, scheitelpunkt, yAchsenabschnitt, wertetabelle } from '../utils/funktion';
+import { ableite, ableiteMehrfach, tangente, REGELN } from '../utils/ableitung';
+import { alsText as termAlsText } from '../utils/term';
+import { alsText as bruchAlsText, ausText as bruchAusText } from '../utils/bruch';
 
 // Der Funktionen-Bildschirm: eintippen, sehen, verstehen.
 //
@@ -76,6 +78,127 @@ function untersuche(eingabe) {
   }
 }
 
+// Die Ableitung und die Tangente an einer wählbaren Stelle.
+//
+// Der Screen rechnet auch hier nichts: ableite() und tangente() stehen
+// in utils/ableitung.js und sind gegen den Differenzenquotienten
+// geprüft.
+function untersucheAbleitung(term, name, stelleText) {
+  const e = ableite(term, name);
+  if (e.art !== 'ableitung') {
+    return { unklar: e.grund };
+  }
+
+  let stelle = null;
+  try {
+    stelle = bruchAusText(String(stelleText).trim().replace('−', '-'));
+  } catch {
+    stelle = null;
+  }
+
+  let t = null;
+  let beruehrpunkt = null;
+  if (stelle !== null) {
+    try {
+      const gefunden = tangente(term, stelle, name);
+      if (gefunden.art === 'tangente') {
+        t = gefunden;
+        beruehrpunkt = {
+          x: stelle.z / stelle.n,
+          y: gefunden.beruehrpunkt.z / gefunden.beruehrpunkt.n,
+        };
+      }
+    } catch {
+      t = null;
+    }
+  }
+
+  const zweite = ableiteMehrfach(term, 2, name);
+  return {
+    ableitung: e.ableitung,
+    schritte: e.schritte,
+    zweite: zweite.art === 'ableitung' ? zweite.ableitung : null,
+    tangente: t,
+    beruehrpunkt,
+  };
+}
+
+function Ableitung({ analysis, stelleText, setStelleText, name }) {
+  if (!analysis) {
+    return null;
+  }
+  if (analysis.unklar) {
+    return (
+      <View style={styles.abschnitt}>
+        <View style={styles.angabeKopf}>
+          <Text style={styles.abschnittTitel}>Ableitung</Text>
+          <InfoButton thema="ableitung" />
+        </View>
+        <Text style={styles.angabeErklaerung}>{analysis.unklar}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.abschnitt}>
+      <View style={styles.angabeKopf}>
+        <Text style={styles.abschnittTitel}>Ableitung</Text>
+        <InfoButton thema="ableitung" />
+      </View>
+
+      <Text style={styles.ableitungZeile}>
+        f′({name}) = {termAlsText(analysis.ableitung)}
+      </Text>
+      {analysis.zweite ? (
+        <Text style={styles.ableitungZweite}>
+          f″({name}) = {termAlsText(analysis.zweite)}
+        </Text>
+      ) : null}
+
+      {/* Der Rechenweg — jede Regel mit Namen. Das ist der Grund, warum
+          es diese App gibt: nicht das Ergebnis, sondern der Weg. */}
+      <View style={styles.regelnKasten}>
+        {analysis.schritte.map((s, i) => (
+          <Text key={i} style={styles.regelZeile}>
+            <Text style={styles.regelName}>{s.regel}</Text>
+            {'  '}
+            {s.text}
+          </Text>
+        ))}
+      </View>
+
+      <View style={styles.angabeKopf}>
+        <Text style={styles.abschnittTitel}>Tangente anlegen</Text>
+        <InfoButton thema="tangente" />
+      </View>
+      <View style={styles.stelleReihe}>
+        <Text style={styles.stelleLabel}>bei {name} =</Text>
+        <TextInput
+          style={styles.stelleFeld}
+          value={stelleText}
+          onChangeText={setStelleText}
+          placeholder="1"
+        />
+      </View>
+
+      {analysis.tangente ? (
+        <View style={styles.tangenteKasten}>
+          <Text style={styles.angabeWert}>y = {termAlsText(analysis.tangente.term)}</Text>
+          <Text style={styles.angabeErklaerung}>
+            Die Steigung dort ist {bruchAlsText(analysis.tangente.steigung)}. So schnell wächst
+            die Funktion an dieser Stelle — die gestrichelte Gerade im Bild berührt die Kurve
+            genau da und läuft in dieselbe Richtung.
+          </Text>
+        </View>
+      ) : (
+        <Text style={styles.angabeErklaerung}>
+          Trage eine Zahl ein, dann wird die Tangente dort eingezeichnet.
+        </Text>
+      )}
+    </View>
+  );
+}
+
 // Nullstellen, Scheitel und der Schnittpunkt mit der y-Achse — die
 // Punkte, die man im Heft einzeichnet.
 function besonderePunkte(term, name) {
@@ -105,9 +228,17 @@ function besonderePunkte(term, name) {
 
 export default function FunktionenScreen() {
   const [eingabe, setEingabe] = useState('x^2 - 6x + 8');
+  // Die Stelle, an der die Tangente anliegt. Sie gehört zum Bildschirm
+  // und nicht zur Funktion: Man will dieselbe Kurve an verschiedenen
+  // Stellen anfassen — genau darum heißt die App "begreifen".
+  const [stelleText, setStelleText] = useState('1');
   const { width } = useWindowDimensions();
 
   const ergebnis = useMemo(() => untersuche(eingabe), [eingabe]);
+  const analysis = useMemo(
+    () => (ergebnis.term ? untersucheAbleitung(ergebnis.term, ergebnis.name, stelleText) : null),
+    [ergebnis.term, ergebnis.name, stelleText]
+  );
   const breite = Math.min(width - 48, 420);
 
 
@@ -142,10 +273,21 @@ export default function FunktionenScreen() {
               fenster={ergebnis.fenster}
               breite={breite}
               hoehe={Math.round(breite * 0.75)}
-              punkte={ergebnis.punkte}
+              punkte={
+                analysis && analysis.tangente
+                  ? [...ergebnis.punkte, analysis.beruehrpunkt]
+                  : ergebnis.punkte
+              }
+              nebenkurve={analysis && analysis.tangente ? analysis.tangente.term : null}
             />
           </View>
 
+          <Ableitung
+            analysis={analysis}
+            stelleText={stelleText}
+            setStelleText={setStelleText}
+            name={ergebnis.name}
+          />
           <Beschreibung beschreibung={ergebnis.beschreibung} />
           <Wertetabelle zeilen={ergebnis.tabelle} name={ergebnis.name} />
         </>
@@ -260,6 +402,56 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     borderLeftWidth: 3,
     borderLeftColor: farben.trenner,
+  },
+  ableitungZeile: {
+    fontSize: 19,
+    color: farben.primaer,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  ableitungZweite: {
+    fontSize: 15,
+    color: farben.textLeise,
+    marginTop: 2,
+  },
+  regelnKasten: {
+    marginTop: 8,
+    marginBottom: 4,
+    paddingLeft: 10,
+    borderLeftWidth: 2,
+    borderLeftColor: farben.trenner,
+  },
+  regelZeile: {
+    fontSize: 13,
+    color: farben.textLeise,
+    marginBottom: 3,
+  },
+  regelName: {
+    color: farben.primaer,
+    fontWeight: '600',
+  },
+  stelleReihe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  stelleLabel: {
+    fontSize: 15,
+    color: farben.text,
+  },
+  stelleFeld: {
+    borderWidth: 1,
+    borderColor: farben.rand,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    fontSize: 16,
+    minWidth: 80,
+    color: farben.text,
+  },
+  tangenteKasten: {
+    marginTop: 8,
   },
   angabeKopf: {
     flexDirection: 'row',

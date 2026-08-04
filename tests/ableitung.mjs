@@ -73,7 +73,10 @@ pruefung('Die Kettenregel — und was ohne sie herauskäme', () => {
   // 3(2x+1)² = 12x² + 12x + 3 statt 24x² + 24x + 6. Also genau die
   // Hälfte, und das fällt bei einer Probe sofort auf.
   const e = ableite(parseTerm('(2x+1)^3'));
-  gleichText('mit innerer Ableitung', termAlsText(e.ableitung), '24x² + 24x + 6');
+  // Stehen bleibt die Klammerform — so schreibt man es im Heft, und sie
+  // ist kürzer. Ausmultipliziert wäre es 24x² + 24x + 6, also dasselbe.
+  gleichText('mit innerer Ableitung', termAlsText(e.ableitung), '6(2x + 1)²');
+  gleichText('ausmultipliziert dasselbe', auswerte(e.ableitung, { x: 2 }), 24 * 4 + 24 * 2 + 6);
 
   const regeln = e.schritte.map((s) => s.schluessel);
   wahr('die Kettenregel wird benannt', regeln.includes('kette'), regeln.join(', '));

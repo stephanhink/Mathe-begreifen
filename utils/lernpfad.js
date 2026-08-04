@@ -231,6 +231,32 @@ export const THEMEN = {
     wissen: 'ungleichung',
   },
 
+  // Die Oberstufe. Hier läuft der ganze Graph zusammen: Die Ableitung
+  // steht auf den Potenzgesetzen, und die Kettenregel steht auf der
+  // Ableitung. Wer bei der Kettenregel scheitert, wird vom Lückenfinder
+  // nach UNTEN geschickt — und landet oft bei negativeExponenten. Genau
+  // dieser Weg ist der Grund, warum es diese App gibt.
+  ableitungPotenzregel: {
+    titel: 'Mit der Potenzregel ableiten',
+    klasse: 11,
+    voraussetzungen: ['potenzDefinition', 'termMitPotenzen'],
+    wissen: 'ableitung',
+  },
+
+  ableitungMitWurzel: {
+    titel: 'Wurzeln und Brüche ableiten',
+    klasse: 11,
+    voraussetzungen: ['ableitungPotenzregel', 'negativeExponenten', 'wurzelZiehen'],
+    wissen: 'ableitung',
+  },
+
+  kettenregel: {
+    titel: 'Mit der Kettenregel ableiten',
+    klasse: 11,
+    voraussetzungen: ['ableitungPotenzregel', 'ausmultiplizieren'],
+    wissen: 'kettenregel',
+  },
+
   gleichungssystem: {
     titel: 'Ein Gleichungssystem lösen',
     klasse: 9,

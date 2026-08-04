@@ -21,6 +21,11 @@ export default function Funktionsgraph({
   breite = 320,
   hoehe = 240,
   punkte = [],
+  // Eine zweite Kurve, dünner und in einer anderen Farbe — für die
+  // Tangente. Sie gehört ins selbe Bild wie die Funktion, denn genau
+  // das Anschmiegen ist die Aussage: Eine Zahl wie "f′(2) = 4" sagt
+  // wenig, eine Gerade, die die Kurve berührt, sagt alles.
+  nebenkurve = null,
 }) {
   const zeichenBreite = breite - RAND.links - RAND.rechts;
   const zeichenHoehe = hoehe - RAND.oben - RAND.unten;
@@ -60,6 +65,15 @@ export default function Funktionsgraph({
         <Text style={styles.fehler}>{fehler}</Text>
       </View>
     );
+  }
+
+  let nebenabschnitte = [];
+  if (nebenkurve) {
+    try {
+      nebenabschnitte = abtasten(nebenkurve, name, { ...fenster, punkte: 240 });
+    } catch {
+      nebenabschnitte = [];
+    }
   }
 
   const innerhalb = (p) => p.y >= fenster.unten - 1e-9 && p.y <= fenster.oben + 1e-9;
@@ -142,6 +156,19 @@ export default function Funktionsgraph({
               {String(wert).replace('.', ',').replace('-', '−')}
             </SvgText>
           ))}
+
+        {/* Die Nebenkurve zuerst — sie liegt UNTER der Funktion, damit
+            die Funktion die Hauptsache bleibt. */}
+        {nebenabschnitte.map((abschnitt, i) => (
+          <Path
+            key={`n${i}`}
+            d={alsPfad(abschnitt, px, py, fenster)}
+            stroke={farben.warnung}
+            strokeWidth={2}
+            strokeDasharray="6 4"
+            fill="none"
+          />
+        ))}
 
         {/* Die Kurve */}
         {abschnitte.map((abschnitt, i) => (

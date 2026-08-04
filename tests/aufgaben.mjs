@@ -14,6 +14,7 @@ import { pruefung, wahr, zahl as zahlIst, gleich as gleichText, wirft } from './
 import { wuerfel, startwertFuer } from './wuerfel.mjs';
 import { bruch } from '../utils/bruch.js';
 import { zahl, variable, summe, produkt, potenz, alsText as termAlsText } from '../utils/term.js';
+import { istGleichung } from '../utils/gleichung.js';
 import { alleThemen } from '../utils/lernpfad.js';
 import {
   istUngleichung,
@@ -184,12 +185,18 @@ pruefung(`Jede erzeugte Aufgabe ist lösbar (je ${DURCHGAENGE} Stück)`, () => {
         break;
       }
 
-      // 2. Steht in der Frage eine Gleichung, muss die App selbst auf
+      // 2. Ist die Aufgabe eine GLEICHUNG, muss die App selbst auf
       //    dieselbe Lösung kommen. Das prüft Aufgabe und Löser
       //    gegeneinander — ein Fehler in einem von beiden fällt auf.
+      //
+      //    Gefragt wird der Aufgabentyp, nicht der Text. Die frühere
+      //    Faustregel "steht ein = in der Frage, ist es eine Gleichung"
+      //    trug nur so lange, bis die Ableitungen kamen: Dort steht
+      //    "Leite ab: f(x) = 4x⁴ + 3x − 4", und der Löser sollte
+      //    plötzlich eine Funktionsdefinition lösen.
       const stelle = a.frage.indexOf(': ');
       const rohtext = stelle === -1 ? '' : a.frage.slice(stelle + 2);
-      if (rohtext.includes('=')) {
+      if (istGleichung(a.start) && rohtext.includes('=')) {
         try {
           const e = loese(parseGleichung(rohtext));
           const sollen = Array.isArray(a.loesung) ? a.loesung : [a.loesung];

@@ -43,6 +43,13 @@ import {
   drehe,
 } from './ungleichung.js';
 import { parseTerm, parseUngleichung, hatVergleich } from './parser.js';
+// Die Musterlösung kommt von ableite() selbst, nicht aus der Hand.
+// Damit können Aufgabe und Modul nicht auseinanderlaufen — und die
+// Ableitung ist zugleich schon aufgeräumt, sodass kein "x¹" dasteht.
+// Geprüft ist ableite() gegen den Differenzenquotienten, also gegen die
+// Definition; ein zweiter handgebauter Weg brächte keine Sicherheit
+// dazu, sondern nur eine zweite Fehlerquelle.
+import { ableite } from './ableitung.js';
 import {
   system,
   istSystem,
@@ -86,6 +93,15 @@ function fehlerbild(wert, diagnose) {
 
 // Eine Zahl im Fließtext. Auch hier gilt das typografische Minus —
 // "−12x" und "-12x" nebeneinander sehen nach Fehler aus.
+// Eine kleine Hochzahl für den Fließtext: x³ statt x^3.
+function hochzahl(n) {
+  const ziffern = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+  return String(n)
+    .split('')
+    .map((z) => (z === '-' ? '⁻' : ziffern[Number(z)]))
+    .join('');
+}
+
 function zahlText(wert) {
   return String(wert).replace('-', '−');
 }
@@ -622,6 +638,87 @@ const GENERATOREN = {
     };
   },
 
+  // Ableiten mit der Potenzregel — ganzrationale Funktionen.
+  ableitungPotenzregel(naechste) {
+    const grad = naechste(3) + 2;                 // 2 bis 4
+    const a = ohneNull(naechste, 4);
+    const b = ohneNull(naechste, 6);
+    const c = naechste(11) - 5;
+    const glieder = [produkt(zahl(a), potenz(x, zahl(grad))), produkt(zahl(b), x)];
+    if (c !== 0) {
+      glieder.push(zahl(c));
+    }
+    const f = summe(...glieder);
+
+    return {
+      frage: `Leite ab: f(x) = ${termAlsText(f)}`,
+      term: f,
+      art: 'term',
+      loesung: ableite(f).ableitung,
+      fehlerbilder: [
+        fehlerbild(
+          summe(produkt(zahl(a * grad), potenz(x, zahl(grad))), zahl(b)),
+          `Der Exponent ist als Faktor nach vorn gekommen, aber oben stehen geblieben. Bei der Potenzregel passiert BEIDES: nach vorn UND um eins kleiner — aus x${hochzahl(grad)} wird ${grad}x${hochzahl(grad - 1)}.`
+        ),
+        fehlerbild(
+          summe(produkt(zahl(a * grad), potenz(x, zahl(grad - 1))), zahl(b), zahl(c)),
+          'Die Zahl am Ende ist stehen geblieben. Eine Zahl allein ändert sich nicht — ihre Ableitung ist 0, sie fällt also weg.'
+        ),
+      ],
+    };
+  },
+
+  // Wurzeln und Brüche — der Punkt, an dem sich entscheidet, ob die
+  // Potenzgesetze wirklich sitzen.
+  ableitungMitWurzel(naechste) {
+    const a = naechste(4) + 1;
+    const alsBruch = naechste(2) === 0;
+    // Geschrieben wird, wie es im Heft steht: 4 : x und 4√x. Erst beim
+    // Ableiten wird daraus x⁻¹ und x^(1/2) — genau das ist der Schritt,
+    // um den es in dieser Aufgabe geht.
+    const f = alsBruch
+      ? quotient(zahl(a), x)
+      : produkt(zahl(a), wurzel(x));
+
+    return {
+      frage: `Leite ab: f(x) = ${termAlsText(f)}`,
+      term: f,
+      art: 'term',
+      loesung: ableite(f).ableitung,
+      fehlerbilder: [
+        fehlerbild(
+          alsBruch
+            ? produkt(zahl(-a), potenz(x, zahl(-1)))
+            : produkt(zahl(bruch(a, 2)), potenz(x, zahl(bruch(1, 2)))),
+          'Der Exponent wurde nicht um eins kleiner. Auch bei negativen Exponenten und Brüchen gilt die Potenzregel unverändert: −1 minus 1 ist −2, und ein Halb minus 1 ist minus ein Halb.'
+        ),
+      ],
+      hinweis: 'Schreibe das Ergebnis als Potenz, zum Beispiel 3x^(-2).',
+    };
+  },
+
+  kettenregel(naechste) {
+    const a = naechste(4) + 2;                    // innere Steigung
+    const b = ohneNull(naechste, 6);
+    const n = naechste(2) + 2;                    // Exponent 2 oder 3
+    const innen = summe(produkt(zahl(a), x), zahl(b));
+    const f = potenz(innen, zahl(n));
+
+    return {
+      frage: `Leite ab: f(x) = ${termAlsText(f)}`,
+      term: f,
+      art: 'term',
+      loesung: ableite(f).ableitung,
+      fehlerbilder: [
+        fehlerbild(
+          produkt(zahl(n), potenz(innen, zahl(n - 1))),
+          `Die innere Ableitung fehlt. In der Klammer steht nicht einfach x, sondern ${termAlsText(innen)} — und das ändert sich ${zahlText(a)}-mal so schnell wie x. Deshalb kommt der Faktor ${zahlText(a)} dazu.`
+        ),
+      ],
+      hinweis: 'Du darfst die Klammer stehen lassen.',
+    };
+  },
+
   // Zwei Gleichungen, zwei Unbekannte. Gebaut wird rückwärts aus einer
   // ganzzahligen Lösung — sonst kämen Brüche heraus, und die Aufgabe
   // prüfte das Bruchrechnen statt das Verfahren.
@@ -901,6 +998,14 @@ function einStellenVergleich(a, b, belegung) {
   try {
     const za = auswerte(a, belegung);
     const zb = auswerte(b, belegung);
+    // NaN heißt "hier gibt es keinen Wert", nicht "die Werte sind
+    // verschieden". Ohne diese Zeile scheiterte 2x^(−1/2) an der Stelle
+    // x = −1: Beide Seiten sind dort NaN, und NaN ≠ NaN hätte die
+    // Antwort als falsch abgewiesen. Eine richtige Lösung als Fehler zu
+    // melden ist das Schlimmste, was eine Übungsapp tun kann.
+    if (!Number.isFinite(za) || !Number.isFinite(zb)) {
+      return null;
+    }
     return Math.abs(za - zb) <= 1e-9 * Math.max(1, Math.abs(za), Math.abs(zb));
   } catch {
     return null;

@@ -207,6 +207,45 @@ export const THEMEN = {
     mehr: ['wurzelAusQuadrat', 'wurzel'],
   },
 
+  ableitung: {
+    titel: 'Die Ableitung',
+    text: [
+      'Die Ableitung sagt, wie STEIL eine Kurve an einer bestimmten Stelle ist. Bei einer Geraden ist die Steigung überall gleich — bei einer Kurve ändert sie sich, und f′(x) ist die Formel, die zu jeder Stelle die passende Steigung liefert.',
+      'Woher kommt sie? Zwischen zwei Punkten kann man die Steigung ausrechnen: Höhenunterschied durch Abstand. Rückt man die beiden Punkte immer dichter zusammen, nähert sich diese Zahl der Steigung an einem einzigen Punkt. Das ist die Ableitung — nichts anderes.',
+      'Die wichtigste Regel ist die POTENZREGEL: Der Exponent kommt als Faktor nach vorn, und der Exponent wird um eins kleiner. Aus x³ wird 3x². Dazu die Summenregel (jeden Summanden einzeln) und die Faktorregel (eine Zahl davor bleibt stehen).',
+      'Es gibt KEINE eigene Wurzelregel und keine Kehrwertregel — man braucht sie nicht. √x ist dasselbe wie x hoch ein Halb, und 1 : x ist dasselbe wie x hoch minus eins. Sobald das dasteht, greift die Potenzregel wie überall sonst. Wer hier hängt, hat kein Problem mit dem Ableiten, sondern mit den Potenzgesetzen.',
+      'Wozu das gut ist: Überall dort, wo etwas sich ändert. Die Geschwindigkeit ist die Ableitung des Weges nach der Zeit, die Beschleunigung die Ableitung der Geschwindigkeit. Und wo f′(x) null ist, ist die Kurve waagerecht — dort liegen Hoch- und Tiefpunkte.',
+    ],
+    formel: '(xⁿ)′ = n · xⁿ⁻¹',
+    beispiel: 'f(x) = x³ − 6x² + 8x  →  f′(x) = 3x² − 12x + 8. Bei x = 1 ist die Steigung 3 − 12 + 8 = −1, die Kurve fällt dort also leicht.',
+    mehr: ['tangente', 'kettenregel', 'potenz', 'steigung'],
+  },
+
+  kettenregel: {
+    titel: 'Die Kettenregel',
+    text: [
+      'Steckt eine Funktion IN einer anderen, leitet man beide ab und multipliziert: äußere Ableitung mal innere Ableitung. Bei (2x + 1)³ ist die äußere Funktion „hoch drei" und die innere „2x + 1".',
+      'Die innere Ableitung ist der Teil, der vergessen wird — und dann ist das Ergebnis um genau diesen Faktor daneben. Bei (2x + 1)³ wäre es die Hälfte, weil die innere Ableitung 2 ist.',
+      'Woran erkennt man, dass man sie braucht? Daran, dass in der Klammer nicht einfach x steht. Bei x³ steht x da, also braucht man nichts weiter. Bei (2x + 1)³ steht dort etwas, das sich selbst mit x ändert — und das muss man mitzählen.',
+      'Die Probe geht immer: Setze eine Zahl ein und vergleiche mit dem Anstieg, den die Kurve dort tatsächlich hat. Genau so prüft die App ihre eigenen Ableitungen nach.',
+    ],
+    formel: 'f(g(x))′ = f′(g(x)) · g′(x)',
+    beispiel: '((2x + 1)³)′ = 3 · (2x + 1)² · 2 = 6 · (2x + 1)². Ohne die 2 käme die Hälfte heraus.',
+    mehr: ['ableitung', 'potenz', 'ausmultiplizieren'],
+  },
+
+  tangente: {
+    titel: 'Die Tangente',
+    text: [
+      'Die Tangente ist die Gerade, die sich an einer Stelle an die Kurve anschmiegt. Sie berührt die Kurve dort und läuft in genau dieselbe Richtung.',
+      'Damit wird die Ableitung sichtbar. „f′(2) = 4" ist eine Zahl, mit der man wenig anfangen kann. Eine Gerade, die die Kurve berührt und dabei um 4 nach oben geht, wenn man um 1 nach rechts geht, sieht man sofort.',
+      'Zwei Bedingungen machen sie aus, und beide braucht man: Sie muss durch den Punkt der Kurve gehen, UND sie muss dort dieselbe Steigung haben. Eine Gerade, die nur den Punkt trifft, ist eine Sekante — der Unterschied ist genau die Ableitung.',
+    ],
+    formel: 'y = f′(x₀) · (x − x₀) + f(x₀)',
+    beispiel: 'f(x) = x² bei x₀ = 2: f(2) = 4 und f′(2) = 4, also y = 4 · (x − 2) + 4 = 4x − 4.',
+    mehr: ['ableitung', 'steigung', 'funktion'],
+  },
+
   // -----------------------------------------------------------------
   // Zufall
   // -----------------------------------------------------------------
