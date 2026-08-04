@@ -16,6 +16,7 @@ import './wissen.mjs';
 // aufeinander auf.
 import './lernpfad.mjs';
 import './ableitung.mjs';
+import './integral.mjs';
 import './aufgaben.mjs';
 import './luecken.mjs';
 import './rechenweg.mjs';
