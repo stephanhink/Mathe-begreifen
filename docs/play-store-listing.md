@@ -8,19 +8,18 @@ Mathe begreifen
 
 ## Kurzbeschreibung (max. 80 Zeichen)
 
-Bruchrechnen, Gleichungen, Funktionen, Stochastik — Grundlagen ab Klasse 5.
+Bruchrechnen, Gleichungen, Ableitung — Mathe von Klasse 5 bis Abitur begreifen.
 
 > Der Name selbst enthält keine Suchbegriffe („begreifen" sucht niemand).
 > Deshalb trägt die Kurzbeschreibung sie: Bruchrechnen, Gleichungen,
-> Funktionen, Stochastik, Grundlagen, Klasse 5.
+> Ableitung, Klasse 5, Abitur.
 >
-> **„Ableitung" und „Abitur" stehen hier bewusst noch NICHT drin**, obwohl
-> sie die stärksten Suchbegriffe wären. Die App kann die Oberstufenanalysis
-> heute nicht — der Lernpfad endet bei Klasse 9, `gleichung.js` löst keine
-> Ungleichungen und keine Gleichungssysteme. Eine App, deren erster Absatz
-> „wir raten nicht" verspricht, darf im Store nicht mit etwas werben, das
-> sie nicht hat. Sobald Ableitung und Integral stehen, wird diese Zeile
-> ausgetauscht — vorbereitet liegt sie unten unter „Für später".
+> **Seit dem 2026-08-04 darf „Ableitung" und „Abitur" hier stehen.** Bis
+> dahin stand hier bewusst eine schwächere Zeile ohne diese Suchbegriffe,
+> weil der Lernpfad bei Klasse 9 endete. Eine App, die im selben Text
+> verspricht, nicht zu raten, darf nicht mit etwas werben, das sie nicht
+> hat. Jetzt hat sie es: Ableitung, Integral, Vektorgeometrie und
+> Hypothesentest stehen, der Lernpfad reicht von Klasse 5 bis 13.
 
 ## Vollständige Beschreibung (max. 4000 Zeichen)
 
@@ -28,73 +27,73 @@ Mathe begreifen macht die Schulmathematik nachvollziehbar — nicht durch
 Auswendiglernen von Verfahren, sondern indem jeder Rechenschritt hergeleitet
 wird und einen Namen bekommt.
 
-Für Schülerinnen und Schüler ab Klasse 5. Ausdrücklich auch für die, die in
-den ersten Gymnasialjahren nicht durchgehend aufgepasst haben und jetzt am
-Stoff der höheren Klassen scheitern.
+Für Schülerinnen und Schüler von Klasse 5 bis zum Abitur. Ausdrücklich auch
+für die, die in den ersten Gymnasialjahren nicht durchgehend aufgepasst
+haben und jetzt am Stoff der höheren Klassen scheitern.
 
 DER LÜCKENFINDER
 Mathematik ist eine Kette. Wer die Potenzgesetze nicht sicher beherrscht,
-scheitert später an der binomischen Formel und weiß nicht, warum. Er glaubt,
-er verstehe quadratische Gleichungen nicht — dabei versteht er negative
-Exponenten nicht.
+scheitert später an der Ableitung und weiß nicht, warum. Er glaubt, er
+verstehe Ableitungen nicht — dabei versteht er negative Exponenten nicht.
 
 Der Lückenfinder stellt Aufgaben quer durch den Stoff. Geht eine schief, geht
 er eine Ebene tiefer statt weiter. Am Ende steht nicht „6 von 15 richtig",
-sondern: „Dein Problem ist nicht die pq-Formel. Dein Problem sind die
+sondern: „Dein Problem ist nicht die Ableitung. Dein Problem sind die
 Potenzgesetze — hier ist der Weg von dort nach oben."
 
 Und er bleibt ehrlich: Worüber nicht abgefragt wurde, sagt er ausdrücklich
 „darüber ist nichts bekannt" — statt es als „kannst du" zu verbuchen.
 
 JEDER SCHRITT HAT EINEN NAMEN
-Kein Ergebnis ohne Weg. Aus 3x + 5 = 14 wird nicht „x = 3", sondern:
-beide Seiten − 5, dann beide Seiten : 3. Das kann man vorlesen, nachmachen
-und in der Klassenarbeit wiederholen. Gerechnet wird exakt in Brüchen:
-Ein Drittel plus ein Drittel plus ein Drittel ist 1 und nicht 0,9999999998.
+Kein Ergebnis ohne Weg. Aus 3x + 5 = 14 wird nicht „x = 3", sondern: beide
+Seiten − 5, dann beide Seiten : 3. Das kann man vorlesen und in der
+Klassenarbeit wiederholen. Gerechnet wird exakt in Brüchen: Ein Drittel mal
+drei ist 1 und nicht 0,9999999998.
 
 DEIN EIGENER RECHENWEG
 Du kannst deinen Weg Zeile für Zeile eintippen. Die App sagt dir dann nicht
 bloß „falsch", sondern ab WELCHER ZEILE es nicht mehr stimmt — und warum.
 
 WAS DRIN IST
-Zahlen: Bruchrechnen mit sichtbarem Gleichnamigmachen — genau der Schritt,
-an dem es hakt und den ein Taschenrechner verschluckt. Dazu Prozent in allen
-Grundaufgaben, samt der Rückwärtsrechnung.
-Terme: Klammern, Binome, Ausklammern, Wurzeln teilweise ziehen, Formeln nach
-einer Größe umstellen — mit den Vorbehalten, die eine Formelsammlung
-verschweigt (t ungleich 0).
-Gleichungen: linear und quadratisch, pq-Formel, Probe.
+Zahlen: Bruchrechnen mit sichtbarem Gleichnamigmachen — der Schritt, an dem
+es hakt und den ein Taschenrechner verschluckt. Dazu Prozent.
+Terme: Klammern, Binome, Ausklammern, Wurzeln, Formeln umstellen — mit den
+Vorbehalten, die eine Formelsammlung verschweigt (t ungleich 0).
+Gleichungen: linear und quadratisch, Ungleichungen (wo sich das Zeichen
+umdreht) und Gleichungssysteme in allen drei Verfahren.
 Funktionen: Nullstellen, Scheitelpunkt, Steigung, gezeichneter Graph.
-Geometrie: Pythagoras, rechtwinklige Dreiecke, Trigonometrie, Flächen von
-Rechteck bis Kreis.
-Zufall: Laplace, Baumdiagramm, Kombinatorik, Binomialverteilung.
+Analysis: Ableitung mit dem Namen jeder Regel, Tangente zum Anlegen,
+Stammfunktion und Integral — samt dem Unterschied zwischen Integral und
+Flächeninhalt.
+Geometrie: Pythagoras, Trigonometrie, Flächen, Vektorrechnung.
+Zufall: Laplace, Baumdiagramm, Kombinatorik, Binomialverteilung,
+Hypothesentests.
 
 Dazu die Mathematik, die man in der Physik braucht — nicht als eigenes
-Kapitel, sondern als durchgehendes Beispielmaterial: v = s/t nach t
-umstellen, die Kräftezerlegung an der schiefen Ebene, die Halbwertszeit,
-das Weg-Zeit-Diagramm.
+Kapitel, sondern als durchgehendes Beispielmaterial: v = s/t umstellen, die
+schiefe Ebene, die Halbwertszeit, die Beschleunigung als Ableitung.
 
 DER INFO-KNOPF
-Neben jedem Fachbegriff sitzt ein kleines i. Ein Tippen genügt, und es
-erscheint eine Erklärung in Alltagssprache — erst die Antwort ohne jede
-Voraussetzung, dann das Warum, dann eine konkrete Zahl zum Anfassen, dann
-die Links eine Ebene tiefer. Aus einem Stolperer wird so ein Weg nach unten
-statt einer Sackgasse.
+Neben jedem Fachbegriff sitzt ein kleines i. Ein Tippen genügt: erst die
+Antwort in Alltagssprache, dann das Warum, dann eine konkrete Zahl zum
+Anfassen, dann die Links eine Ebene tiefer. Aus einem Stolperer wird ein Weg
+nach unten statt einer Sackgasse.
 
 WAS DIESE APP NICHT TUT
 Sie rät nicht. Division durch null, Wurzel aus einer negativen Zahl, eine
 quadratische Gleichung ohne reelle Lösung: Da sagt sie, dass es das nicht
 gibt, statt eine Zahl zu erfinden, die plausibel aussieht.
 
-Und sie sagt, was sie noch nicht kann. Ableitung und Integral fehlen
-derzeit, ebenso Gleichungssysteme und Ungleichungen. Sie kommen dazu — bis
-dahin steht es hier, statt in der Beschreibung versprochen und in der App
-vermisst zu werden.
+Und sie sagt, was sie noch nicht kann. Sinus, e-Funktion und Logarithmus
+fehlen beim Ableiten, ebenso die partielle Integration. Wo eine Regel nicht
+greift, sagt die App es und nennt den Grund — statt eine Formel anzuwenden,
+die dort gar nicht gilt.
 
-Die Rechenlogik ist maschinell geprüft: über zweitausend automatische
-Prüfungen, bevor eine Version überhaupt gebaut wird. Darunter die Probe,
-die alles trägt — jede Umformung muss den Term an zweihundert zufälligen
-Stellen wertgleich lassen, sonst ist die Regel falsch.
+Die Rechenlogik ist maschinell geprüft: über dreitausend automatische
+Prüfungen, bevor eine Version gebaut wird. Darunter die, die alles tragen —
+jede Umformung muss wertgleich bleiben, jede Ableitung mit dem
+Differenzenquotienten übereinstimmen, und jede Stammfunktion abgeleitet
+wieder die Ausgangsfunktion ergeben.
 
 DATENSCHUTZ
 Mathe begreifen erhebt keine personenbezogenen Daten. Kein Nutzerkonto,
@@ -203,19 +202,17 @@ Reihenfolge — so erzählen sie die Geschichte der App:
 7. Ein Baumdiagramm mit den Pfadwahrscheinlichkeiten und der Probe
 8. Ein geöffnetes Info-Fenster
 
-## Für später — wenn die Oberstufe steht
+## Erledigt: der Wechsel auf „bis Abitur"
 
-Sobald `gleichung.js` Ungleichungen und Gleichungssysteme kann und Ableitung
-und Integral im Lernpfad stehen, wird ausgetauscht:
+Am 2026-08-04 vollzogen. Bis dahin stand hier eine vorbereitete Fassung mit
+dem Vermerk: „Erst dann. Vorher wäre es eine Behauptung über etwas, das es
+nicht gibt." Ableitung, Integral, Vektorgeometrie und Hypothesentest stehen
+jetzt, der Lernpfad reicht von Klasse 5 bis 13 — also durfte die Zeile
+getauscht werden.
 
-- Kurzbeschreibung: `Bruchrechnen, Gleichungen, Ableitung — Mathe von
-  Klasse 5 bis Abitur begreifen.` (79 Zeichen, geprüft)
-- Im Text „ab Klasse 5" durch „von Klasse 5 bis zum Abitur" ersetzen, im
-  Lückenfinder-Absatz wieder die Ableitung als Beispiel nehmen (sie ist das
-  stärkere Bild), und den Absatz „was noch fehlt" entsprechend kürzen.
-
-Erst dann. Vorher wäre es eine Behauptung über etwas, das es nicht gibt —
-und genau das wirft die App ihren Nutzern gegenüber nie.
+Der Vermerk bleibt hier stehen, weil die Regel bleibt: **Was im Store
+versprochen wird, muss die App können.** Vor der nächsten Erweiterung der
+Beschreibung wieder gegen `utils/` prüfen, nicht gegen `CLAUDE.md`.
 
 ---
 
@@ -229,7 +226,7 @@ Mathe begreifen
 
 ## Short description (max. 80 characters)
 
-Fractions, equations, functions, probability — the basics from year 5 on.
+Fractions, equations, calculus — school maths from year 5 to A-levels.
 
 ## Full description (max. 4000 characters)
 
@@ -237,20 +234,20 @@ Mathe begreifen makes school mathematics make sense — not by memorizing
 procedures, but by deriving every single step and giving it a name. The app
 is in German.
 
-Written for students from year 5 on, and explicitly for those who lost the
-thread in the early years and are now failing at the material built on top
-of it.
+Written for students from year 5 up to the final exams, and explicitly for
+those who lost the thread in the early years and are now failing at the
+material built on top of it.
 
 THE GAP FINDER
 Mathematics is a chain. Someone who never got a firm grip on the laws of
-exponents will later fail at the binomial formulas without knowing why. They
-think they don't understand quadratic equations — in truth they don't
-understand negative exponents.
+exponents will later fail at differentiation without knowing why. They think
+they don't understand derivatives — in truth they don't understand negative
+exponents.
 
 The gap finder poses problems from across the whole syllabus. When one goes
 wrong, it goes one level DOWN instead of moving on. The result is not
-"6 out of 15 correct", but: "Your problem isn't the quadratic formula. Your
-problem is the laws of exponents — here is the path from there back up."
+"6 out of 15 correct", but: "Your problem isn't differentiation. Your problem
+is the laws of exponents — here is the path from there back up."
 
 And it stays honest: anything it did not test is reported as "nothing is
 known about this", never silently counted as mastered.
@@ -267,41 +264,45 @@ merely "wrong", but from WHICH LINE onwards it stops being true — and why.
 
 WHAT IS INCLUDED
 Numbers: fraction arithmetic with the common denominator made visible — the
-exact step where it goes wrong and the one a calculator swallows. Plus
-percentages in all their forms, including working backwards.
-Terms: brackets, binomial formulas, factorizing, simplifying surds,
-rearranging formulas for a given quantity — including the caveats a formula
-book leaves out (t ≠ 0).
-Equations: linear and quadratic, with a check.
+step where it goes wrong and the one a calculator swallows. Plus percentages.
+Terms: brackets, binomial formulas, factorizing, surds, rearranging formulas
+— including the caveats a formula book leaves out (t ≠ 0).
+Equations: linear and quadratic, inequalities and simultaneous equations in
+all three standard methods.
 Functions: roots, vertex, gradient, plotted graph.
-Geometry: Pythagoras, right-angled triangles, trigonometry, areas from the
-rectangle to the circle.
-Probability: Laplace, tree diagrams, combinatorics, binomial distribution.
+Calculus: differentiation with every rule named, a tangent you can place
+anywhere, antiderivatives and integrals — including the difference between
+an integral and an area.
+Geometry: Pythagoras, right-angled triangles, trigonometry, areas, and
+vectors with dot and cross product.
+Probability: Laplace, tree diagrams, combinatorics, binomial distribution
+and significance tests.
 
 Alongside it, the mathematics you need in physics — not as a separate
 chapter but as the running supply of examples: rearranging v = s/t for t,
-resolving forces on an inclined plane, half-life, distance-time graphs.
+resolving forces on an inclined plane, half-life, distance-time graphs,
+acceleration as a derivative.
 
 THE INFO BUTTON
-Next to every technical term sits a small i. One tap brings up a
-plain-language explanation — first the answer with no prerequisites, then
-the reasoning, then a concrete number to hold on to, then links one level
-further down. A stumble turns into a path downwards instead of a dead end.
+Next to every technical term sits a small i. One tap: first the answer in
+plain language, then the reasoning, then a concrete number, then links one
+level further down. A stumble turns into a path down instead of a dead end.
 
 WHAT THIS APP DOES NOT DO
 It does not guess. Division by zero, the square root of a negative number, a
 quadratic with no real solution: it says that no such thing exists rather
 than inventing a plausible-looking number.
 
-And it says what it cannot yet do. Calculus is not in there yet, nor are
-simultaneous equations and inequalities. They are coming — until then it
-says so here, rather than being promised in the listing and missed in the
-app.
+And it says what it cannot yet do. Trigonometric, exponential and
+logarithmic functions cannot be differentiated yet, and integration by parts
+is missing. Where a rule does not apply, the app says so and gives the
+reason — rather than applying a formula that does not hold there.
 
-The calculation logic is machine-verified: over two thousand automated
-checks run before any version is built. Among them the one that carries
-everything — every transformation must leave the term equal in value at two
-hundred random points, otherwise the rule is wrong.
+The calculation logic is machine-verified: over three thousand automated
+checks run before any version is built. Among them the ones that carry
+everything — every transformation must preserve value, every derivative must
+agree with the difference quotient, and every antiderivative must
+differentiate back to the original function.
 
 PRIVACY
 Mathe begreifen collects no personal data. No account, no ads, no in-app

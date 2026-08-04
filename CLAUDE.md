@@ -797,13 +797,16 @@ nicht gibt — oder gewöhnt sich an, die Meldung zu ignorieren, und übersieht
 beim nächsten Mal eine echte Berechtigung.
 
 ### Der Store-Text darf nur versprechen, was die App kann
-`docs/play-store-listing.md` verzichtet bewusst auf die stärksten
-Suchbegriffe: **„Ableitung" und „Abitur" stehen nicht in der
-Kurzbeschreibung.** Der Lernpfad endet bei Klasse 9, `gleichung.js` löst
-keine Ungleichungen und keine Gleichungssysteme, Analysis gibt es nicht.
-Eine App, deren Beschreibung „sie rät nicht" verspricht, darf im Store
-nicht mit etwas werben, das sie nicht hat. Die fertige Zeile für später
-liegt im Listing unter „Für später" bereit.
+Die Regel hat sich einmal bewährt und ist deshalb festgehalten: Bis zum
+2026-08-04 verzichtete `docs/play-store-listing.md` bewusst auf die
+stärksten Suchbegriffe — **„Ableitung" und „Abitur" standen NICHT in der
+Kurzbeschreibung**, weil der Lernpfad bei Klasse 9 endete. Stattdessen
+lag dort eine vorbereitete Zeile mit dem Vermerk „erst dann".
+
+Seit Analysis, Vektorgeometrie und Hypothesentest stehen, ist sie
+eingetauscht. **Vor der nächsten Erweiterung wieder gegen `utils/`
+prüfen, nicht gegen `CLAUDE.md`** — dieser Text hier hinkt dem Code
+naturgemäß hinterher.
 
 Beim Schreiben fielen drei weitere Überversprechen auf, die aus dem
 Konzept statt aus dem Code stammten: „Flächen und Körper" (es gibt nur
@@ -1492,18 +1495,17 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
      ~~Hypothesentest~~ **steht** (2026-08-04). **Damit ist „bis
      Abitur" eingelöst** — der Lernpfad reicht von Klasse 5 bis 13.
 
-     **HIER GEHT ES WEITER:** die Kurzbeschreibung im Play-Store-Listing
-     austauschen (die Fassung mit „Ableitung" und „Abitur" liegt dort
-     unter „Für später" bereit), ein Update bauen und einreichen. Danach
-     das Kapitel „Wozu braucht man das?" weiter oben
+     **HIER GEHT ES WEITER:** das Kapitel „Wozu braucht man das?" weiter
+     oben — Zinseszins, exponentielles Wachstum, Optionspreise
   2. **Integral**
   4. **Vektorgeometrie und Hypothesentest**
 
   Jedes neue Thema braucht einen Eintrag in `lernpfad.js` UND einen
   Generator in `aufgaben.js`, sonst schlägt die Prüfung fehl. Genau dieses
   Geländer hält den Graphen beim Wachsen ehrlich.
-- **Jetzt möglich:** die Kurzbeschreibung im Play-Store-Listing
-  austauschen — „Ableitung" darf seit dem 2026-08-04 darin stehen. Die Fassung mit „Ableitung" und
+- ~~Kurzbeschreibung austauschen~~ **erledigt** (2026-08-04). Offen ist
+  das Update selbst: `npm run build:android` (versionCode zählt auf 4)
+  und die neue Fassung in der Play Console eintragen. Die Fassung mit „Ableitung" und
   „Abitur" liegt dort unter „Für später" fertig bereit — vorher wäre sie
   eine Werbung für etwas, das es nicht gibt.
 - Warten auf die Freigabe durch Google. Danach: Bewertungen und Abstürze
