@@ -639,6 +639,103 @@ const GENERATOREN = {
     };
   },
 
+  // Pythagoras. Gebaut aus pythagoreischen Tripeln, damit die
+  // Hypotenuse ganzzahlig bleibt — sonst prüfte die Aufgabe das
+  // Wurzelziehen aus 61 statt den Satz.
+  pythagorasSatz(naechste) {
+    const tripel = ausListe(naechste, [
+      [3, 4, 5],
+      [6, 8, 10],
+      [5, 12, 13],
+      [8, 15, 17],
+      [9, 12, 15],
+      [7, 24, 25],
+      [20, 21, 29],
+    ]);
+    const [a, b, c] = tripel;
+    return {
+      frage: `Rechtwinkliges Dreieck mit den Katheten a = ${a} und b = ${b}. Wie lang ist die Hypotenuse c?`,
+      art: 'zahl',
+      loesung: zahl(c),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(a + b),
+          `Die Katheten wurden addiert. Der Satz sagt a² + b² = c² — quadriert wird ZUERST. Sonst wäre der Umweg über die Ecke genauso lang wie der direkte Weg, und dann bräuchte man den Satz nicht.`
+        ),
+        fehlerbild(
+          zahl(a * a + b * b),
+          `Das ist c², nicht c. Aus ${a}² + ${b}² = ${a * a + b * b} wird c, indem man die Wurzel zieht: √${a * a + b * b} = ${c}.`
+        ),
+      ],
+    };
+  },
+
+  // Mit Vektoren rechnen — Addition und Vielfache, komponentenweise.
+  vektorRechnen(naechste) {
+    const a1 = naechste(13) - 6;
+    const a2 = naechste(13) - 6;
+    const b1 = naechste(13) - 6;
+    const b2 = naechste(13) - 6;
+    const faktor = naechste(4) + 2;
+    return {
+      frage:
+        `Berechne ${faktor} · a + b  für  a = (${zahlText(a1)} | ${zahlText(a2)})  und  ` +
+        `b = (${zahlText(b1)} | ${zahlText(b2)}). Schreibe beide Komponenten, getrennt durch ein Semikolon.`,
+      art: 'zahlen',
+      loesung: [zahl(faktor * a1 + b1), zahl(faktor * a2 + b2)],
+      fehlerbilder: [
+        fehlerbild(
+          [zahl(faktor * (a1 + b1)), zahl(faktor * (a2 + b2))],
+          `Der Faktor ${faktor} wurde auf BEIDE Vektoren angewandt. Er gehört nur zu a — b bleibt, wie es ist.`
+        ),
+      ],
+      hinweis: 'Zwei Zahlen, zum Beispiel 5; −3.',
+    };
+  },
+
+  vektorBetrag(naechste) {
+    const tripel = ausListe(naechste, [
+      [3, 4, 5],
+      [6, 8, 10],
+      [5, 12, 13],
+      [8, 15, 17],
+      [7, 24, 25],
+    ]);
+    const [a, b, c] = tripel;
+    const vz = naechste(2) === 0 ? 1 : -1;
+    return {
+      frage: `Wie lang ist der Vektor (${zahlText(vz * a)} | ${b})?`,
+      art: 'zahl',
+      loesung: zahl(c),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(vz * a + b),
+          'Die Komponenten wurden addiert. Der Betrag kommt aus dem Satz des Pythagoras: erst quadrieren, dann addieren, dann die Wurzel ziehen.'
+        ),
+      ],
+    };
+  },
+
+  skalarprodukt(naechste) {
+    const a1 = naechste(11) - 5;
+    const a2 = naechste(11) - 5;
+    const b1 = naechste(11) - 5;
+    const b2 = naechste(11) - 5;
+    return {
+      frage:
+        `Berechne das Skalarprodukt (${zahlText(a1)} | ${zahlText(a2)}) · (${zahlText(b1)} | ${zahlText(b2)}).`,
+      art: 'zahl',
+      loesung: zahl(a1 * b1 + a2 * b2),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(a1 * b1 - a2 * b2),
+          'Die beiden Produkte wurden voneinander abgezogen statt addiert. Beim Skalarprodukt werden sie ADDIERT — ein Minus gibt es dort nicht.'
+        ),
+      ],
+      hinweis: 'Das Ergebnis ist eine Zahl, kein Vektor.',
+    };
+  },
+
   // Die Umkehrung: Stammfunktion bilden. Die Musterlösung kommt von
   // integriere() selbst — geprüft ist das Modul dadurch, dass Ableiten
   // der Stammfunktion die Ausgangsfunktion ergibt.

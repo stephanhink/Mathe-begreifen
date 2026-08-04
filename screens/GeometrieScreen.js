@@ -14,6 +14,21 @@ import {
   FORMEN,
   zahlText,
 } from '../utils/geometrie';
+import {
+  vektor,
+  alsText as vektorAlsText,
+  addiere,
+  subtrahiere,
+  strecke,
+  skalarprodukt,
+  betragAlsText,
+  kreuzprodukt,
+  istOrthogonal,
+  istKollinear,
+  winkel as vektorWinkel,
+  dimension,
+} from '../utils/vektor';
+import { ausText as bruchAusText, alsText as zahlAlsText } from '../utils/bruch';
 
 // Der Geometrie-Bildschirm.
 //
@@ -28,6 +43,7 @@ const BEREICHE = [
   { key: 'pythagoras', label: 'Pythagoras' },
   { key: 'winkel', label: 'Winkel' },
   { key: 'flaechen', label: 'Flächen' },
+  { key: 'vektoren', label: 'Vektoren' },
 ];
 
 export default function GeometrieScreen() {
@@ -52,8 +68,162 @@ export default function GeometrieScreen() {
       {bereich === 'pythagoras' ? <Pythagoras /> : null}
       {bereich === 'winkel' ? <Winkel /> : null}
       {bereich === 'flaechen' ? <Flaechen /> : null}
+      {bereich === 'vektoren' ? <Vektoren /> : null}
     </ScreenGeruest>
   );
+}
+
+// --------------------------------------------------------------------
+// Vektoren
+// --------------------------------------------------------------------
+//
+// Sie stehen hier und nicht in einem eigenen Tab, weil der Betrag aus
+// dem Satz des Pythagoras kommt — der zwei Reiter weiter links steht.
+// Wer den Zusammenhang sehen soll, darf nicht durch die App wandern
+// müssen.
+
+function Vektoren() {
+  const [a1, setA1] = useState('3');
+  const [a2, setA2] = useState('4');
+  const [a3, setA3] = useState('0');
+  const [b1, setB1] = useState('1');
+  const [b2, setB2] = useState('1');
+  const [b3, setB3] = useState('0');
+  const [imRaum, setImRaum] = useState(false);
+
+  const ergebnis = useMemo(
+    () => rechneVektoren([a1, a2, a3], [b1, b2, b3], imRaum),
+    [a1, a2, a3, b1, b2, b3, imRaum]
+  );
+
+  return (
+    <View>
+      <View style={styles.umschalterKlein}>
+        <Pressable
+          style={[styles.reiter, !imRaum && styles.reiterAktiv]}
+          onPress={() => setImRaum(false)}
+        >
+          <Text style={[styles.reiterText, !imRaum && styles.reiterTextAktiv]}>Ebene</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.reiter, imRaum && styles.reiterAktiv]}
+          onPress={() => setImRaum(true)}
+        >
+          <Text style={[styles.reiterText, imRaum && styles.reiterTextAktiv]}>Raum</Text>
+        </Pressable>
+      </View>
+
+      <VektorFelder
+        name="a"
+        werte={[a1, a2, a3]}
+        setzen={[setA1, setA2, setA3]}
+        imRaum={imRaum}
+      />
+      <VektorFelder
+        name="b"
+        werte={[b1, b2, b3]}
+        setzen={[setB1, setB2, setB3]}
+        imRaum={imRaum}
+      />
+      <ZahlenTasten />
+
+      {ergebnis.fehler ? (
+        <Text style={styles.hinweis}>{ergebnis.fehler}</Text>
+      ) : (
+        <View style={styles.ergebnisKasten}>
+          <Zeile titel="a + b" wert={ergebnis.summe} thema="vektor" />
+          <Zeile titel="a − b" wert={ergebnis.differenz} />
+          <Zeile titel="2 · a" wert={ergebnis.doppelt} />
+          <Zeile titel="|a|" wert={ergebnis.betragA} thema="vektor" />
+          <Zeile titel="|b|" wert={ergebnis.betragB} />
+          <Zeile titel="a · b" wert={ergebnis.skalar} thema="skalarprodukt" />
+          {ergebnis.kreuz ? <Zeile titel="a × b" wert={ergebnis.kreuz} thema="skalarprodukt" /> : null}
+          <Zeile titel="Winkel" wert={ergebnis.winkelText} thema="trigonometrie" />
+
+          <Text style={styles.deutung}>{ergebnis.deutung}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function VektorFelder({ name, werte, setzen, imRaum }) {
+  const anzahl = imRaum ? 3 : 2;
+  return (
+    <View style={styles.vektorReihe}>
+      <Text style={styles.vektorName}>{name} =</Text>
+      {Array.from({ length: anzahl }, (unused, i) => (
+        <TextInput
+          key={i}
+          style={styles.vektorFeld}
+          value={werte[i]}
+          onChangeText={setzen[i]}
+        />
+      ))}
+    </View>
+  );
+}
+
+function Zeile({ titel, wert, thema }) {
+  return (
+    <View style={styles.vektorZeile}>
+      <View style={styles.vektorZeileKopf}>
+        <Text style={styles.vektorZeileTitel}>{titel}</Text>
+        {thema ? <InfoButton thema={thema} /> : null}
+      </View>
+      <Text style={styles.vektorZeileWert}>{wert}</Text>
+    </View>
+  );
+}
+
+function rechneVektoren(rohA, rohB, imRaum) {
+  const anzahl = imRaum ? 3 : 2;
+  let a;
+  let b;
+  try {
+    a = vektor(...rohA.slice(0, anzahl).map((t) => bruchAusText(String(t).trim().replace('−', '-'))));
+    b = vektor(...rohB.slice(0, anzahl).map((t) => bruchAusText(String(t).trim().replace('−', '-'))));
+  } catch {
+    return { fehler: 'Trage in jedes Feld eine Zahl ein.' };
+  }
+
+  const w = vektorWinkel(a, b);
+  const senkrecht = istOrthogonal(a, b);
+  const parallel = istKollinear(a, b);
+
+  // Die Deutung ist der eigentliche Zweck: Zahlen allein sagen nichts.
+  // Dass das Skalarprodukt null ist, heißt "senkrecht" — und das ist
+  // exakt, auch wenn die Gradzahl gerundet ist.
+  let deutung;
+  if (senkrecht) {
+    deutung =
+      'Das Skalarprodukt ist null — die beiden Vektoren stehen senkrecht aufeinander. ' +
+      'Diese Aussage ist exakt, nicht gerundet.';
+  } else if (parallel) {
+    deutung =
+      'Der eine Vektor ist ein Vielfaches des anderen — sie zeigen in dieselbe oder in ' +
+      'die genau entgegengesetzte Richtung und spannen keine Fläche auf.';
+  } else {
+    deutung =
+      `Die Vektoren schließen einen Winkel von etwa ${w.art === 'winkel' ? zahlKurz(w.grad) : '?'}° ein. ` +
+      'Der Winkel ist gerundet — das Skalarprodukt darüber ist exakt.';
+  }
+
+  return {
+    summe: vektorAlsText(addiere(a, b)),
+    differenz: vektorAlsText(subtrahiere(a, b)),
+    doppelt: vektorAlsText(strecke(a, 2)),
+    betragA: betragAlsText(a),
+    betragB: betragAlsText(b),
+    skalar: zahlAlsText(skalarprodukt(a, b)).replace('-', '−'),
+    kreuz: imRaum ? vektorAlsText(kreuzprodukt(a, b)) : null,
+    winkelText: w.art === 'winkel' ? `${zahlKurz(w.grad)}° (gerundet)` : w.grund,
+    deutung,
+  };
+}
+
+function zahlKurz(zahlWert) {
+  return String(Math.round(zahlWert * 100) / 100).replace('.', ',');
 }
 
 // Merkt sich das zuletzt angetippte Feld, damit eine Leiste für mehrere
@@ -374,6 +544,60 @@ function zahlOderNull(text) {
 }
 
 const styles = StyleSheet.create({
+  umschalterKlein: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  vektorReihe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  vektorName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: farben.text,
+    width: 34,
+  },
+  vektorFeld: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: farben.rand,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 16,
+    textAlign: 'center',
+    color: farben.text,
+  },
+  vektorZeile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  vektorZeileKopf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  vektorZeileTitel: {
+    fontSize: 15,
+    color: farben.textLeise,
+  },
+  vektorZeileWert: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: farben.primaer,
+  },
+  deutung: {
+    fontSize: 14,
+    color: farben.textLeise,
+    marginTop: 10,
+    lineHeight: 20,
+  },
   umschalter: { flexDirection: 'row', gap: 6, marginBottom: 18 },
   reiter: {
     flex: 1,

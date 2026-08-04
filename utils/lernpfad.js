@@ -257,6 +257,42 @@ export const THEMEN = {
     wissen: 'kettenregel',
   },
 
+  // Der Satz des Pythagoras. Er fehlte bisher im Graphen, obwohl der
+  // Geometrie-Bildschirm ihn längst kann — aufgefallen ist das erst,
+  // als der Betrag eines Vektors ihn als Voraussetzung brauchte.
+  pythagorasSatz: {
+    titel: 'Den Satz des Pythagoras anwenden',
+    klasse: 9,
+    voraussetzungen: ['potenzDefinition', 'wurzelZiehen'],
+    wissen: 'pythagoras',
+  },
+
+  // Vektorgeometrie. Sie hängt an ganz anderen Voraussetzungen als die
+  // Analysis — am Pythagoras für den Betrag und am Rechnen mit
+  // negativen Zahlen für die Komponenten. Deshalb steht sie im Graphen
+  // NEBEN der Analysis und nicht darunter: Wer bei Vektoren scheitert,
+  // soll nicht zur Ableitung geschickt werden.
+  vektorRechnen: {
+    titel: 'Mit Vektoren rechnen',
+    klasse: 11,
+    voraussetzungen: ['ganzeZahlenAddieren', 'ganzeZahlenMultiplizieren'],
+    wissen: 'vektor',
+  },
+
+  vektorBetrag: {
+    titel: 'Den Betrag eines Vektors berechnen',
+    klasse: 11,
+    voraussetzungen: ['vektorRechnen', 'pythagorasSatz'],
+    wissen: 'vektor',
+  },
+
+  skalarprodukt: {
+    titel: 'Das Skalarprodukt und der rechte Winkel',
+    klasse: 12,
+    voraussetzungen: ['vektorRechnen'],
+    wissen: 'skalarprodukt',
+  },
+
   stammfunktion: {
     titel: 'Eine Stammfunktion bilden',
     klasse: 12,

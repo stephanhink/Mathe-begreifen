@@ -1148,6 +1148,54 @@ Schritt getan. Wo nicht, wird die partielle Integration genannt und die
 Aufgabe abgelehnt. Das ist die Stelle, an der Integrieren tatsächlich
 schwerer ist als Ableiten, und das darf man nicht verstecken.
 
+### Vektorgeometrie: hier lässt sich EXAKT prüfen
+Anders als bei den Funktionen brauchen die tragenden Sätze hier keine
+Toleranz und keine Zufallsstellen — Skalar- und Kreuzprodukt sind reine
+Bruchrechnung. Drei Sätze tragen alles, und jeder ist zugleich das, was
+man im Unterricht als Kontrolle lernt:
+
+1. **Das Kreuzprodukt steht auf beiden senkrecht.** Genau null, nicht
+   „ungefähr null" — dafür gibt es das Kreuzprodukt überhaupt.
+2. **Die Identität von Lagrange:** `|a × b|² + (a · b)² = |a|² · |b|²`.
+   Sie verbindet beide Produkte und fällt auseinander, sobald in einem
+   von beiden ein Vorzeichen falsch steht.
+3. **Die Dreiecksungleichung** `|a + b| ≤ |a| + |b|` — der Umweg ist
+   nie kürzer. Dazu Cauchy-Schwarz, der Grund, warum der Kosinus im
+   Winkel nie über 1 kommt.
+
+Die Genauigkeitsfrage ist wie in `geometrie.js` beantwortet: Produkte
+exakt, der Betrag exakt bis auf die Wurzel (`|(1|1)|` ist √2, nicht
+1,414), der Winkel numerisch — **und dann sagt die Datei es dazu, samt
+Einheit.** Ein rechter Winkel bleibt trotzdem exakt, weil das
+Skalarprodukt dort genau null ist; dafür gibt es ein eigenes Feld
+`rechterWinkel`.
+
+Kollinearität wird **strukturell** über die Verhältnisse geprüft, nicht
+über den Winkel: „179,9999°" ist keine Antwort auf eine Ja-Nein-Frage.
+
+#### Windschief gibt es nur im Raum
+Von den vier Lagen zweier Geraden ist windschief die, die man nicht
+erwartet, weil sie in der Ebene unmöglich ist: Zwei Geraden können
+aneinander vorbeilaufen, ohne parallel zu sein. Von oben betrachtet
+sähe man einen Schnittpunkt — sie liegen aber in verschiedenen Höhen.
+
+Eine eigene Prüfung stellt deshalb an 200 Zufallsgeraden sicher, dass in
+der **Ebene** nie „windschief" herauskommt. Das wäre ein Fehler, den man
+beim Rechnen im Raum nicht bemerkt.
+
+#### Der Lernpfad kannte keine Geometrie
+Aufgefallen beim Eintragen: `vektorBetrag` braucht den Satz des
+Pythagoras als Voraussetzung — und den gab es im Graphen gar nicht,
+obwohl der Geometrie-Bildschirm ihn längst kann. Der Graph war bis dahin
+reine Algebra. Jetzt steht `pythagorasSatz` drin, mit Generator aus
+pythagoreischen Tripeln, damit die Hypotenuse ganzzahlig bleibt und die
+Aufgabe den Satz prüft statt das Wurzelziehen aus 61.
+
+Die Vektorthemen hängen bewusst **neben** der Analysis, nicht darunter:
+Sie setzen das Rechnen mit negativen Zahlen und den Pythagoras voraus,
+nicht die Ableitung. Wer bei Vektoren scheitert, soll nicht zu den
+Potenzgesetzen geschickt werden.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1196,6 +1244,8 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/vektor.js` — Vektoren in Ebene und Raum, Skalar- und
+  Kreuzprodukt, Geraden und ihre vier Lagen zueinander
 - `utils/integral.js` — Stammfunktionen, das bestimmte Integral und der
   Unterschied zwischen Integral und Flächeninhalt
 - `utils/ableitung.js` — ableiten mit dem Namen jeder Regel, höhere
@@ -1215,7 +1265,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **2759 Prüfungen**
+- Zusammen **2971 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1383,8 +1433,13 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
      ~~Integral~~ **steht** (2026-08-04): Stammfunktion, bestimmtes
      Integral, Fläche, zwei Themen im Lernpfad.
 
-     **HIER GEHT ES WEITER: Vektorgeometrie**, danach der
-     Hypothesentest. Damit wäre „bis Abitur" eingelöst
+     ~~Vektorgeometrie~~ **steht** (2026-08-04): Vektoren, Skalar- und
+     Kreuzprodukt, Geraden, vier Themen im Lernpfad. Dabei fiel auf,
+     dass der Graph bis dahin GAR KEINE Geometrie kannte — der Satz des
+     Pythagoras ist jetzt auch drin.
+
+     **HIER GEHT ES WEITER: der Hypothesentest.** Danach ist „bis
+     Abitur" eingelöst
   2. **Integral**
   4. **Vektorgeometrie und Hypothesentest**
 

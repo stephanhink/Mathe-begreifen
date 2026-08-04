@@ -272,6 +272,48 @@ export const THEMEN = {
     mehr: ['integral', 'nullstelle', 'ableitung'],
   },
 
+  vektor: {
+    titel: 'Was ist ein Vektor?',
+    text: [
+      'Ein Vektor ist eine Verschiebung: so weit nach rechts, so weit nach oben. Er sagt nicht WO etwas ist, sondern WIE man von einem Ort zum nächsten kommt.',
+      'Das ist der Unterschied zum Punkt, und er ist der häufigste Stolperstein des ganzen Gebiets. (3 | 4) als Punkt ist ein Ort im Koordinatensystem. (3 | 4) als Vektor ist „drei nach rechts, vier nach oben" — und das darf überall stehen. Derselbe Vektor kann an tausend Stellen gezeichnet werden; es ist immer derselbe.',
+      'Zwei Vektoren addiert man, indem man sie aneinanderhängt: erst der eine, dann der andere. Rechnerisch heißt das, jede Komponente einzeln zu addieren. Malnehmen mit einer Zahl macht den Pfeil länger oder kürzer — bei einer negativen Zahl dreht er sich zusätzlich um.',
+      'Der Verbindungsvektor von A nach B ist B − A. Die Reihenfolge ist genau andersherum, als man sie spricht, und genau deshalb vertut man sich dabei. Merkhilfe: „Spitze minus Fuß".',
+      'Die Länge eines Vektors heißt Betrag und kommt aus dem Satz des Pythagoras. Bei (3 | 4) ist sie 5, bei (1 | 1) ist sie √2 — und √2 bleibt √2.',
+    ],
+    formel: '|a| = √(a₁² + a₂² + a₃²)',
+    beispiel: 'Von A(1 | 1) nach B(4 | 5): der Vektor ist (3 | 4), seine Länge 5.',
+    mehr: ['skalarprodukt', 'gerade', 'pythagoras'],
+  },
+
+  skalarprodukt: {
+    titel: 'Skalarprodukt und Kreuzprodukt',
+    text: [
+      'Es gibt zwei Arten, Vektoren zu multiplizieren, und sie liefern völlig Verschiedenes: Das Skalarprodukt ergibt eine ZAHL, das Kreuzprodukt einen VEKTOR.',
+      'Das SKALARPRODUKT rechnet man, indem man die Komponenten paarweise malnimmt und alles addiert. Seine wichtigste Eigenschaft: Es ist genau dann null, wenn die beiden Vektoren senkrecht aufeinander stehen. Das ist der meistgebrauchte Satz der ganzen Vektorgeometrie — und er ist exakt, nicht gerundet.',
+      'Daraus kommt auch der Winkel: a · b = |a| · |b| · cos φ. Nach cos φ umgestellt, liefert das jeden Winkel zwischen zwei Vektoren.',
+      'Das KREUZPRODUKT gibt es nur im Raum, und es liefert einen Vektor, der auf beiden Ausgangsvektoren senkrecht steht. Genau dafür braucht man es: als Normalenvektor einer Ebene. In der Ebene gibt es kein Kreuzprodukt — dort steht auf zwei Vektoren nichts mehr senkrecht, ohne die Ebene zu verlassen.',
+      'Beim Kreuzprodukt kommt es auf die Reihenfolge an: a × b zeigt genau entgegengesetzt zu b × a. Beim Skalarprodukt ist die Reihenfolge dagegen egal.',
+    ],
+    formel: 'a · b = a₁b₁ + a₂b₂ + a₃b₃     a · b = 0  ⟺  a ⊥ b',
+    beispiel: '(3 | 4) · (−4 | 3) = −12 + 12 = 0 — die beiden stehen senkrecht aufeinander.',
+    mehr: ['vektor', 'trigonometrie', 'gerade'],
+  },
+
+  gerade: {
+    titel: 'Geraden im Raum',
+    text: [
+      'Eine Gerade wird durch zwei Angaben festgelegt: einen Punkt, an dem man einsteigt, und eine Richtung, in die es geht. Aufgeschrieben als x = p + t · u.',
+      'p heißt Stützvektor — er zeigt, WO man einsteigt. u heißt Richtungsvektor — er zeigt, WOHIN es geht. t ist der Parameter: Für jedes t bekommt man einen anderen Punkt der Geraden, und alle zusammen ergeben die ganze Gerade.',
+      'Ob ein Punkt auf der Geraden liegt, prüft man, indem man ein passendes t sucht. Wichtig ist: Es muss EIN EINZIGES t für ALLE Zeilen geben. Eine Zeile allein reicht nicht — genau dort vertut man sich.',
+      'Zwei Geraden können vier Lagen zueinander haben. IDENTISCH heißt: dieselbe Gerade, nur anders aufgeschrieben. PARALLEL: gleiche Richtung, aber versetzt — sie treffen sich nie. SCHNEIDEND: genau ein gemeinsamer Punkt. Und WINDSCHIEF: weder parallel noch schneidend.',
+      'Windschief gibt es nur im Raum, und deshalb erwartet man es nicht. Zwei Geraden können aneinander vorbeilaufen, ohne parallel zu sein — von oben betrachtet sähe man einen Schnittpunkt, aber sie liegen in verschiedenen Höhen. In der Ebene ist das unmöglich: Dort müssen sich zwei Geraden mit verschiedenen Richtungen schneiden.',
+    ],
+    formel: 'g: x = p + t · u',
+    beispiel: 'g: x = (1 | 0 | 0) + t · (1 | 1 | 0). Bei t = 2 ist man am Punkt (3 | 2 | 0).',
+    mehr: ['vektor', 'skalarprodukt', 'gleichungssystem'],
+  },
+
   // -----------------------------------------------------------------
   // Zufall
   // -----------------------------------------------------------------
