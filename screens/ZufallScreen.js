@@ -5,6 +5,9 @@ import ScreenGeruest from '../components/ScreenGeruest';
 import InfoButton from '../components/InfoButton';
 import ZahlenTasten from '../components/ZahlenTasten';
 import Baumdiagramm from '../components/Baumdiagramm';
+import Wozu from '../components/Wozu';
+import { optionspreis } from '../utils/anwendung';
+import { alsText as bruchText } from '../utils/bruch';
 import { farben } from '../utils/konstanten';
 import { bruch, alsZahl } from '../utils/bruch';
 import {
@@ -33,6 +36,30 @@ import {
 //
 // Alles rechnet exakt in Brüchen — 1/6 ist 1/6, nicht 0,1667. Die
 // Prozentzahl steht daneben, nicht anstelle.
+
+// Der Optionspreis hängt an der Binomialverteilung — deshalb steht er
+// dort und nicht anderswo.
+function WozuOption() {
+  const o = optionspreis({ kurs: 100, hoch: 125, tief: 80, ausuebung: 100 });
+
+  return (
+    <Wozu
+      titel="Optionspreise — wenn der Erwartungswert lügt"
+      thema="optionspreis"
+      zeilen={[
+        'Aktie heute 100 €, in einem Jahr 125 € oder 80 €.',
+        'Kaufrecht für 100 €. Was ist es wert?',
+        'naheliegend: halbe-halbe, also 12,50 €',
+        { text: `richtig: ${bruchText(o.preis)} € = 11,11 €`, stark: true },
+        `denn ${bruchText(o.delta)} Aktien und ${bruchText(o.bargeld)} € Bargeld liefern`,
+        'in BEIDEN Fällen dasselbe wie die Option',
+        `rückwärts gerechnet gehört dazu q = ${bruchText(o.q)}, nicht 1/2`,
+      ]}
+      einsicht={o.einsicht}
+      vorbehalt={o.vorbehalt}
+    />
+  );
+}
 
 // --------------------------------------------------------------------
 // Hypothesentest
@@ -187,6 +214,7 @@ export default function ZufallScreen() {
       {bereich === 'zaehlen' ? <Zaehlen /> : null}
       {bereich === 'binomial' ? <Binomial /> : null}
       {bereich === 'test' ? <Hypothesentest /> : null}
+      {bereich === 'binomial' ? <WozuOption /> : null}
     </ScreenGeruest>
   );
 }

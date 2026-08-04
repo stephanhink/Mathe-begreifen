@@ -5,6 +5,8 @@ import ScreenGeruest from '../components/ScreenGeruest';
 import InfoButton from '../components/InfoButton';
 import ZahlenTasten from '../components/ZahlenTasten';
 import { farben } from '../utils/konstanten';
+import Wozu from '../components/Wozu';
+import { zinseszins, verdopplungszeit, verdopplung, zahlKurz } from '../utils/anwendung';
 import { rechne, kuerze, alsKommazahl, wertAlsText } from '../utils/bruchrechnung';
 import {
   prozentwert,
@@ -43,6 +45,48 @@ function useAktivesFeld() {
       }
     },
   };
+}
+
+// Der Zinseszins hängt an der Prozentrechnung und bringt die
+// Exponentialfunktion hervor — deshalb steht er hier und nicht in einem
+// eigenen Bereich.
+function WozuZinseszins() {
+  const z = zinseszins({ startkapital: 1000, zinssatz: 3, jahre: 30 });
+  const v = verdopplungszeit(3);
+  const cent = verdopplung({ start: 0.01, schritte: 30 });
+
+  return (
+    <>
+      <Wozu
+        titel="Zinseszins — hier entsteht die Exponentialfunktion"
+        thema="zinseszins"
+        zeilen={[
+          '1000 € zu 3 % angelegt:',
+          ...z.schritte.map(
+            (s) => `nach ${s.jahr} Jahr${s.jahr === 1 ? '' : 'en'}:  ${s.ausgeschrieben}  =  ${s.alsPotenz}`
+          ),
+          { text: `nach 30 Jahren:  ${zahlKurz(z.ende)} €`, stark: true },
+          `ohne Zinseszins wären es nur ${zahlKurz(z.ohneZinseszins)} € — ${zahlKurz(z.unterschied)} € weniger`,
+          `Verdopplung nach ${v.jahre} Jahren, unabhängig vom Startkapital`,
+        ]}
+        einsicht={z.einsicht}
+        vorbehalt={z.vorbehalt}
+      />
+
+      <Wozu
+        titel="Ein Cent, dreißigmal verdoppelt"
+        thema="wachstum"
+        zeilen={[
+          `nach 10 Verdopplungen:  ${zahlKurz(cent.reihe[10].wert)} €`,
+          `nach 15 Verdopplungen:  ${zahlKurz(cent.reihe[15].wert)} €`,
+          `nach 20 Verdopplungen:  ${zahlKurz(cent.reihe[20].wert)} €`,
+          { text: `nach 30 Verdopplungen:  ${zahlKurz(cent.ende)} €`, stark: true },
+        ]}
+        einsicht={cent.einsicht}
+        vorbehalt={cent.vorbehalt}
+      />
+    </>
+  );
 }
 
 const BEREICHE = [

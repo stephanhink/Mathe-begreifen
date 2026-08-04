@@ -19,6 +19,7 @@ import './ableitung.mjs';
 import './integral.mjs';
 import './vektor.mjs';
 import './hypothese.mjs';
+import './anwendung.mjs';
 import './aufgaben.mjs';
 import './luecken.mjs';
 import './rechenweg.mjs';

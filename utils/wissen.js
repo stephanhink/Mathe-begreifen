@@ -207,6 +207,51 @@ export const THEMEN = {
     mehr: ['wurzelAusQuadrat', 'wurzel'],
   },
 
+  zinseszins: {
+    titel: 'Zinseszins — wo die Exponentialfunktion herkommt',
+    text: [
+      'Wer Geld anlegt, bekommt Zinsen. Im zweiten Jahr bekommt er auch Zinsen auf die Zinsen — das ist der Zinseszins, und er ist der Grund, warum aus wenig über lange Zeit viel wird.',
+      'Rechnerisch passiert etwas sehr Einfaches: Bei 3 % wird das Kapital jedes Jahr mit 1,03 malgenommen. Nach einem Jahr K · 1,03. Nach zwei Jahren K · 1,03 · 1,03. Nach drei Jahren K · 1,03 · 1,03 · 1,03.',
+      'Und genau hier steht sie: DERSELBE FAKTOR WIEDERHOLT SICH. Wiederholtes Malnehmen ist eine Potenz, also K · 1,03ⁿ. Die Exponentialfunktion ist nichts Fremdes, das jemand erfunden hat — sie entsteht von selbst, sobald etwas immer wieder mit demselben Faktor wächst.',
+      'Der Unterschied zu einfachen Zinsen wird mit der Zeit gewaltig. 1000 € zu 3 % ergeben nach 30 Jahren mit Zinseszins etwa 2427 €, ohne ihn nur 1900 €. Über 500 € allein dadurch, dass die Zinsen mitverzinst werden.',
+      'Eine Eigenschaft überrascht fast alle: Die Verdopplungszeit hängt NICHT vom Startkapital ab. Ob 100 € oder eine Million — bei 3 % dauert es beide Male 24 Jahre. Das ist das Kennzeichen exponentiellen Wachstums.',
+      'Was das Modell nicht weiß: Es kennt keine Inflation, keine Steuern, keine Gebühren, und es nimmt an, dass der Zinssatz sich nie ändert. Die Rechnung zeigt die Wirkung des Zinseszinses — nicht den Kontostand.',
+    ],
+    formel: 'K(n) = K₀ · (1 + p/100)ⁿ',
+    beispiel: '1000 € zu 3 % über 30 Jahre: 1000 · 1,03³⁰ ≈ 2427 €.',
+    mehr: ['wachstum', 'potenz', 'prozent'],
+  },
+
+  wachstum: {
+    titel: 'Exponentielles Wachstum — und warum man es zu spät bemerkt',
+    text: [
+      'Exponentiell wächst etwas, wenn es sich in gleichen Zeitabständen immer wieder um denselben FAKTOR vermehrt — nicht um denselben Betrag. Verdoppeln ist der bekannteste Fall.',
+      'Die Zahlen sprengen dabei jede Anschauung. Ein Cent, dreißigmal verdoppelt, sind über zehn Millionen Euro. Das glaubt niemand, bevor er es nachrechnet.',
+      'Der eigentliche Punkt liegt woanders: Nach der HÄLFTE der Zeit sind aus dem Cent erst rund 328 € geworden. Fast alles passiert ganz am Schluss. Genau deshalb wird exponentielles Wachstum immer zu spät bemerkt — solange es klein ist, sieht es harmlos aus.',
+      'Rückwärts ist es dasselbe Gesetz: Beim ZERFALL bleibt nach jeder Halbwertszeit die Hälfte übrig, also (1/2)ⁿ. Kohlenstoff-14 hat eine Halbwertszeit von 5730 Jahren; nach 11 460 Jahren ist ein Viertel übrig. Wachstum und Zerfall sind eine Formel, einmal mit einem Faktor über 1 und einmal darunter.',
+      'Was das Modell nicht weiß: In der Wirklichkeit hört jedes Wachstum irgendwann auf. Der Platz wird knapp, das Futter, das Geld. Kein Bakterium füllt das Weltall. Die Rechnung sagt, was geschähe, WENN sich der Verlauf fortsetzt — nicht, dass er es tut.',
+    ],
+    formel: 'N(t) = N₀ · aᵗ     Zerfall: N(t) = N₀ · (1/2)^(t/T)',
+    beispiel: 'Ein Cent, 30-mal verdoppelt: 0,01 · 2³⁰ = 10 737 418,24 €.',
+    mehr: ['zinseszins', 'potenz', 'optionspreis'],
+  },
+
+  optionspreis: {
+    titel: 'Optionspreise — wenn der Erwartungswert lügt',
+    text: [
+      'Eine Option ist das Recht, eine Aktie später zu einem heute festgelegten Preis zu kaufen. Was ist dieses Recht wert?',
+      'Die Aktie steht bei 100 €. In einem Jahr steht sie bei 125 € oder bei 80 €. Man darf für 100 € kaufen. Naheliegend wäre: halbe-halbe, also die Hälfte von 25 €, macht 12,50 €. DAS IST FALSCH. Der Preis ist 100/9, also 11,11 €.',
+      'Warum? Weil man die Option NACHBAUEN kann. Mit 5/9 Aktien und 400/9 € Schulden hat man in BEIDEN Fällen genau so viel wie mit der Option — und das kostet heute 100/9 €. Wer die Option teurer verkauft, baut sie billiger nach und hat den Unterschied sicher in der Tasche, egal was passiert. Der Preis ist also kein Schätzwert, sondern ein Zwang.',
+      'Und jetzt das Erstaunliche: Rechnet man rückwärts, welche Wahrscheinlichkeit diesen Preis als Erwartungswert liefert, kommt 4/9 heraus — nicht 1/2. Diese Zahl behauptet nicht, die Aktie steige mit 44,4 %. Sie ist ein Rechenwerkzeug: die einzige Gewichtung, unter der sich mit dem Nachbau nichts verdienen ließe.',
+      'Setzt man dieses q als p in die Binomialverteilung ein, bekommt man den Preis für beliebig viele Zwischenschritte. Je feiner man unterteilt, desto näher kommt man der Black-Scholes-Formel, für die es 1997 den Wirtschaftsnobelpreis gab.',
+      'Der Satz zum Mitnehmen: Der Erwartungswert wird mit der FALSCHEN Wahrscheinlichkeit gerechnet — und gerade deshalb stimmt er.',
+      'Was das Modell nicht weiß: Es nimmt an, dass es nur zwei mögliche Kurse gibt, dass man beliebig teilbare Aktien handeln kann, dass keine Gebühren anfallen und dass sich mit dem Nachbau nichts verdienen lässt. Keine dieser Annahmen trifft genau zu.',
+    ],
+    formel: 'Δ = (C↑ − C↓) : (S↑ − S↓)     Preis = Δ · S + B',
+    beispiel: 'Aktie 100 €, in einem Jahr 125 € oder 80 €, Kaufrecht für 100 €: Δ = 5/9, B = −400/9, Preis = 100/9 ≈ 11,11 €.',
+    mehr: ['binomialverteilung', 'wachstum', 'laplace'],
+  },
+
   ableitung: {
     titel: 'Die Ableitung',
     text: [

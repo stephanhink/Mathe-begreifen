@@ -68,24 +68,43 @@ pruefung('Info-Knöpfe in den Screens', () => {
   wahr('es gibt überhaupt Info-Knöpfe', benutzt.size > 0, `${benutzt.size} gefunden`);
 });
 
-pruefung('Jedes Thema ist erreichbar', () => {
-  // Ein Text, den niemand öffnen kann, ist verlorene Arbeit. Erreichbar
-  // heißt: Entweder sitzt ein Info-Knopf im Screen darauf, oder ein
-  // anderes Thema verlinkt ihn unter "mehr".
-  const erreichbar = new Set();
-
+pruefung('Jedes Thema ist vom Bildschirm aus erreichbar', () => {
+  // Ein Text, den niemand öffnen kann, ist verlorene Arbeit.
+  //
+  // Erreichbar heißt: Man kommt von einem INFO-KNOPF aus hin — direkt
+  // oder über die "mehr"-Links. Gesucht wird deshalb vorwärts von den
+  // Knöpfen aus, nicht bloß nach Erwähnungen.
+  //
+  // Die erste Fassung fragte nur "wird irgendwo erwähnt". Das ließ sich
+  // täuschen: Drei neue Texte, die einander unter "mehr" verlinkten,
+  // bestanden die Prüfung mühelos — obwohl kein Knopf auf einen von
+  // ihnen zeigte und kein Nutzer je hingekommen wäre. Eine geschlossene
+  // Insel ist nicht erreichbar, sie ist nur in sich verbunden.
+  const start = new Set();
   for (const { inhalt } of quelltexte()) {
     for (const treffer of inhalt.matchAll(/thema="([^"]+)"/g)) {
-      erreichbar.add(treffer[1]);
+      start.add(treffer[1]);
     }
   }
-  for (const t of Object.values(THEMEN)) {
-    for (const ziel of t.mehr || []) {
-      erreichbar.add(ziel);
+
+  const erreichbar = new Set();
+  const offen = [...start];
+  while (offen.length > 0) {
+    const id = offen.pop();
+    if (erreichbar.has(id)) {
+      continue;
+    }
+    erreichbar.add(id);
+    for (const ziel of THEMEN[id]?.mehr || []) {
+      offen.push(ziel);
     }
   }
 
   for (const id of Object.keys(THEMEN)) {
-    wahr(`${id}: von irgendwo aus erreichbar`, erreichbar.has(id));
+    wahr(
+      `${id}: von einem Info-Knopf aus erreichbar`,
+      erreichbar.has(id),
+      'kein Knopf zeigt darauf, und über die mehr-Links kommt man auch nicht hin'
+    );
   }
 });

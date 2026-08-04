@@ -1297,6 +1297,9 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/anwendung.js` — „Wozu braucht man das?": Zinseszins,
+  exponentielles Wachstum, Zerfall und der Optionspreis.
+  `components/Wozu.js` zeigt sie als aufklappbaren Streifen
 - `utils/hypothese.js` — Signifikanztests: Ablehnungsbereich, beide
   Fehlerarten und der Satz, den fast jeder falsch lernt
 - `utils/vektor.js` — Vektoren in Ebene und Raum, Skalar- und
@@ -1320,7 +1323,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **3111 Prüfungen**
+- Zusammen **3238 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1380,10 +1383,10 @@ Der Lückenfinder braucht ohnehin keine Klassenangabe.
 Was tatsächlich zu groß wird, sind `wissen.js` und `lernpfad.js`. Das ist
 eine interne Aufteilung in Unterdateien, keine Produktaufteilung.
 
-## Geplant: „Wozu braucht man das?"
+## „Wozu braucht man das?" — gebaut am 2026-08-04
 
-Aufgekommen am 2026-08-04, **nicht jetzt zu bauen** — aber die
-Entscheidung, WIE es gebaut wird, gehört vor die erste Zeile Code.
+Der Entwurf stand vorher fest, und er hat getragen. Was hier steht, ist
+deshalb keine Planung mehr, sondern die Begründung des Gebauten.
 
 Der Anlass ist die Frage, an der Mathematik in der Schule am häufigsten
 scheitert, und sie kam vom Nutzer selbst: *„Ich habe mich in der Schule
@@ -1439,6 +1442,43 @@ Vorgesehen ist deshalb:
 3. **Ein sichtbarer Haken im Screen**, kein zweiter Info-Knopf. Ein
    schmaler Streifen „Wozu braucht man das?" unter dem Ergebnis, der
    sich aufklappt. Sichtbar, ohne zu drängeln.
+
+### Was daraus geworden ist
+`utils/anwendung.js` liefert vier Anwendungen, `components/Wozu.js`
+zeigt sie als **aufklappbaren Streifen** unter dem Ergebnis — kein
+achter Tab, wie festgelegt. Zugeklappt ist er eine Zeile und drängelt
+nicht.
+
+Jede Anwendung sitzt dort, wo ihre Mathematik steht: Zinseszins und
+Verdopplung beim **Prozentrechnen**, der Optionspreis bei der
+**Binomialverteilung**. Eine eigene Prüfung verlangt, dass jede von
+ihnen sowohl eine `einsicht` als auch einen `vorbehalt` hat — ohne den
+Vorbehalt wäre die Anwendung eine Behauptung über die Wirklichkeit.
+
+Die tragenden Prüfungen sind für jede Anwendung die Aussage, die sie zur
+Anwendung macht:
+
+| | |
+|---|---|
+| Zinseszins | Die Potenz muss dasselbe liefern wie Jahr für Jahr multiplizieren |
+| Verdopplungszeit | Sie hängt **nicht** vom Startkapital ab — direkt geprüft, von 1 € bis zur Million |
+| Zerfall | Dieselbe Formel wie Zinseszins, nur mit Faktor unter 1 — beide Wege müssen übereinstimmen |
+| Optionspreis | **Der Nachbau muss in BEIDEN Fällen dasselbe liefern** wie die Option. Exakt prüfbar, weil in Brüchen gerechnet wird |
+
+Die letzte ist die schönste: Aus ihr folgt der Preis, und sie zeigt
+zugleich, warum er kein Schätzwert ist, sondern ein Zwang.
+
+#### Ein Fund: die Erreichbarkeitsprüfung ließ sich täuschen
+`tests/wissen.mjs` verlangte bisher nur, dass ein Erklärtext
+*irgendwo erwähnt* wird — von einem Info-Knopf oder von einem anderen
+Text unter `mehr`. Die drei neuen Texte verlinkten **einander** und
+bestanden die Prüfung mühelos, obwohl kein Knopf auf einen von ihnen
+zeigte und kein Nutzer je hingekommen wäre.
+
+Eine geschlossene Insel ist nicht erreichbar, sie ist nur in sich
+verbunden. Gesucht wird jetzt **vorwärts von den Info-Knöpfen aus**,
+transitiv über die `mehr`-Links — und die drei Texte fielen sofort
+durch, bis der Streifen sie anband.
 
 ### Womit anfangen — nach Wirkung sortiert
 | Anwendung | Bringt hervor | Braucht | Wert |
