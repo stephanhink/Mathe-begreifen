@@ -173,24 +173,35 @@ https://stephanhink.github.io/Mathe-begreifen/datenschutz.html
 
 | Was | Format | Status |
 |---|---|---|
-| App-Icon für den Store | 512×512, 32-Bit PNG | **fehlt** |
-| Vorstellungsgraphik (Feature Graphic) | 1024×500, PNG ohne Alpha | **fehlt** |
-| Screenshots Smartphone | mind. 2, empfohlen 4–8 | **fehlen** |
+| App-Icon für den Store | 512×512, 32-Bit PNG | `docs/store-assets/app-icon-512.png` |
+| Vorstellungsgraphik (Feature Graphic) | 1024×500, PNG ohne Alpha | `docs/store-assets/feature-graphic.png` |
+| Screenshots Smartphone | 8 Stück, 1122×2244 | `docs/screenshots/` |
 
-Das App-Icon auf dem Startbildschirm (`assets/icon.png` und die
-`assets/android-icon-*.png`) sind derzeit die Expo-Platzhalter. Leitfarbe ist
-Indigo `#4338CA` (steht in `utils/konstanten.js` und `app.json`).
+Alle drei erzeugt aus `tools/icon-bauen.py` bzw. aufgenommen im
+Android-Emulator (Medium_Phone_API_36.1, 1080×2400).
 
-Vorschlag für die Screenshots — in dieser Reihenfolge erzählen sie die
-Geschichte der App:
+**Zum Format der Screenshots:** Der Emulator liefert 1080×2400, das ist
+1:2,22 — Google lässt aber höchstens **1:2** zu. Gestaucht würde die
+Schrift leiden, deshalb sind Statusleiste und Gestenbalken abgeschnitten
+(die Emulator-Uhr stand ohnehin auf jedem Bild anders) und die Bilder
+seitlich auf 1122×2244 aufgefüllt. Genau 1:2, nichts verzerrt, nichts
+verloren.
 
-1. Der Lückenfinder mit dem Befund („Dein Problem sind die Potenzgesetze")
-   — das ist das Alleinstellungsmerkmal und gehört an die erste Stelle
-2. Ein Rechenweg mit benannten Schritten („| beide Seiten − 5")
-3. Der geprüfte eigene Rechenweg mit der markierten falschen Zeile
-4. Ein Funktionsgraph mit Nullstellen und Scheitelpunkt
-5. Ein Baumdiagramm mit den Pfadwahrscheinlichkeiten
-6. Ein geöffnetes Info-Fenster
+Reihenfolge — so erzählen sie die Geschichte der App:
+
+1. **Der Befund des Lückenfinders.** „Dein Problem ist nicht ‚Teilweise die
+   Wurzel ziehen'. Dein Problem ist: Quadratwurzeln ziehen." Darunter der
+   Weg nach oben und, ausdrücklich getrennt, was gar nicht abgefragt wurde
+2. **Ein Fehlerbild.** „Ich weiß, was passiert ist: Ein negativer Exponent
+   macht das Ergebnis nicht negativ, sondern zu einem Kehrwert"
+3. **Der geprüfte eigene Rechenweg**, Zeile für Zeile, mit der ersten
+   falschen Zeile in Rot und der Begründung
+4. Der Rechner mit benannten Schritten („| beide Seiten − 5"), Lösungsmenge
+   und Probe
+5. Ein Funktionsgraph mit Nullstellen und Scheitelpunkt
+6. Pythagoras mit gezeichnetem Dreieck und hergeleiteter Rechnung
+7. Ein Baumdiagramm mit den Pfadwahrscheinlichkeiten und der Probe
+8. Ein geöffnetes Info-Fenster
 
 ## Für später — wenn die Oberstufe steht
 

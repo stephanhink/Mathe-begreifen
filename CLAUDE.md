@@ -866,6 +866,35 @@ als `#000000` und nicht als `gray(0)`. Der Filter traf nie, und gemeldet
 wurde die Bildecke. Aufgefallen ist es nur, weil die Zahl (721 px)
 offensichtlich unmöglich war.
 
+### Screenshots kommen aus dem Emulator, nicht vom Handy
+Aufgenommen mit `adb exec-out screencap` auf dem AVD
+`Medium_Phone_API_36.1` (1080×2400), während die App über
+`npx expo start --android` aus Expo Go lief. Durchgeklickt wurde mit
+`adb shell input tap`; die Koordinaten liefert **`uiautomator dump`**, denn
+aus einem verkleinerten Bildschirmfoto abgeschätzte Werte treffen den
+Info-Knopf um über hundert Pixel daneben.
+
+Drei Fallen, alle drei zuerst hineingetappt:
+
+1. **Der Emulator schiebt ein „Try out your stylus"-Fenster über die
+   Tastatur.** Solange es steht, kommt keine Eingabe an.
+2. **`adb shell input text` läuft in der GERÄTE-Shell.** `3*sqrt(7)` bricht
+   dort an der Klammer ab. Der Text muss dort einfach gequotet ankommen.
+3. **Eine verlorene Eingabe fällt nicht auf.** Ein `input text`, das nicht
+   ankommt, führt zu einer leeren Antwort — die App meldet
+   folgerichtig „Da steht noch nichts", und die Aufgabe zählt als falsch,
+   ohne dass jemand etwas falsch gemacht hätte. Im Bericht des
+   Lückenfinders stand danach eine Lücke, die es nicht gibt. Seitdem prüft
+   das Tippen selbst nach, ob der Text im Feld steht, und wiederholt sich
+   sonst.
+
+Das Ergebnis muss auf **1:2** gebracht werden: Der Emulator liefert
+1:2,22, Google lässt höchstens 1:2 zu. Gestaucht litte die Schrift, also
+werden Statusleiste und Gestenbalken abgeschnitten und die Bilder seitlich
+auf 1122×2244 aufgefüllt. Nebenwirkung, die man sonst übersieht: Die
+Emulator-Uhr stand auf jedem Bild anders — mit der Statusleiste ist auch
+das weg.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -941,21 +970,17 @@ Was steht:
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- **Für die Veröffentlichung:** `docs/` steht (Datenschutzerklärung,
-  Play-Store-Text, App-Icon 512×512 und Feature Graphic). Es fehlen noch
-  die **Screenshots** — die kann nur ein echtes Gerät liefern — und
-  **GitHub Pages muss aktiviert werden**. Das ist alles, was zwischen dem
-  jetzigen Stand und einer veröffentlichbaren Version steht.
+- **Für die Veröffentlichung ist alles beisammen:** `docs/` enthält
+  Datenschutzerklärung, Play-Store-Text, App-Icon, Feature Graphic und
+  acht Screenshots; GitHub Pages ist aktiv und liefert die
+  Datenschutzerklärung aus. Offen ist nur noch das Google-Play-Konto
+  und die Erstveröffentlichung selbst.
   `BaustelleScreen.js` ist der Platzhalter dafür und verschwindet, wenn der
   letzte steht
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlen Funktionen,
   Geometrie, Stochastik und die ganze Oberstufe — jedes neue Thema braucht
   einen Eintrag in `lernpfad.js` UND einen Generator in `aufgaben.js`,
   sonst schlägt die Prüfung fehl
-- GitHub Pages für die Datenschutzerklärung noch nicht aktiviert
-  (Repo-Settings → Pages → Branch `main`, Ordner `/docs`). Die URL lautet
-  danach `https://stephanhink.github.io/Mathe-begreifen/datenschutz.html`
-  und wird im Play-Store-Listing verlangt.
 - Google-Play-Konto/Erstveröffentlichung noch nicht eingerichtet
 
 `EXPO_TOKEN` steht hier bewusst NICHT mehr — der Cloud-Build-Workflow bleibt
