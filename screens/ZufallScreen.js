@@ -8,6 +8,14 @@ import Baumdiagramm from '../components/Baumdiagramm';
 import { farben } from '../utils/konstanten';
 import { bruch, alsZahl } from '../utils/bruch';
 import {
+  test as hypothesenTest,
+  entscheide,
+  fehlerZweiterArt,
+  alsRechenweg as testAlsRechenweg,
+  prozent,
+  ARTEN,
+} from '../utils/hypothese';
+import {
   laplace,
   zaehleMoeglichkeiten,
   ZIEHUNGSARTEN,
@@ -26,11 +34,133 @@ import {
 // Alles rechnet exakt in Brüchen — 1/6 ist 1/6, nicht 0,1667. Die
 // Prozentzahl steht daneben, nicht anstelle.
 
+// --------------------------------------------------------------------
+// Hypothesentest
+// --------------------------------------------------------------------
+//
+// Der Bildschirm zeigt nicht nur den Ablehnungsbereich, sondern immer
+// auch den Vorbehalt dazu. Eine App, die bloß "H₀ beibehalten" ausgibt,
+// züchtet den häufigsten Denkfehler der Statistik, statt ihn
+// abzuräumen: "nicht verworfen" heißt nicht "bewiesen".
+
+function Hypothesentest() {
+  const [n, setN] = useState('100');
+  const [p0, setP0] = useState('0,5');
+  const [alpha, setAlpha] = useState('5');
+  const [art, setArt] = useState('rechtsseitig');
+  const [k, setK] = useState('59');
+
+  const ergebnis = useMemo(() => rechneTest(n, p0, alpha, art, k), [n, p0, alpha, art, k]);
+
+  return (
+    <View>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.abschnittTitel}>Nullhypothese prüfen</Text>
+        <InfoButton thema="hypothesentest" />
+      </View>
+
+      <View style={styles.testReihe}>
+        <TestFeld label="Versuche n" wert={n} setzen={setN} />
+        <TestFeld label="H₀: p =" wert={p0} setzen={setP0} />
+      </View>
+      <View style={styles.testReihe}>
+        <TestFeld label="α in %" wert={alpha} setzen={setAlpha} />
+        <TestFeld label="Treffer k" wert={k} setzen={setK} />
+      </View>
+
+      <View style={styles.artReihe}>
+        {Object.entries(ARTEN).map(([id, a]) => (
+          <Pressable
+            key={id}
+            style={[styles.reiter, art === id && styles.reiterAktiv]}
+            onPress={() => setArt(id)}
+          >
+            <Text style={[styles.reiterText, art === id && styles.reiterTextAktiv]}>
+              {a.name}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.hilfe}>{ARTEN[art].frage}</Text>
+      <ZahlenTasten />
+
+      {ergebnis.fehler ? (
+        <Text style={styles.hinweisText}>{ergebnis.fehler}</Text>
+      ) : (
+        <View style={styles.ergebnisKasten}>
+          {ergebnis.weg.map((zeile, i) => (
+            <Text key={i} style={zeile.startsWith(' ') ? styles.regelZeile : styles.wegZeile}>
+              {zeile}
+            </Text>
+          ))}
+
+          {ergebnis.entscheidung ? (
+            <View style={styles.entscheidungKasten}>
+              <Text style={styles.entscheidungSatz}>{ergebnis.entscheidung.satz}</Text>
+              {/* Der Vorbehalt steht IMMER dabei — er ist der eigentliche
+                  Lernstoff, nicht das Kleingedruckte. */}
+              <Text style={styles.vorbehalt}>{ergebnis.entscheidung.vorbehalt}</Text>
+            </View>
+          ) : null}
+
+          {ergebnis.fehler2 ? (
+            <View style={styles.fehler2Kasten}>
+              <Text style={styles.probeTitel}>Fehler 2. Art</Text>
+              <Text style={styles.vorbehalt}>{ergebnis.fehler2.satz}</Text>
+              <Text style={styles.vorbehalt}>{ergebnis.fehler2.hinweis}</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function TestFeld({ label, wert, setzen }) {
+  return (
+    <View style={styles.testFeldRahmen}>
+      <Text style={styles.testLabel}>{label}</Text>
+      <TextInput style={styles.testFeld} value={wert} onChangeText={setzen} />
+    </View>
+  );
+}
+
+function rechneTest(nText, p0Text, alphaText, art, kText) {
+  const zahlAus = (t) => Number(String(t).trim().replace('−', '-').replace(',', '.'));
+  const n = zahlAus(nText);
+  const p0 = zahlAus(p0Text);
+  const alpha = zahlAus(alphaText) / 100;
+  const k = zahlAus(kText);
+
+  let t;
+  try {
+    t = hypothesenTest({ n, p0, art, alpha });
+  } catch (fehler) {
+    return { fehler: fehler.message };
+  }
+
+  const weg = testAlsRechenweg(t);
+  let entscheidung = null;
+  let fehler2 = null;
+  if (Number.isInteger(k) && k >= 0 && k <= n) {
+    entscheidung = entscheide(t, k);
+    // Der Fehler 2. Art nur, wenn er etwas aussagt — bei p₀ selbst gibt
+    // es keinen Unterschied zu erkennen.
+    const pWahr = Math.min(0.99, Math.max(0.01, p0 + (art === 'linksseitig' ? -0.1 : 0.1)));
+    if (!t.leer) {
+      fehler2 = fehlerZweiterArt(t, pWahr);
+    }
+  }
+
+  return { weg, entscheidung, fehler2 };
+}
+
 const BEREICHE = [
   { key: 'laplace', label: 'Laplace' },
   { key: 'baum', label: 'Baumdiagramm' },
   { key: 'zaehlen', label: 'Zählen' },
   { key: 'binomial', label: 'Binomial' },
+  { key: 'test', label: 'Test' },
 ];
 
 export default function ZufallScreen() {
@@ -56,6 +186,7 @@ export default function ZufallScreen() {
       {bereich === 'baum' ? <Baum /> : null}
       {bereich === 'zaehlen' ? <Zaehlen /> : null}
       {bereich === 'binomial' ? <Binomial /> : null}
+      {bereich === 'test' ? <Hypothesentest /> : null}
     </ScreenGeruest>
   );
 }
@@ -492,6 +623,73 @@ const styles = StyleSheet.create({
   zeile: { fontSize: 17, color: farben.text, marginBottom: 2 },
   regel: { fontSize: 13, color: farben.primaer, marginLeft: 16, marginTop: 4, marginBottom: 2 },
 
+  testReihe: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 8,
+  },
+  testFeldRahmen: {
+    flex: 1,
+  },
+  testLabel: {
+    fontSize: 13,
+    color: farben.textLeise,
+    marginBottom: 3,
+  },
+  testFeld: {
+    borderWidth: 1,
+    borderColor: farben.rand,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: farben.text,
+  },
+  artReihe: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  wegZeile: {
+    fontSize: 16,
+    color: farben.text,
+    marginBottom: 2,
+  },
+  regelZeile: {
+    fontSize: 13,
+    color: farben.primaer,
+    marginBottom: 6,
+  },
+  entscheidungKasten: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: farben.trenner,
+  },
+  entscheidungSatz: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: farben.text,
+    marginBottom: 6,
+  },
+  vorbehalt: {
+    fontSize: 14,
+    color: farben.textLeise,
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  fehler2Kasten: {
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: farben.hintergrundHell,
+  },
+  hinweisText: {
+    fontSize: 14,
+    color: farben.warnung,
+    marginTop: 10,
+  },
   ergebnisKasten: {
     marginTop: 14,
     padding: 14,

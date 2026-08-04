@@ -260,6 +260,24 @@ export const THEMEN = {
   // Der Satz des Pythagoras. Er fehlte bisher im Graphen, obwohl der
   // Geometrie-Bildschirm ihn längst kann — aufgefallen ist das erst,
   // als der Betrag eines Vektors ihn als Voraussetzung brauchte.
+  // Stochastik der Oberstufe. Der Hypothesentest steht auf der
+  // Binomialverteilung — und die gab es im Graphen bisher ebenso wenig
+  // wie die Geometrie. Beides fiel erst auf, als etwas darauf aufbauen
+  // sollte.
+  binomialRechnen: {
+    titel: 'Mit der Binomialverteilung rechnen',
+    klasse: 12,
+    voraussetzungen: ['potenzDefinition', 'bruchMultiplizieren'],
+    wissen: 'binomialverteilung',
+  },
+
+  hypothesentest: {
+    titel: 'Einen Hypothesentest auswerten',
+    klasse: 13,
+    voraussetzungen: ['binomialRechnen'],
+    wissen: 'hypothesentest',
+  },
+
   pythagorasSatz: {
     titel: 'Den Satz des Pythagoras anwenden',
     klasse: 9,

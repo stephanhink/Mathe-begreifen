@@ -355,6 +355,21 @@ export const THEMEN = {
     mehr: ['binomialverteilung', 'laplace', 'potenz'],
   },
 
+  hypothesentest: {
+    titel: 'Der Hypothesentest',
+    text: [
+      'Ein Test fragt: Passt das, was ich beobachtet habe, noch zu meiner Annahme — oder ist es dafür zu unwahrscheinlich? Ist es zu unwahrscheinlich, wird die Annahme verworfen.',
+      'Die Annahme heißt Nullhypothese H₀, etwa „die Münze ist fair, p = 0,5". Vorher legt man fest, wie viel Irrtum man zulässt: das Signifikanzniveau α, meist 5 % oder 1 %. Daraus ergibt sich der Ablehnungsbereich — die Trefferzahlen, bei denen man H₀ fallen lässt.',
+      'Und jetzt der Satz, den fast jeder falsch lernt: EIN TEST BEWEIST NICHTS. Wird H₀ nicht verworfen, heißt das nicht, dass H₀ stimmt. Es heißt nur, dass das Beobachtete mit H₀ verträglich ist — mit anderen Annahmen vielleicht genauso gut. Ein Gericht, das freispricht, erklärt niemanden für unschuldig; es stellt fest, dass es nicht gereicht hat.',
+      'Zwei Arten von Irrtum gibt es. FEHLER 1. ART: H₀ verwerfen, obwohl sie stimmt — seine Wahrscheinlichkeit ist höchstens α. FEHLER 2. ART: H₀ beibehalten, obwohl sie falsch ist. Der zweite lässt sich nur ausrechnen, wenn man sagt, was stattdessen gelten soll — „irgendetwas anderes" ist keine Verteilung.',
+      'Ein Detail, das man leicht übersieht: Das tatsächliche Niveau ist fast immer KLEINER als α. Die Binomialverteilung springt in Stufen; bei n = 20 gibt es keinen Bereich mit genau 5 %, sondern nur einen mit 2,1 % und den nächsten mit 5,8 %. Genommen wird der größte, der noch darunter bleibt.',
+      'Und manchmal ist der Ablehnungsbereich leer. Dann ist die Stichprobe zu klein: Selbst das äußerste Ergebnis wäre unter H₀ noch wahrscheinlicher als α. Ein solcher Versuch kann gar nichts zeigen — auch das ist eine Antwort.',
+    ],
+    formel: 'P(Fehler 1. Art) ≤ α',
+    beispiel: 'n = 100 Münzwürfe, H₀: p = 0,5, einseitig, α = 5 %. Ablehnung ab 59 Treffern; das tatsächliche Niveau ist 4,43 %, nicht 5 %.',
+    mehr: ['binomialverteilung', 'laplace', 'kombinatorik'],
+  },
+
   binomialverteilung: {
     titel: 'Die Binomialverteilung',
     text: [

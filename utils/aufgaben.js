@@ -18,7 +18,13 @@
 //    ist der Unterschied zwischen einer App, die Mathematik prüft, und
 //    einer, die Tippfehler prüft.
 
-import { bruch, gleich as bruchGleich, istGanz, alsText as bruchAlsText } from './bruch.js';
+import {
+  bruch,
+  mal as malBruch,
+  gleich as bruchGleich,
+  istGanz,
+  alsText as bruchAlsText,
+} from './bruch.js';
 import {
   zahl,
   variable,
@@ -51,6 +57,8 @@ import { parseTerm, parseUngleichung, hatVergleich } from './parser.js';
 // dazu, sondern nur eine zweite Fehlerquelle.
 import { ableite } from './ableitung.js';
 import { integriere, bestimmtesIntegral } from './integral.js';
+import { binomial } from './zufall.js';
+import { test as hypothesenTest, imAblehnungsbereich } from './hypothese.js';
 import {
   system,
   istSystem,
@@ -94,6 +102,15 @@ function fehlerbild(wert, diagnose) {
 
 // Eine Zahl im Fließtext. Auch hier gilt das typografische Minus —
 // "−12x" und "-12x" nebeneinander sehen nach Fehler aus.
+// p hoch k, exakt. Für das Fehlerbild bei der Binomialverteilung.
+function potenzBruch(p, k) {
+  let aus = bruch(1);
+  for (let i = 0; i < k; i++) {
+    aus = malBruch(aus, p);
+  }
+  return aus;
+}
+
 // Eine kleine Hochzahl für den Fließtext: x³ statt x^3.
 function hochzahl(n) {
   const ziffern = '⁰¹²³⁴⁵⁶⁷⁸⁹';
@@ -636,6 +653,63 @@ const GENERATOREN = {
         ),
       ],
       hinweis: 'Es gibt zwei Lösungen. Schreibe beide, getrennt durch ein Semikolon.',
+    };
+  },
+
+  // Binomialverteilung: genau k Treffer bei n Versuchen. Klein
+  // gehalten, damit die exakte Rechnung trägt und das Ergebnis ein
+  // Bruch bleibt, den man hinschreiben kann.
+  binomialRechnen(naechste) {
+    const n = naechste(3) + 3;                    // 3 bis 5
+    const k = naechste(n + 1);
+    const nenner = ausListe(naechste, [2, 3, 4, 6]);
+    const zaehler = naechste(nenner - 1) + 1;
+    const p = bruch(zaehler, nenner);
+    const ergebnis = binomial(n, p, k);
+
+    return {
+      frage:
+        `Ein Versuch mit ${n} Wiederholungen, Trefferwahrscheinlichkeit p = ${zaehler}/${nenner}. ` +
+        `Wie wahrscheinlich sind genau ${k} Treffer?`,
+      art: 'zahl',
+      loesung: zahl(ergebnis.wahrscheinlichkeit),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(potenzBruch(p, k)),
+          `Der Binomialkoeffizient fehlt. p^${k} ist die Wahrscheinlichkeit für EINEN bestimmten Weg mit ${k} Treffern — es gibt aber mehrere, und „${n} über ${k}" zählt sie.`
+        ),
+      ],
+      hinweis: 'Als Bruch, zum Beispiel 3/8.',
+    };
+  },
+
+  // Den Ablehnungsbereich anwenden. Gefragt ist die ENTSCHEIDUNG, nicht
+  // die Rechnung — genau dort sitzt der Denkfehler.
+  hypothesentest(naechste) {
+    const n = ausListe(naechste, [20, 50, 100]);
+    const alpha = ausListe(naechste, [0.05, 0.01]);
+    const t = hypothesenTest({ n, p0: 0.5, art: 'rechtsseitig', alpha });
+    const grenze = t.ablehnung[0].von;
+    // Mal knapp darunter, mal knapp darüber — die Stelle, an der es
+    // sich entscheidet.
+    const k = naechste(2) === 0 ? grenze - 1 : grenze;
+    const verwirft = imAblehnungsbereich(t, k);
+
+    return {
+      frage:
+        `Bei ${n} Versuchen wird H₀: p = 0,5 gegen H₁: p > 0,5 getestet, α = ${alpha === 0.05 ? '5' : '1'} %. ` +
+        `Der Ablehnungsbereich ist k ≥ ${grenze}. Beobachtet werden ${k} Treffer. ` +
+        `Wird H₀ verworfen? Antworte mit 1 für ja und 0 für nein.`,
+      art: 'zahl',
+      loesung: zahl(verwirft ? 1 : 0),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(verwirft ? 0 : 1),
+          verwirft
+            ? `${k} liegt im Ablehnungsbereich (k ≥ ${grenze}), also wird H₀ verworfen. Die Grenze gehört DAZU.`
+            : `${k} liegt noch nicht im Ablehnungsbereich (der beginnt erst bei ${grenze}), also wird H₀ NICHT verworfen. Das heißt aber nicht, dass H₀ stimmt — nur, dass das Beobachtete dazu passt.`
+        ),
+      ],
     };
   },
 

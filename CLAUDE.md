@@ -1196,6 +1196,56 @@ Sie setzen das Rechnen mit negativen Zahlen und den Pythagoras voraus,
 nicht die Ableitung. Wer bei Vektoren scheitert, soll nicht zu den
 Potenzgesetzen geschickt werden.
 
+### Der Hypothesentest: ein Satz, den fast jeder falsch lernt
+`utils/hypothese.js` rechnet nicht nur, es SAGT auch:
+
+> **Ein Test beweist nichts.** „H₀ wird nicht verworfen" heißt nicht
+> „H₀ ist wahr". Es heißt nur: Was beobachtet wurde, ist mit H₀
+> verträglich — mit anderen Annahmen vielleicht genauso gut. Ein
+> Gericht, das freispricht, erklärt niemanden für unschuldig; es stellt
+> fest, dass es nicht gereicht hat.
+
+Deshalb liefert jede Entscheidung einen **Vorbehalt** mit, und der
+Bildschirm zeigt ihn immer — nicht als Kleingedrucktes. Eine App, die
+bloß „H₀ beibehalten" ausgibt, züchtet den Denkfehler, statt ihn
+abzuräumen.
+
+Die tragende Prüfung ist die, die den Test definiert: **Die
+Wahrscheinlichkeit, H₀ fälschlich zu verwerfen, ist höchstens α — und
+der Ablehnungsbereich ist der größte, für den das noch gilt.** Beide
+Hälften werden geprüft, und die zweite ist die wichtigere: Ein Test, der
+nie verwirft, hielte die erste mühelos ein und wäre wertlos.
+
+#### Hier wird numerisch gerechnet, und das ist begründet
+Eine Abweichung von der sonstigen Linie. Ein realistischer Test hat
+n = 100; „100 über 50" ist etwa 1 · 10²⁹ und sprengt die exakte
+Bruchrechnung um dreizehn Größenordnungen — `zufall.js` bricht dort zu
+Recht ab.
+
+Gerechnet wird deshalb über die Rekursion
+`P(X = k+1) = P(X = k) · (n−k)/(k+1) · p/(1−p)`, die ohne einen einzigen
+Binomialkoeffizienten auskommt. **Gerechtfertigt wird das durch eine
+eigene Prüfung:** Für kleine n wird gegen die exakte Rechnung aus
+`zufall.js` verglichen. Wo beides geht, kommt dasselbe heraus — dann
+darf man der Näherung auch dort glauben, wo exakt gar nichts mehr geht.
+
+#### Zwei Dinge, die man leicht übersieht
+1. **Das tatsächliche Niveau ist fast immer kleiner als α.** Die
+   Binomialverteilung springt in Stufen; bei n = 100 und α = 5 % liegt
+   es bei 4,43 %. α zu behaupten wäre falsch, also nennt die Datei die
+   echte Zahl.
+2. **Der Ablehnungsbereich kann leer sein.** Dann ist die Stichprobe zu
+   klein: Selbst das äußerste Ergebnis wäre unter H₀ noch
+   wahrscheinlicher als α. Das ist eine Antwort, keine Panne — und sie
+   zu verschweigen und irgendeinen Bereich zu melden wäre das
+   Schlimmste.
+
+#### Der Fehler 2. Art braucht eine konkrete Annahme
+Er lässt sich nur ausrechnen, wenn man sagt, was statt H₀ gelten soll.
+„Irgendetwas anderes als 0,5" ist keine Verteilung. Das übersieht man,
+weil α ja auch ohne Zusatzangabe dasteht — deshalb steht der Hinweis
+bei jeder Ausgabe dabei.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1244,6 +1294,8 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/hypothese.js` — Signifikanztests: Ablehnungsbereich, beide
+  Fehlerarten und der Satz, den fast jeder falsch lernt
 - `utils/vektor.js` — Vektoren in Ebene und Raum, Skalar- und
   Kreuzprodukt, Geraden und ihre vier Lagen zueinander
 - `utils/integral.js` — Stammfunktionen, das bestimmte Integral und der
@@ -1265,7 +1317,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **2971 Prüfungen**
+- Zusammen **3111 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1417,9 +1469,8 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
   obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
-- Der Lernpfad reicht inzwischen bis Klasse 11 (Ableitung). Für „bis
-  Abitur" fehlt der Rest der Oberstufe. Reihenfolge, weil jeder Block
-  auf dem vorigen steht:
+- **Der Lernpfad reicht jetzt von Klasse 5 bis 13.** Der Weg dorthin,
+  jeder Block auf dem vorigen:
   1. ~~Ungleichungen~~ **stehen** (2026-08-04), mit zwei Themen im
      Lernpfad und zwei Aufgabengeneratoren.
 
@@ -1438,8 +1489,13 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
      dass der Graph bis dahin GAR KEINE Geometrie kannte — der Satz des
      Pythagoras ist jetzt auch drin.
 
-     **HIER GEHT ES WEITER: der Hypothesentest.** Danach ist „bis
-     Abitur" eingelöst
+     ~~Hypothesentest~~ **steht** (2026-08-04). **Damit ist „bis
+     Abitur" eingelöst** — der Lernpfad reicht von Klasse 5 bis 13.
+
+     **HIER GEHT ES WEITER:** die Kurzbeschreibung im Play-Store-Listing
+     austauschen (die Fassung mit „Ableitung" und „Abitur" liegt dort
+     unter „Für später" bereit), ein Update bauen und einreichen. Danach
+     das Kapitel „Wozu braucht man das?" weiter oben
   2. **Integral**
   4. **Vektorgeometrie und Hypothesentest**
 
