@@ -23,4 +23,5 @@ import './fortschritt.mjs';
 import './funktion.mjs';
 import './geometrie.mjs';
 import './umstellen.mjs';
+import './ungleichung.mjs';
 import './zufall.mjs';
