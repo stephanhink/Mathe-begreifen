@@ -16,6 +16,25 @@ import { bruch } from '../utils/bruch.js';
 import { zahl, variable, summe, produkt, potenz, alsText as termAlsText } from '../utils/term.js';
 import { alleThemen } from '../utils/lernpfad.js';
 import {
+  istUngleichung,
+  alsText as ungleichungAlsText,
+  loese as loeseUngleichung,
+  loesungAlsText,
+} from '../utils/ungleichung.js';
+
+// Zwei Ungleichungen beschreiben denselben Bereich? Strukturell
+// verglichen, nicht über Stichproben: x < 3 und x ≤ 3 sähen an
+// zufälligen Stellen fast immer gleich aus, und genau der Unterschied
+// ist hier der Lernstoff.
+function gleicheMenge(a, b) {
+  const links = loeseUngleichung(a);
+  const rechts = loeseUngleichung(b);
+  return (
+    links.art === rechts.art &&
+    loesungAlsText(links) === loesungAlsText(rechts)
+  );
+}
+import {
   erzeugeAufgabe,
   hatGenerator,
   pruefeAntwort,
@@ -44,7 +63,10 @@ pruefung('Eine Aufgabe ist vollständig', () => {
   for (const id of alleThemen()) {
     const a = erzeugeAufgabe(id, naechste);
     wahr(`${id}: hat eine Frage`, typeof a.frage === 'string' && a.frage.length > 5);
-    wahr(`${id}: hat eine bekannte Art`, ['zahl', 'term', 'zahlen'].includes(a.art));
+    wahr(
+      `${id}: hat eine bekannte Art`,
+      ['zahl', 'term', 'zahlen', 'ungleichung'].includes(a.art)
+    );
     wahr(`${id}: hat eine Lösung`, Boolean(a.loesung));
     wahr(`${id}: nennt den Titel des Themas`, Boolean(a.titel));
     wahr(`${id}: hat einen Lösungstext`, typeof a.loesungText === 'string' && a.loesungText.length > 0);
@@ -208,6 +230,15 @@ pruefung('Ein Fehlerbild trifft nie die richtige Lösung', () => {
           if (deckungsgleich) {
             fehler = `"${a.frage}": ein Fehlerbild ist deckungsgleich mit der Lösung`;
           }
+        } else if (istUngleichung(a.loesung)) {
+          // Bei einer Ungleichung ist die Lösung ein Bereich. Zwei
+          // Bereiche mit derselben Grenze können sich allein im Zeichen
+          // unterscheiden — und genau das ist hier der typische Fehler.
+          // Deckungsgleich wären sie nur, wenn auch der Dreh nichts
+          // ändert; dann darf das Bild nicht stehen bleiben.
+          if (gleicheMenge(bild.wert, a.loesung)) {
+            fehler = `"${a.frage}": Fehlerbild ${loesungAlsText(loeseUngleichung(bild.wert))} ist die richtige Lösung`;
+          }
         } else if (wertgleich(bild.wert, a.loesung)) {
           fehler = `"${a.frage}": Fehlerbild ${termAlsText(bild.wert)} ist die richtige Lösung`;
         }
@@ -228,9 +259,11 @@ pruefung('Ein Fehlerbild wird erkannt und benannt', () => {
   for (const id of alleThemen()) {
     const a = erzeugeAufgabe(id, naechste);
     for (const bild of a.fehlerbilder ?? []) {
-      const eingabe = Array.isArray(bild.wert)
-        ? bild.wert.map(termAlsText).join('; ')
-        : termAlsText(bild.wert);
+      const eingabe = istUngleichung(bild.wert)
+        ? ungleichungAlsText(bild.wert)
+        : Array.isArray(bild.wert)
+          ? bild.wert.map(termAlsText).join('; ')
+          : termAlsText(bild.wert);
       const geprueft = pruefeAntwort(a, eingabe);
 
       wahr(`${id}: "${eingabe}" gilt als falsch`, !geprueft.richtig);

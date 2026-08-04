@@ -217,6 +217,26 @@ export const THEMEN = {
     voraussetzungen: ['gleichungMitKlammern', 'binomischeFormeln', 'wurzelZiehen'],
     wissen: 'pqFormel',
   },
+
+  // Ungleichungen hängen an den Gleichungen — bis auf eine Regel, und
+  // die hängt an etwas ganz anderem: am Rechnen mit negativen Zahlen.
+  // Wer nicht sicher weiß, dass −2 größer ist als −3, kann den Dreh
+  // nicht verstehen, sondern nur auswendig lernen. Genau deshalb steht
+  // ganzeZahlenMultiplizieren als Voraussetzung darunter und nicht bloß
+  // die Gleichung darüber.
+  ungleichungEinfach: {
+    titel: 'Eine einfache Ungleichung lösen',
+    klasse: 7,
+    voraussetzungen: ['gleichungMehrschrittig'],
+    wissen: 'ungleichung',
+  },
+
+  ungleichungMitDreh: {
+    titel: 'Eine Ungleichung mit negativem Vorfaktor lösen',
+    klasse: 8,
+    voraussetzungen: ['ungleichungEinfach', 'ganzeZahlenMultiplizieren'],
+    wissen: 'ungleichung',
+  },
 };
 
 // ---------------------------------------------------------------------

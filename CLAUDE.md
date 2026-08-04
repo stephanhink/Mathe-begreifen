@@ -917,6 +917,72 @@ auf 1122×2244 aufgefüllt. Nebenwirkung, die man sonst übersieht: Die
 Emulator-Uhr stand auf jedem Bild anders — mit der Statusleiste ist auch
 das weg.
 
+### Ungleichungen: eine Regel, die alles andere umkehrt
+`utils/ungleichung.js` steht neben `gleichung.js` und nicht darin — aus
+demselben Grund, aus dem `gleichung.js` neben `term.js` steht: Es gilt
+eine andere Regel.
+
+> Multipliziert oder dividiert man beide Seiten mit einer **negativen**
+> Zahl, dreht sich das Vergleichszeichen um.
+
+Der Dreh steht im Rechenweg ausdrücklich dabei und ist am Schritt als
+Feld `dreht` markiert, nicht nur im Text — der Bildschirm hebt ihn
+farblich hervor. Genau dort geht es schief, also gehört dorthin die
+Aufmerksamkeit.
+
+Geprüft wird wie bei den Gleichungen über die Lösungsmenge, und die
+Zufallsprüfung ist gegengeprüft: Lässt man den Dreh im Code weg, meldet
+sie Schritt, Zeile und Stelle.
+
+#### Die Grenze ist der ganze Punkt
+Bei Ungleichungen entscheidet sich alles an der Grenze — `<` oder `≤`.
+Zwei Funde beim Bauen, beide dort:
+
+1. Die erste Fassung der Prüfung maß die Zugehörigkeit an einer
+   **Fließkommazahl** und die Wahrheit an einer gerundeten Bruchzahl.
+   Bei der Grenze −2 − √2/2 gingen die beiden auseinander, und sie
+   meldete einen Fehler, den es nicht gab.
+2. `inLoesung` nahm anfangs nur Kommazahlen. Bei der Grenze **−4/3** —
+   einer ganz gewöhnlichen Bruchzahl — konnte es deshalb nicht sagen,
+   ob die Grenze dazugehört. Jetzt wird exakt verglichen, wo es exakt
+   geht, und nur bei Wurzelgrenzen numerisch.
+
+Deshalb vergleicht auch `aufgaben.js` die Lösungsmengen **strukturell**
+und nicht über Stichproben: `x < 3` und `x ≤ 3` sähen an zufälligen
+Stellen fast immer gleich aus.
+
+#### Beim Parser zählt die Reihenfolge
+`x <= 3` **enthält** ein Gleichheitszeichen. Wer zuerst auf `=` prüft,
+liest eine Gleichung und scheitert dann am eigenen `<`. Deshalb wird
+zuerst nach einem Vergleichszeichen gesucht — und aus demselben Grund
+stehen die zweizeichigen Formen (`<=`, `>=`) in der Erkennungsliste VOR
+den einzeichigen.
+
+Ketten wie `1 < x < 5` werden abgelehnt, aber mit Ansage. Sie
+stillschweigend als `x < 5` zu lesen wäre die schlimmste aller
+Antworten.
+
+#### „−3 < x" ist aufgelöst
+Beim Prüfen der Schülerantwort hatte ich zuerst gefragt, ob `loese()`
+noch Schritte macht — und damit `−3 < x` abgewiesen, weil die App die
+Variable erst nach links holt. Das Umdrehen ist aber kein
+Rechenschritt, sondern eine Leserichtung. **Derselbe Fehler wie damals
+bei `umstellen.js`.** Gefragt wird jetzt, ob die Variable allein auf
+einer Seite steht — auf welcher, ist egal.
+
+#### Im Lückenfinder stehen zwei Themen, nicht eines
+`ungleichungEinfach` hat einen POSITIVEN Vorfaktor und verlangt keinen
+Dreh. Das ist Absicht: Erst stellt die App fest, ob das Umformen an
+sich sitzt, und erst darüber verlangt `ungleichungMitDreh` die Regel.
+Wer beim einfachen scheitert, hat kein Problem mit dem Dreh, sondern
+mit dem Lösen — und diese Unterscheidung ist der ganze Zweck des
+Lückenfinders.
+
+Unter `ungleichungMitDreh` steht als Voraussetzung nicht nur die
+Ungleichung darüber, sondern `ganzeZahlenMultiplizieren`. Wer nicht
+sicher weiß, dass −2 größer ist als −3, kann den Dreh nicht verstehen,
+sondern nur auswendig lernen.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -965,6 +1031,10 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/ungleichung.js` — Ungleichungen ersten und zweiten Grades,
+  samt der einen Regel, die alles umkehrt: Beim Multiplizieren mit
+  einer negativen Zahl dreht sich das Vergleichszeichen um.
+  `components/Zahlenstrahl.js` zeigt die Lösungsmenge als Bild
 - `utils/gleichung.js` — Gleichungen ersten und zweiten Grades lösen,
   Schritt für Schritt („| beide Seiten − 5"), samt pq-Formel und Probe.
   Erkennt „keine Lösung" und „jede Zahl"; alles andere sagt ausdrücklich,
@@ -973,7 +1043,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **2126 Prüfungen**
+- Zusammen **2303 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1045,7 +1115,9 @@ eine interne Aufteilung in Unterdateien, keine Produktaufteilung.
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
 - Der Lernpfad endet bei Klasse 9. Für „bis Abitur" fehlt die ganze
   Oberstufe. Reihenfolge, weil jeder Block auf dem vorigen steht:
-  1. **Ungleichungen und Gleichungssysteme** — schließt `gleichung.js` ab
+  1. ~~Ungleichungen~~ **stehen** (2026-08-04), mit zwei Themen im
+     Lernpfad und zwei Aufgabengeneratoren. Offen bleiben
+     **Gleichungssysteme**, dann ist dieser Block abgeschlossen
   2. **Ableitung** — das eigentliche Ziel, und der Grund, warum der ganze
      Graph darunter überhaupt existiert
   3. **Integral**

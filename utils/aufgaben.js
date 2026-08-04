@@ -34,7 +34,15 @@ import {
   vereinfache,
 } from './term.js';
 import { gleichung, alsText as gleichungAlsText } from './gleichung.js';
-import { parseTerm } from './parser.js';
+import {
+  ungleichung,
+  istUngleichung,
+  alsText as ungleichungAlsText,
+  loese as loeseUngleichung,
+  loesungAlsText,
+  drehe,
+} from './ungleichung.js';
+import { parseTerm, parseUngleichung, hatVergleich } from './parser.js';
 import { alleThemen, holeThema } from './lernpfad.js';
 
 const x = variable('x');
@@ -607,6 +615,55 @@ const GENERATOREN = {
       hinweis: 'Es gibt zwei Lösungen. Schreibe beide, getrennt durch ein Semikolon.',
     };
   },
+
+  // ax + b < c mit POSITIVEM a — hier dreht sich nichts. Diese Aufgabe
+  // ist absichtlich harmlos: Sie stellt fest, ob das Umformen an sich
+  // sitzt, bevor die Aufgabe darüber den Dreh verlangt. Wer hier
+  // scheitert, hat kein Problem mit dem Dreh, sondern mit dem Lösen.
+  ungleichungEinfach(naechste) {
+    const a = naechste(5) + 2;
+    const b = ohneNull(naechste, 9);
+    const grenze = ohneNull(naechste, 6);
+    const zeichen = ausListe(naechste, ['<', '≤', '>', '≥']);
+    const u = ungleichung(summe(produkt(zahl(a), x), zahl(b)), zeichen, zahl(a * grenze + b));
+    return {
+      frage: `Löse die Ungleichung: ${ungleichungAlsText(u)}`,
+      start: u,
+      art: 'ungleichung',
+      loesung: ungleichung(x, zeichen, zahl(grenze)),
+      fehlerbilder: [
+        fehlerbild(
+          ungleichung(x, drehe(zeichen), zahl(grenze)),
+          `Hier war kein Dreh nötig. Das Zeichen kippt nur beim Malnehmen oder Teilen mit einer NEGATIVEN Zahl — hier wurde durch ${zahlText(a)} geteilt, und ${zahlText(a)} ist positiv.`
+        ),
+      ],
+      hinweis: 'Schreibe das Ergebnis als Ungleichung, zum Beispiel x < 5.',
+    };
+  },
+
+  // −ax + b < c — und jetzt muss gedreht werden. Das ist die Aufgabe,
+  // für die es die ganze Zeile im Lernpfad gibt.
+  ungleichungMitDreh(naechste) {
+    const a = naechste(4) + 2;
+    const b = ohneNull(naechste, 9);
+    const grenze = ohneNull(naechste, 6);
+    const zeichen = ausListe(naechste, ['<', '≤', '>', '≥']);
+    // −a·x + b ⋛ −a·grenze + b   ist gleichbedeutend mit   x ⋚ grenze.
+    const u = ungleichung(summe(produkt(zahl(-a), x), zahl(b)), zeichen, zahl(-a * grenze + b));
+    return {
+      frage: `Löse die Ungleichung: ${ungleichungAlsText(u)}`,
+      start: u,
+      art: 'ungleichung',
+      loesung: ungleichung(x, drehe(zeichen), zahl(grenze)),
+      fehlerbilder: [
+        fehlerbild(
+          ungleichung(x, zeichen, zahl(grenze)),
+          `Die Zahl stimmt, das Zeichen nicht. Geteilt wurde durch ${zahlText(-a)} — eine negative Zahl, und dabei dreht sich das Vergleichszeichen um. Probe: Setze eine Zahl aus deinem Bereich in die ursprüngliche Ungleichung ein, dann siehst du es sofort.`
+        ),
+      ],
+      hinweis: 'Schreibe das Ergebnis als Ungleichung, zum Beispiel x < 5.',
+    };
+  },
 };
 
 // ---------------------------------------------------------------------
@@ -651,15 +708,38 @@ export function erzeugeAufgabe(themaId, naechste = zufall) {
     // Gleichung, bei einer Umformung der Term. Wer selbst rechnet,
     // beginnt hier — und die erste eigene Zeile wird dagegen geprüft.
     start: roh.start ?? roh.term ?? null,
-    loesungText: Array.isArray(roh.loesung)
-      ? roh.loesung.map(termAlsText).join('; ')
-      : termAlsText(roh.loesung),
+    loesungText: loesungAlsAntwort(roh.loesung),
   });
+}
+
+// Die Lösung so, wie sie dastehen soll, wenn man sie vorliest. Bei
+// einer Ungleichung ist das der Bereich ("x > −3"), nicht die
+// umgeformte Zeile.
+function loesungAlsAntwort(loesung) {
+  if (istUngleichung(loesung)) {
+    return loesungAlsText(loeseUngleichung(loesung));
+  }
+  return Array.isArray(loesung)
+    ? loesung.map(termAlsText).join('; ')
+    : termAlsText(loesung);
 }
 
 // Deckt sich ein Fehlerbild mit der Lösung? Bei mehreren Lösungen zählt
 // die Menge, nicht die Reihenfolge.
 function trifftLoesung(wert, loesung) {
+  // Bei einer Ungleichung ist die "Lösung" kein Term, sondern ein
+  // Bereich — verglichen wird die Lösungsmenge. Auch hier gilt der
+  // Zweck dieses Filters: Fiele der typische Fehler mit dem Richtigen
+  // zusammen, würde eine richtige Antwort als Fehler abgewiesen. Bei
+  // Ungleichungen passiert das etwa, wenn die Grenze null ist und das
+  // Zeichen ≤ heißt — dann sind gedreht und ungedreht nicht immer zu
+  // unterscheiden.
+  if (istUngleichung(loesung) || istUngleichung(wert)) {
+    if (!istUngleichung(loesung) || !istUngleichung(wert)) {
+      return false;
+    }
+    return gleicheLoesungsmenge(loeseUngleichung(wert), loeseUngleichung(loesung));
+  }
   if (Array.isArray(wert) !== Array.isArray(loesung)) {
     return false;
   }
@@ -779,6 +859,9 @@ export function pruefeAntwort(aufgabe, eingabe) {
   if (aufgabe.art === 'zahlen') {
     return pruefeMehrere(aufgabe, text);
   }
+  if (aufgabe.art === 'ungleichung') {
+    return pruefeUngleichung(aufgabe, String(eingabe).trim());
+  }
 
   let antwort;
   try {
@@ -815,6 +898,92 @@ export function pruefeAntwort(aufgabe, eingabe) {
   }
 
   return { richtig: true };
+}
+
+// Bei einer Ungleichung ist die Antwort keine Zahl, sondern ein
+// Bereich. Verglichen wird deshalb die LÖSUNGSMENGE und nicht der Text:
+// "−3 < x" ist dieselbe Aussage wie "x > −3", nur andersherum
+// aufgeschrieben, und beides muss zählen.
+//
+// Vorn steht trotzdem eine Formprüfung: Wer "2x > −6" schreibt, hat
+// zwar eine richtige Aussage hingeschrieben, aber nichts gelöst. Das
+// ist dasselbe Maß wie bei den Zahlaufgaben, wo "6 : 2" nicht als "3"
+// durchgeht.
+function pruefeUngleichung(aufgabe, text) {
+  if (!hatVergleich(text)) {
+    return {
+      richtig: false,
+      grund: 'Hier ist eine Ungleichung gesucht — mit <, ≤, > oder ≥ dazwischen.',
+    };
+  }
+
+  let antwort;
+  try {
+    antwort = parseUngleichung(text);
+  } catch (fehler) {
+    return { richtig: false, grund: `Das kann ich nicht lesen: ${fehler.message}` };
+  }
+
+  const meins = loeseUngleichung(antwort);
+  if (meins.art === 'unklar') {
+    return { richtig: false, grund: meins.grund };
+  }
+  if (!istAufgeloest(antwort)) {
+    return { richtig: false, grund: 'Das lässt sich noch weiter auflösen — x soll allein stehen.' };
+  }
+
+  const soll = loeseUngleichung(aufgabe.loesung);
+  if (gleicheLoesungsmenge(meins, soll)) {
+    return { richtig: true };
+  }
+
+  for (const bild of aufgabe.fehlerbilder ?? []) {
+    if (bild.wert && bild.wert.zeichen && gleicheLoesungsmenge(meins, loeseUngleichung(bild.wert))) {
+      return { richtig: false, grund: bild.diagnose, erkannt: true };
+    }
+  }
+  return { richtig: false, grund: 'Dieser Bereich stimmt nicht.' };
+}
+
+// Steht x allein auf einer Seite? Auf WELCHER, ist egal: "−3 < x" ist
+// dieselbe Aussage wie "x > −3" und genauso weit aufgelöst. Nur wer
+// "2x > −6" schreibt, hat noch nichts getan.
+//
+// Zuerst hatte ich hier gefragt, ob loese() noch Schritte macht — und
+// damit "−3 < x" abgewiesen, weil die App es erst nach links holt. Das
+// Umdrehen ist aber kein Rechenschritt, sondern eine Leserichtung.
+// Derselbe Fehler wie damals bei umstellen.js.
+function istAufgeloest(u) {
+  const alleinLinks = u.links.art === 'variable' && variablen(u.rechts).length === 0;
+  const alleinRechts = u.rechts.art === 'variable' && variablen(u.links).length === 0;
+  return alleinLinks || alleinRechts;
+}
+
+// Zwei Lösungsmengen vergleichen. Strukturell, nicht über Stichproben:
+// Zwei Bereiche, die sich nur an der Grenze unterscheiden — x < 3 und
+// x ≤ 3 —, sähen an zufälligen Stellen fast immer gleich aus. Und genau
+// dieser Unterschied ist bei Ungleichungen der Lernstoff.
+function gleicheLoesungsmenge(a, b) {
+  if (a.art !== b.art) {
+    return false;
+  }
+  if (a.art !== 'loesung') {
+    return true;
+  }
+  if (a.intervalle.length !== b.intervalle.length) {
+    return false;
+  }
+  return a.intervalle.every((iv, i) => {
+    const w = b.intervalle[i];
+    const grenzeGleich = (p, q) =>
+      (p === null && q === null) || (p !== null && q !== null && termAlsText(p) === termAlsText(q));
+    return (
+      grenzeGleich(iv.von, w.von) &&
+      grenzeGleich(iv.bis, w.bis) &&
+      iv.vonOffen === w.vonOffen &&
+      iv.bisOffen === w.bisOffen
+    );
+  });
 }
 
 function pruefeMehrere(aufgabe, text) {
