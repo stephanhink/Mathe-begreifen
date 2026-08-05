@@ -10,6 +10,8 @@ import { variablen, alsText as termAlsText, multipliziereAus, klammereAus } from
 import { alsText as gleichungAlsText } from '../utils/gleichung';
 import { parseTerm, parseGleichung } from '../utils/parser';
 import { stelleUm, FORMELN } from '../utils/umstellen';
+import { kuerze, alsRechenweg as kuerzWeg } from '../utils/bruchterm';
+import { alsText as zahlAlsText } from '../utils/bruch';
 
 // Der Terme-Bildschirm.
 //
@@ -23,7 +25,117 @@ import { stelleUm, FORMELN } from '../utils/umstellen';
 const BEREICHE = [
   { key: 'umstellen', label: 'Formeln umstellen' },
   { key: 'klammern', label: 'Klammern' },
+  { key: 'bruchterm', label: 'Bruchterme' },
 ];
+
+// Bruchterme. Der Bereich steht hier und nicht bei den Zahlen, weil man
+// zum Kürzen zerlegen muss — und das Ausklammern sitzt einen Reiter
+// weiter links.
+//
+// Wichtig ist die Reihenfolge der Anzeige: Der Definitionsbereich steht
+// ÜBER dem Ergebnis, nicht darunter. Er ist die erste Frage bei einem
+// Bruchterm, nicht die Fußnote.
+const BRUCH_BEISPIELE = [
+  ['x^2 - 1', 'x - 1'],
+  ['x^2 - 4', 'x + 2'],
+  ['x^2 + 5x + 6', 'x + 2'],
+  ['2x^2 - 8', 'x - 2'],
+  ['x^2 - 3x', 'x'],
+  ['x - 1', 'x^2 + 1'],
+];
+
+function Bruchterme() {
+  const [zaehler, setZaehler] = useState('x^2 - 1');
+  const [nenner, setNenner] = useState('x - 1');
+
+  const ergebnis = useMemo(() => rechneBruchterm(zaehler, nenner), [zaehler, nenner]);
+
+  return (
+    <View>
+      <FeldLabel thema="bruchterm">Zähler</FeldLabel>
+      <MatheFeld wert={zaehler} setWert={setZaehler} platzhalter="z. B. x^2 − 1" />
+      <FeldLabel thema="definitionsbereich">Nenner</FeldLabel>
+      <MatheFeld wert={nenner} setWert={setNenner} platzhalter="z. B. x − 1" />
+
+      <View style={styles.beispiele}>
+        {BRUCH_BEISPIELE.map(([z, n]) => (
+          <Pressable
+            key={z + n}
+            style={styles.beispiel}
+            onPress={() => {
+              setZaehler(z);
+              setNenner(n);
+            }}
+          >
+            <Text style={styles.beispielText}>
+              {z} : {n}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {ergebnis.fehler ? (
+        <View style={styles.fehlerKasten}>
+          <Text style={styles.fehlerText}>{ergebnis.fehler}</Text>
+        </View>
+      ) : (
+        <View style={styles.ergebnisKasten}>
+          {/* Zuerst der Definitionsbereich. Er ist die erste Frage bei
+              einem Bruchterm, nicht die Fußnote — und nach dem Kürzen
+              sieht man ihm die Lücke nicht mehr an. */}
+          <View style={styles.zeileMitKnopf}>
+            <Text style={styles.abschnittTitel}>Definitionsbereich</Text>
+            <InfoButton thema="definitionsbereich" />
+          </View>
+          <Text style={styles.hinweis}>{ergebnis.bereichText}</Text>
+
+          {ergebnis.weg.map((zeile, i) => (
+            <Text key={i} style={zeile.startsWith(' ') ? styles.regel : styles.zeile}>
+              {zeile}
+            </Text>
+          ))}
+
+          {ergebnis.vorbehalt ? (
+            <View style={styles.warnKasten}>
+              <Text style={styles.warnTitel}>Die Lücke bleibt</Text>
+              <Text style={styles.hinweis}>{ergebnis.vorbehalt}</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function rechneBruchterm(zaehlerText, nennerText) {
+  let z;
+  let n;
+  try {
+    z = parseTerm(zaehlerText);
+    n = parseTerm(nennerText);
+  } catch (fehler) {
+    return { fehler: `Das kann ich nicht lesen: ${fehler.message}` };
+  }
+
+  const e = kuerze(z, n);
+  if (e.art === 'unklar') {
+    return { fehler: e.grund };
+  }
+
+  const stellen = e.ausgeschlossen ?? [];
+  const bereichText =
+    stellen.length === 0
+      ? 'Der Nenner wird nie null — der Bruchterm ist für jede Zahl definiert.'
+      : `Der Nenner wird null bei ${stellen
+          .map((s) => `x = ${zahlAlsText(s).replace('-', '−')}`)
+          .join(' und ')}. Dort ist der Bruchterm nicht definiert.`;
+
+  return {
+    bereichText,
+    weg: kuerzWeg(z, n, e),
+    vorbehalt: e.art === 'gekuerzt' ? e.vorbehalt : null,
+  };
+}
 
 export default function TermeScreen() {
   const [bereich, setBereich] = useState('umstellen');
@@ -44,7 +156,9 @@ export default function TermeScreen() {
         ))}
       </View>
 
-      {bereich === 'umstellen' ? <Umstellen /> : <Klammern />}
+      {bereich === 'umstellen' ? <Umstellen /> : null}
+      {bereich === 'klammern' ? <Klammern /> : null}
+      {bereich === 'bruchterm' ? <Bruchterme /> : null}
     </ScreenGeruest>
   );
 }
@@ -332,6 +446,15 @@ const styles = StyleSheet.create({
   zeile: { fontSize: 18, color: farben.text, marginBottom: 2 },
   regel: { fontSize: 13, color: farben.primaer, marginLeft: 20, marginTop: 4, marginBottom: 2 },
   hinweis: { fontSize: 14, color: farben.textLeise, lineHeight: 20 },
+  abschnittTitel: { fontSize: 15, fontWeight: '700', color: farben.text },
+  zeileMitKnopf: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  warnKasten: {
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: farben.warnungHintergrund,
+  },
+  warnTitel: { fontSize: 14, fontWeight: '700', color: farben.warnung, marginBottom: 4 },
 
   ergebnisKasten: {
     marginTop: 14,

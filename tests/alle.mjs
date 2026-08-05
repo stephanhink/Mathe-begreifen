@@ -8,6 +8,7 @@
 import './bruch.mjs';
 import './term.mjs';
 import './gleichung.mjs';
+import './bruchterm.mjs';
 import './parser.mjs';
 import './wissen.mjs';
 

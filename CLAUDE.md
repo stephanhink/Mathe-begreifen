@@ -1293,6 +1293,54 @@ bedacht:
 > ergab die Sortierung „3; −1". Sortiert wird jetzt numerisch über
 > `auswerte`.
 
+### Bruchterme: beim Kürzen WÄCHST der Definitionsbereich
+Die schärfste Definitionsbereichs-Frage im Projekt — schärfer als bei
+den Wurzeln.
+
+```
+x² − 1
+──────  =  x + 1        aber nur für x ≠ 1
+x − 1
+```
+
+Bei x = 1 steht links `0 : 0`, das gibt es nicht. Rechts steht 2. Die
+beiden Terme sind also **nicht überall gleich**. Und die Richtung ist
+die gefährliche: Der gekürzte Term ist an einer Stelle definiert, an der
+der ursprüngliche es nicht ist. Ohne Vorbehalt lieferte die App für
+x = 1 eine Antwort — **für eine Stelle, die es nie gab.** Sie hätte
+einen Wert erfunden.
+
+Das Tückische: **Nach dem Kürzen sieht man die Lücke nicht mehr**, denn
+der Faktor, der dort null wurde, ist ja weggekürzt. Deshalb steht der
+Definitionsbereich im Bildschirm ÜBER dem Ergebnis, nicht darunter — er
+ist die erste Frage bei einem Bruchterm, nicht die Fußnote.
+
+#### Die tragende Prüfung hat zwei Hälften
+Wertgleichheit allein genügt hier nicht. Geprüft wird zusätzlich:
+
+> **Die ausgeschlossenen Stellen sind GENAU die, an denen der
+> ursprüngliche Term nicht definiert ist** — nicht mehr und nicht
+> weniger.
+
+Kein Vorbehalt zu viel (sonst schränkt die App grundlos ein), kein
+Vorbehalt zu wenig (sonst antwortet sie, wo es keine Antwort gibt).
+Über 3000 Stellen je Lauf.
+
+#### Ein Fund im alten Code: `1 : 0` war nicht gekennzeichnet
+`bruch.geteilt` warf „Division durch null" **ohne das Kennzeichen
+`undefiniert`** — obwohl CLAUDE.md `1 : 0` als ERSTES Beispiel dafür
+nennt. Aufgefallen ist es erst hier, weil man beim Kürzen die Frage
+„ist der Term an dieser Stelle definiert?" beantworten können muss, und
+ohne Kennzeichen lässt sich eine Definitionslücke nicht von einem
+Rechenfehler unterscheiden.
+
+**Das ist bereits der dritte Fund dieser Sorte** (nach dem gebrochenen
+Exponenten in `term.js` und dem NaN-Vergleich in `aufgaben.js`). Die
+drei Kennzeichen stehen seit Langem im Dokument, aber nicht überall im
+Code. Wer eine neue Fehlerstelle baut: **Kennzeichen setzen, sonst
+antwortet die App irgendwann auf eine offene Frage mit einem sachlichen
+Nein.**
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1341,6 +1389,8 @@ Was steht:
   Kehrwert statt Teilen, Wurzel ziehen, teilweise Wurzel ziehen, Wurzel
   aus einer Potenz, Potenzgesetz, gleichartige Glieder, ausmultiplizieren,
   ausklammern. Kennt Wurzeln beliebigen Grades und den Betrag
+- `utils/bruchterm.js` — Bruchterme kürzen und dabei den
+  Definitionsbereich mitführen
 - `utils/anwendung.js` — „Wozu braucht man das?": Zinseszins,
   exponentielles Wachstum, Zerfall und der Optionspreis.
   `components/Wozu.js` zeigt sie als aufklappbaren Streifen
@@ -1367,7 +1417,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **3265 Prüfungen**
+- Zusammen **3318 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1551,8 +1601,6 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
 - `gleichung.js` kann Gleichungen ersten und zweiten Grades mit einer
   Variablen; Ungleichungen und Gleichungssysteme stehen daneben in
   eigenen Dateien. Noch offen: Gleichungen dritten Grades
-- Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
-  Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
 - **Der Lernpfad reicht jetzt von Klasse 5 bis 13.** Der Weg dorthin,
   jeder Block auf dem vorigen:
   1. ~~Ungleichungen~~ **stehen** (2026-08-04), mit zwei Themen im

@@ -149,11 +149,29 @@ export function mal(a, b) {
   return bruch((a.z / g1) * (b.z / g2), (a.n / g2) * (b.n / g1));
 }
 
+// Ein Fehler, der „das gibt es nicht" bedeutet — im Unterschied zu
+// `irrational` („kein Bruch, aber es gibt es") und `zuGross` („kann ich
+// nicht ausrechnen"). Die drei auseinanderzuhalten ist der Grund, warum
+// die App auf eine offene Frage nicht mit einem sachlichen Nein
+// antwortet. Siehe CLAUDE.md.
+function werfeUndefiniert(nachricht) {
+  const fehler = new Error(nachricht);
+  fehler.undefiniert = true;
+  return fehler;
+}
+
 export function geteilt(a, b) {
   pruefeBruch(a, 'geteilt');
   pruefeBruch(b, 'geteilt');
   if (b.z === 0) {
-    throw new Error('Division durch null');
+    // Gekennzeichnet als `undefiniert` — „das gibt es nicht". CLAUDE.md
+    // nennt 1 : 0 als ERSTES Beispiel dafür, und trotzdem war das
+    // Kennzeichen hier nie gesetzt. Aufgefallen ist es erst beim
+    // Kürzen von Bruchtermen: Dort muss man die Frage „ist der Term an
+    // dieser Stelle definiert?" beantworten können, und ohne
+    // Kennzeichen lässt sich eine Definitionslücke nicht von einem
+    // Rechenfehler unterscheiden.
+    throw werfeUndefiniert('Division durch null');
   }
   return mal(a, kehrwert(b));
 }
@@ -193,7 +211,7 @@ export function negativ(a) {
 export function kehrwert(a) {
   pruefeBruch(a, 'kehrwert');
   if (a.z === 0) {
-    throw new Error('Der Kehrwert von 0 ist nicht definiert');
+    throw werfeUndefiniert('Der Kehrwert von 0 ist nicht definiert');
   }
   return bruch(a.n, a.z);
 }

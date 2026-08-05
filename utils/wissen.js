@@ -638,6 +638,21 @@ export const THEMEN = {
     mehr: ['gleichung', 'beideSeiten', 'loesungsmenge'],
   },
 
+  bruchterm: {
+    titel: 'Bruchterme kürzen',
+    text: [
+      'Ein Bruchterm hat eine Variable im Nenner — und damit gibt es Stellen, an denen er gar nicht existiert. Überall dort, wo der Nenner null wird, ist er nicht definiert. Das nennt man Definitionslücke, und es ist die ERSTE Frage bei jedem Bruchterm, nicht die letzte.',
+      'Gekürzt wird wie bei Zahlenbrüchen: Zähler und Nenner in Faktoren zerlegen, gemeinsame Faktoren streichen. Aus (x² − 1) : (x − 1) wird (x − 1)(x + 1) : (x − 1), und der Faktor x − 1 steht oben wie unten — also weg damit. Übrig bleibt x + 1.',
+      'Und jetzt kommt der Punkt, der alles entscheidet: DIE LÜCKE BLEIBT. Setzt man x = 1 in den ursprünglichen Term ein, steht dort 0 : 0 — das gibt es nicht. In x + 1 eingesetzt kommt dagegen 2 heraus. Die beiden Terme sind also nicht überall gleich; sie sind es nur dort, wo BEIDE definiert sind.',
+      'Deshalb schreibt man dazu: (x² − 1) : (x − 1) = x + 1 für x ≠ 1. Ohne diesen Zusatz behauptet man, der Bruchterm hätte bei x = 1 den Wert 2 — und das ist schlicht falsch. Der Wert wurde erfunden.',
+      'Das Tückische daran: Nach dem Kürzen SIEHT man die Lücke nicht mehr. Der Faktor, der dort null wurde, ist ja weggekürzt. Genau deshalb muss man den Definitionsbereich bestimmen, BEVOR man kürzt — danach ist die Information aus dem Term verschwunden.',
+      'Kürzen darf man nur FAKTOREN, nie einzelne Summanden. Aus (x + 3) : (x + 5) wird nicht 3 : 5 — dort steht ein Plus, kein Mal. Das ist der zweithäufigste Fehler nach dem vergessenen Definitionsbereich.',
+    ],
+    formel: '(x² − 1) : (x − 1) = x + 1     für x ≠ 1',
+    beispiel: 'Bei x = 1: links 0 : 0 — nicht definiert. Rechts 1 + 1 = 2. Deshalb der Zusatz.',
+    mehr: ['definitionsbereich', 'ausklammern', 'bruch'],
+  },
+
   definitionsbereich: {
     titel: 'Definitionsbereich',
     text: [
