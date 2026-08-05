@@ -68,6 +68,42 @@ pruefung('Info-Knöpfe in den Screens', () => {
   wahr('es gibt überhaupt Info-Knöpfe', benutzt.size > 0, `${benutzt.size} gefunden`);
 });
 
+pruefung('Kein Bauteil bleibt unbenutzt liegen', () => {
+  // Die Erreichbarkeitsprüfung unten liest den QUELLTEXT. Ein Bauteil,
+  // das niemand einbindet, enthält seine Info-Knöpfe trotzdem — und
+  // besteht sie mühelos, obwohl auf dem Bildschirm nie etwas davon
+  // erscheint.
+  //
+  // Genau das ist passiert: `WozuZinseszins` stand fertig im
+  // Zahlen-Bildschirm und wurde nie gerendert, weil meine Änderung auf
+  // eine Zeile zielte, die es dort gar nicht gab. Aufgefallen ist es
+  // erst beim Fotografieren.
+  //
+  // Deshalb hier die billige, aber wirksame Gegenprobe: Jede lokal
+  // definierte Komponente muss im selben Bauteil auch verwendet werden.
+  for (const { datei, inhalt } of quelltexte()) {
+    for (const treffer of inhalt.matchAll(/^function ([A-Z]\w+)\s*\(/gm)) {
+      const name = treffer[1];
+      // Nach dem Namen darf ALLES Weiße folgen — Komponenten mit
+      // mehreren Eigenschaften stehen mehrzeilig da:
+      //   <Ableitung
+      //     analysis={analysis}
+      // Ein Muster, das ein Leerzeichen verlangt, meldet die alle
+      // fälschlich als unbenutzt. Genau das war mein erster Anlauf.
+      const benutzt = new RegExp(`<${name}[\\s/>]`);
+      const wirdBenutzt =
+        benutzt.test(inhalt) ||
+        inhalt.includes(`export default ${name}`) ||
+        inhalt.includes(`export function ${name}`);
+      wahr(
+        `${datei}: ${name} wird auch eingebunden`,
+        wirdBenutzt,
+        'definiert, aber nirgends verwendet — auf dem Bildschirm erscheint davon nichts'
+      );
+    }
+  }
+});
+
 pruefung('Jedes Thema ist vom Bildschirm aus erreichbar', () => {
   // Ein Text, den niemand öffnen kann, ist verlorene Arbeit.
   //

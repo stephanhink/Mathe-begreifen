@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { farben } from '../utils/konstanten';
-import { skala, teilstriche, abtasten } from '../utils/graph';
+import { skala, teilstriche, abtasten, beschneideSenkrecht } from '../utils/graph';
 
 // Zeichnet einen Funktionsgraphen.
 //
@@ -54,7 +54,9 @@ export default function Funktionsgraph({
   let abschnitte = [];
   let fehler = null;
   try {
-    abschnitte = abtasten(term, name, { ...fenster, punkte: 240 });
+    abschnitte = abtasten(term, name, { ...fenster, punkte: 240 }).flatMap((a) =>
+      beschneideSenkrecht(a, fenster.unten, fenster.oben)
+    );
   } catch (f) {
     fehler = f.message;
   }
@@ -70,7 +72,9 @@ export default function Funktionsgraph({
   let nebenabschnitte = [];
   if (nebenkurve) {
     try {
-      nebenabschnitte = abtasten(nebenkurve, name, { ...fenster, punkte: 240 });
+      nebenabschnitte = abtasten(nebenkurve, name, { ...fenster, punkte: 240 }).flatMap((a) =>
+        beschneideSenkrecht(a, fenster.unten, fenster.oben)
+      );
     } catch {
       nebenabschnitte = [];
     }
@@ -162,7 +166,7 @@ export default function Funktionsgraph({
         {nebenabschnitte.map((abschnitt, i) => (
           <Path
             key={`n${i}`}
-            d={alsPfad(abschnitt, px, py, fenster)}
+            d={alsPfad(abschnitt, px, py)}
             stroke={farben.warnung}
             strokeWidth={2}
             strokeDasharray="6 4"
@@ -174,7 +178,7 @@ export default function Funktionsgraph({
         {abschnitte.map((abschnitt, i) => (
           <Path
             key={`k${i}`}
-            d={alsPfad(abschnitt, px, py, fenster)}
+            d={alsPfad(abschnitt, px, py)}
             stroke={farben.primaer}
             strokeWidth={2.5}
             fill="none"
@@ -201,11 +205,16 @@ export default function Funktionsgraph({
 // Ein Abschnitt als SVG-Pfad. Punkte weit außerhalb des Fensters werden
 // auf den Rand gezogen, damit die Linie dort endet statt in den Himmel
 // zu laufen.
-function alsPfad(abschnitt, px, py, fenster) {
-  const klemme = (wert) => Math.min(fenster.oben, Math.max(fenster.unten, wert));
-
+// Ein Abschnitt wird zu einem SVG-Pfad. Beschnitten wird vorher in
+// utils/graph.js — hier wird nur noch übersetzt.
+//
+// Früher stand hier ein `klemme`, das die y-Werte auf den Fensterrand
+// zog. Dadurch lief eine Kurve, die aus dem Bild läuft, am Rand
+// entlang — als hätte sie dort diesen Wert. Bei einer Tangente sah man
+// es sofort: Eine Gerade wird nicht plötzlich waagerecht.
+function alsPfad(abschnitt, px, py) {
   return abschnitt
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x).toFixed(1)} ${py(klemme(p.y)).toFixed(1)}`)
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x).toFixed(1)} ${py(p.y).toFixed(1)}`)
     .join(' ');
 }
 

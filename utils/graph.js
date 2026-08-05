@@ -343,3 +343,63 @@ export function zahlenstrahl({ intervalle, pixel, von, bis, zielAnzahl = 6 }) {
     nullX: von <= 0 && 0 <= bis ? nachPixel(0) : null,
   };
 }
+
+// ---------------------------------------------------------------------
+// Senkrecht beschneiden
+// ---------------------------------------------------------------------
+//
+// `abtasten` zerlegt die Kurve dort, wo die Funktion NICHT DEFINIERT
+// ist. Was dabei offenblieb: Stellen, an denen sie sehr wohl definiert
+// ist, aber aus dem Fenster läuft.
+//
+// Bisher wurden diese Punkte auf den Rand geklemmt — und dann lief die
+// Kurve am unteren Rand entlang, als hätte sie dort diesen Wert. Bei
+// einer Parabel fällt das kaum auf, bei einer TANGENTE sofort: Eine
+// Gerade wird nicht plötzlich waagerecht. Aufgefallen ist es beim
+// Anschauen eines Screenshots, nicht durch eine Prüfung.
+//
+// Richtig ist Abschneiden statt Klemmen: Wo die Kurve das Fenster
+// verlässt, endet der Abschnitt — genau am Rand, mit einem
+// Zwischenwert. Kommt sie zurück, fängt ein neuer an. Dieselbe Haltung
+// wie bei den Definitionslücken: lieber eine Lücke im Bild als eine
+// Linie, die etwas Falsches behauptet.
+export function beschneideSenkrecht(punkte, unten, oben) {
+  const drin = (p) => p.y >= unten && p.y <= oben;
+
+  // Wo schneidet die Strecke von a nach b den Rand `grenze`?
+  const amRand = (a, b, grenze) => {
+    const anteil = (grenze - a.y) / (b.y - a.y);
+    return { x: a.x + anteil * (b.x - a.x), y: grenze };
+  };
+  const grenzeZwischen = (a, b) => (b.y > oben ? oben : unten);
+
+  const abschnitte = [];
+  let aktuell = [];
+
+  for (let i = 0; i < punkte.length; i++) {
+    const p = punkte[i];
+
+    if (drin(p)) {
+      // Kommt die Kurve gerade zurück? Dann am Rand einsteigen.
+      if (aktuell.length === 0 && i > 0 && !drin(punkte[i - 1])) {
+        aktuell.push(amRand(p, punkte[i - 1], grenzeZwischen(p, punkte[i - 1])));
+      }
+      aktuell.push(p);
+      continue;
+    }
+
+    // Draußen: den laufenden Abschnitt am Rand beenden.
+    if (aktuell.length > 0) {
+      const letzter = aktuell[aktuell.length - 1];
+      aktuell.push(amRand(letzter, p, grenzeZwischen(letzter, p)));
+      abschnitte.push(aktuell);
+      aktuell = [];
+    }
+  }
+
+  if (aktuell.length > 0) {
+    abschnitte.push(aktuell);
+  }
+  // Einzelne Punkte ergeben keine Linie.
+  return abschnitte.filter((a) => a.length >= 2);
+}

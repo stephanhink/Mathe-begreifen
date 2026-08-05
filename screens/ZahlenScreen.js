@@ -114,6 +114,7 @@ export default function ZahlenScreen() {
       </View>
 
       {bereich === 'brueche' ? <Brueche /> : <Prozent />}
+      {bereich === 'brueche' ? null : <WozuZinseszins />}
     </ScreenGeruest>
   );
 }

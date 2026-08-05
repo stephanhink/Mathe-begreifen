@@ -30,6 +30,7 @@ import {
   funktionsvariable,
   zahlenstrahl,
   zahlenstrahlBereich,
+  beschneideSenkrecht,
 } from '../utils/graph.js';
 
 // ---------------------------------------------------------------------
@@ -354,4 +355,84 @@ pruefung('Ohne Grenzen bleibt ein Stück Zahlengerade', () => {
   const nichts = zahlenstrahl({ intervalle: [], pixel: 300, ...b });
   zahlIst('leere Lösungsmenge: kein Balken', nichts.balken.length, 0);
   wahr('aber die Skala steht trotzdem', nichts.striche.length > 0);
+});
+
+pruefung('Was aus dem Fenster läuft, wird abgeschnitten — nicht geklemmt', () => {
+  // Aufgefallen an einem Screenshot, nicht durch eine Prüfung: Die
+  // Tangente lief am unteren Bildrand entlang, statt dort zu enden. Der
+  // Grund war ein Klemmen der y-Werte auf den Rand — und eine Linie am
+  // Rand behauptet, die Funktion hätte dort diesen Wert.
+  //
+  // Eine Gerade wird nicht plötzlich waagerecht.
+  const gerade = [];
+  for (let i = 0; i <= 20; i++) {
+    const x = -5 + i * 0.5;
+    gerade.push({ x, y: -4 * x + 7 });
+  }
+
+  const abschnitte = beschneideSenkrecht(gerade, -2, 20);
+  zahlIst('ein zusammenhängendes Stück', abschnitte.length, 1);
+
+  const stueck = abschnitte[0];
+  wahr(
+    'kein Punkt liegt außerhalb',
+    stueck.every((p) => p.y >= -2 - 1e-9 && p.y <= 20 + 1e-9),
+    stueck.map((p) => p.y.toFixed(1)).join(' ')
+  );
+  // Und es endet GENAU am Rand, nicht irgendwo davor.
+  wahr(
+    'der Anfang sitzt auf dem oberen Rand',
+    Math.abs(stueck[0].y - 20) < 1e-9,
+    String(stueck[0].y)
+  );
+  wahr(
+    'das Ende auf dem unteren',
+    Math.abs(stueck[stueck.length - 1].y + 2) < 1e-9,
+    String(stueck[stueck.length - 1].y)
+  );
+
+  // Keine zwei aufeinanderfolgenden Punkte mit demselben y am Rand —
+  // genau das war das Klemmen.
+  let flach = 0;
+  for (let i = 1; i < stueck.length; i++) {
+    if (Math.abs(stueck[i].y - stueck[i - 1].y) < 1e-12) {
+      flach++;
+    }
+  }
+  zahlIst('nirgends waagerecht', flach, 0);
+});
+
+pruefung('Kommt die Kurve zurück, fängt ein neuer Abschnitt an', () => {
+  // Ein Fenster, das die MITTE wegschneidet: x² zwischen 1 und 4 liegt
+  // bei x von −2 bis −1 und wieder von 1 bis 2. Das sind zwei Stücke —
+  // und dazwischen darf keine Brücke gezeichnet werden.
+  //
+  // Mein erster Testfall war hier falsch gedacht: Mit dem Fenster von
+  // −1 bis 4 läuft die Parabel nur EINMAL hinein und wieder hinaus, das
+  // ist ein Stück. Zwei Äste bekommt man nur, wenn das Fenster in der
+  // Mitte liegt.
+  const parabel = [];
+  for (let i = 0; i <= 40; i++) {
+    const x = -4 + i * 0.2;
+    parabel.push({ x, y: x * x });
+  }
+
+  const abschnitte = beschneideSenkrecht(parabel, 1, 4);
+  zahlIst('zwei Äste', abschnitte.length, 2);
+  wahr(
+    'und dazwischen ist eine Lücke',
+    abschnitte[0][abschnitte[0].length - 1].x < abschnitte[1][0].x
+  );
+
+  // Der eine Durchgang: von −1 bis 4 läuft die Parabel nur einmal
+  // hinein und wieder hinaus.
+  zahlIst('einmal hindurch ist ein Stück', beschneideSenkrecht(parabel, -1, 4).length, 1);
+
+  // Liegt alles im Fenster, wird nichts zerschnitten.
+  const ganzDrin = beschneideSenkrecht(parabel, -1, 100);
+  zahlIst('ein Stück', ganzDrin.length, 1);
+  zahlIst('mit allen Punkten', ganzDrin[0].length, parabel.length);
+
+  // Liegt alles draußen, bleibt nichts übrig — statt einer Linie am Rand.
+  zahlIst('nichts zu zeichnen', beschneideSenkrecht(parabel, 100, 200).length, 0);
 });

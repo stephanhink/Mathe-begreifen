@@ -1341,6 +1341,48 @@ Code. Wer eine neue Fehlerstelle baut: **Kennzeichen setzen, sonst
 antwortet die App irgendwann auf eine offene Frage mit einem sachlichen
 Nein.**
 
+### Was aus dem Fenster läuft, wird ABGESCHNITTEN — nicht geklemmt
+`abtasten` zerlegt die Kurve dort, wo die Funktion nicht definiert ist.
+Was lange offenblieb: Stellen, an denen sie sehr wohl definiert ist,
+aber aus dem Fenster läuft. Die wurden auf den Rand **geklemmt** — und
+dann lief die Kurve am Rand entlang, als hätte sie dort diesen Wert.
+
+Bei einer Parabel fällt das kaum auf. Bei einer **Tangente** sofort:
+Eine Gerade wird nicht plötzlich waagerecht. Genau daran ist es
+aufgefallen — beim Anschauen eines Screenshots, nicht durch eine
+Prüfung.
+
+Es ist derselbe Fehler wie der, den `graph.js` seit jeher vermeidet, nur
+senkrecht statt waagerecht: *Eine durchgezogene Linie behauptet, dort
+läge etwas.* `beschneideSenkrecht` beendet den Abschnitt jetzt **genau
+am Rand**, mit Zwischenwert, und fängt einen neuen an, wenn die Kurve
+zurückkommt.
+
+### Ein totes Bauteil zeigt auch keinen Info-Knopf
+Die Erreichbarkeitsprüfung liest den **Quelltext**. Ein Bauteil, das
+niemand einbindet, enthält seine `thema="…"`-Knöpfe trotzdem — und
+besteht sie mühelos, obwohl auf dem Bildschirm nie etwas davon
+erscheint.
+
+Genau das ist passiert: `WozuZinseszins` stand fertig im
+Zahlen-Bildschirm und wurde **nie gerendert**, weil meine Änderung auf
+eine Zeile zielte, die es dort nicht gab (`bereich === 'prozent'` statt
+`bereich === 'brueche' ? … : …`). Die Ersetzung lief ins Leere, die
+Prüfung blieb grün, und aufgefallen ist es erst beim Fotografieren.
+
+Dagegen steht jetzt eine billige, aber wirksame Gegenprobe: **Jede lokal
+definierte Komponente muss im selben Bauteil auch verwendet werden.**
+
+> Beim Bauen dieser Prüfung selbst hineingetappt: Mein Muster verlangte
+> ein Leerzeichen hinter dem Namen (`<Ableitung `). Komponenten mit
+> mehreren Eigenschaften stehen aber mehrzeilig da, und neun richtige
+> Bauteile galten als unbenutzt. Jetzt akzeptiert das Muster jedes
+> Weißzeichen.
+>
+> Gegengeprüft an einer **Wegwerf-Kopie** des Projekts, nicht an den
+> echten Dateien — eine Prüfung zu belegen ist kein Grund, den
+> Arbeitsstand anzufassen.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1417,7 +1459,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **3318 Prüfungen**
+- Zusammen **3386 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
