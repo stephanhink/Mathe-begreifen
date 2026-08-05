@@ -395,6 +395,16 @@ export function loese(g) {
   const schritte = [];
   let aktuell = g;
 
+  // ZUERST der Satz vom Nullprodukt — vor dem Aufräumen, denn
+  // multipliziereAus() hätte die Faktoren sonst längst weggerechnet.
+  // Genau das war der Mangel: (x + 1)(x − 3) = 0 wurde ausmultipliziert
+  // und dann mühsam über die pq-Formel zurückgeholt, obwohl die Antwort
+  // schon dastand.
+  const faktoren = alsNullprodukt(g, name);
+  if (faktoren !== null) {
+    return ueberNullprodukt(g, faktoren, name, schritte);
+  }
+
   // Schritt 0: Klammern auflösen und zusammenfassen. Nur aufnehmen,
   // wenn sich dabei wirklich etwas ändert.
   const aufgeraeumt = gleichung(multipliziereAus(g.links).term, multipliziereAus(g.rechts).term);
@@ -441,6 +451,145 @@ export function loese(g) {
 
 function unklar(grund, schritte, g) {
   return { art: 'unklar', grund, schritte, gleichung: g };
+}
+
+// ---------------------------------------------------------------------
+// Der Satz vom Nullprodukt
+// ---------------------------------------------------------------------
+//
+// Nicht "null mal irgendwas ist null" — das ist die triviale Richtung.
+// Sondern die UMKEHRUNG:
+//
+//     Ist a · b = 0, dann ist a = 0 ODER b = 0.
+//
+// Ein Produkt kann nur null werden, wenn schon ein Faktor null ist. Das
+// klingt selbstverständlich und ist es nicht: In den Restklassen modulo
+// 12 gilt 3 · 4 = 12 = 0, und weder 3 noch 4 ist null. Dass der Satz in
+// den reellen Zahlen gilt, ist eine Eigenschaft DIESER Zahlen und kein
+// logischer Selbstläufer. Deshalb heißt er Satz.
+//
+// Praktisch bringt er zweierlei: Man liest die Lösungen direkt ab, statt
+// auszumultiplizieren und über die Wurzel zurückzurechnen — und man löst
+// damit auch Gleichungen, deren Grad sonst zu hoch wäre.
+
+// Steht hier "Produkt = 0"? Dann kommen die Faktoren zurück, sonst null.
+function alsNullprodukt(g, name) {
+  for (const [seite, andere] of [
+    [g.links, g.rechts],
+    [g.rechts, g.links],
+  ]) {
+    if (seite.art !== 'produkt' || seite.teile.length < 2) {
+      continue;
+    }
+    if (!istNullTerm(andere)) {
+      continue;
+    }
+    // Ohne Variable ist es keine Gleichung, die man lösen könnte.
+    if (!variablen(seite).includes(name)) {
+      continue;
+    }
+    return seite.teile;
+  }
+  return null;
+}
+
+function istNullTerm(term) {
+  try {
+    return istNull(auswerteExakt(term));
+  } catch {
+    return false;
+  }
+}
+
+function ueberNullprodukt(g, faktoren, name, schritte) {
+  // Faktoren ohne Variable können nie null werden — außer sie SIND null.
+  // Der erste Fall wird weggelassen, der zweite entscheidet alles.
+  const konstante = faktoren.filter((f) => !variablen(f).includes(name));
+  for (const f of konstante) {
+    if (istNullTerm(f)) {
+      return {
+        art: 'alle',
+        grund:
+          `Der Faktor ${termAlsText(f)} ist null, und damit ist das ganze Produkt null — ` +
+          'egal welche Zahl man einsetzt. Jede Zahl löst die Gleichung.',
+        schritte,
+        gleichung: g,
+      };
+    }
+  }
+
+  const mitVariable = faktoren.filter((f) => variablen(f).includes(name));
+
+  schritte.push({
+    operation:
+      'Satz vom Nullprodukt: ein Produkt ist genau dann null, wenn ein Faktor null ist' +
+      (konstante.length > 0
+        ? ` (${konstante.map(termAlsText).join(' und ')} kann nie null werden und fällt weg)`
+        : ''),
+    // Die Gleichung ändert sich hier NICHT — der Satz formt nicht um, er
+    // liest anders. Deshalb steht dieselbe Zeile noch einmal da, und die
+    // Invariante "jeder Schritt erhält die Lösungsmenge" ist an dieser
+    // Stelle trivial erfüllt, statt schiefzugehen.
+    gleichung: g,
+    text: mitVariable.map((f) => `${termAlsText(f)} = 0`).join('   oder   '),
+  });
+
+  const loesungen = [];
+  const teilergebnisse = [];
+  let jedeZahl = false;
+
+  for (const faktor of mitVariable) {
+    const teil = loese(gleichung(faktor, zahl(bruch(0))));
+    teilergebnisse.push({ faktor, ergebnis: teil });
+
+    if (teil.art === 'unklar') {
+      return unklar(
+        `Der Faktor ${termAlsText(faktor)} lässt sich nicht lösen: ${teil.grund}`,
+        schritte,
+        g
+      );
+    }
+    if (teil.art === 'alle') {
+      jedeZahl = true;
+      continue;
+    }
+    for (const l of teil.loesungen ?? []) {
+      // Doppelte Lösungen zusammenfassen: (x − 2)(x − 2) = 0 hat EINE
+      // Lösung, nicht zwei. Die Lösungsmenge ist eine Menge.
+      if (!loesungen.some((vorhanden) => termAlsText(vorhanden) === termAlsText(l))) {
+        loesungen.push(l);
+      }
+    }
+  }
+
+  if (jedeZahl) {
+    return {
+      art: 'alle',
+      grund:
+        'Einer der Faktoren ist für jede Zahl null — damit ist das ganze Produkt immer null.',
+      schritte,
+      gleichung: g,
+    };
+  }
+
+  if (loesungen.length === 0) {
+    return {
+      art: 'keine',
+      grund: 'Kein Faktor kann null werden — also wird das Produkt nie null.',
+      schritte,
+      gleichung: g,
+    };
+  }
+
+  return {
+    art: loesungen.length === 1 ? 'eindeutig' : 'mehrere',
+    loesungen,
+    // Für den Bildschirm: welcher Faktor welche Lösung geliefert hat.
+    faktoren: teilergebnisse,
+    nullprodukt: true,
+    schritte,
+    gleichung: g,
+  };
 }
 
 // Die Variable ist herausgefallen — dann entscheidet die Zahlenaussage.

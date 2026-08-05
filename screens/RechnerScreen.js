@@ -41,6 +41,8 @@ const BEISPIELE = [
   'x/3 = 2',
   'x^2 = 4',
   '2x^2 + 8x + 6 = 0',
+  '(x+1)(x-3) = 0',
+  '(x+1)(x-3)(x+5) = 0',
   'x^2 + 3x + 1 = 0',
   'x^2 + 1 = 0',
   '(x + 3)^2',
@@ -419,6 +421,32 @@ function GleichungsWeg({ eingelesen, ergebnis }) {
   );
 }
 
+// Beim Nullprodukt ist der Weg die Aussage: Jeder Faktor wird einzeln
+// null gesetzt, und was dabei herauskommt, steht daneben. Ein Faktor
+// ohne reelle Lösung trägt nichts bei — auch das gehört hin, sonst
+// fragt man sich, wo er geblieben ist.
+function Nullprodukt({ faktoren }) {
+  return (
+    <View style={styles.pqKasten}>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.probeTitel}>Satz vom Nullprodukt</Text>
+        <InfoButton thema="nullprodukt" />
+      </View>
+      {faktoren.map(({ faktor, ergebnis }, i) => (
+        <Text key={i} style={styles.probeZeile}>
+          {termAlsText(faktor)} = 0
+          {'   →   '}
+          {ergebnis.art === 'keine'
+            ? 'keine reelle Lösung'
+            : ergebnis.art === 'alle'
+              ? 'jede Zahl'
+              : `x = ${(ergebnis.loesungen ?? []).map(termAlsText).join(' oder x = ')}`}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 function Loesung({ eingelesen, ergebnis }) {
   if (ergebnis.art === 'unklar') {
     return (
@@ -450,6 +478,7 @@ function Loesung({ eingelesen, ergebnis }) {
   return (
     <View style={styles.ergebnisKasten}>
       {ergebnis.pq ? <PqRechnung pq={ergebnis.pq} /> : null}
+      {ergebnis.faktoren ? <Nullprodukt faktoren={ergebnis.faktoren} /> : null}
 
       <View style={styles.zeileMitKnopf}>
         <Text style={styles.ergebnis}>L = &#123; {mengenText} &#125;</Text>

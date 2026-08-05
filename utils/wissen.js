@@ -547,6 +547,21 @@ export const THEMEN = {
     mehr: ['gleichung', 'probe', 'loesungsmenge'],
   },
 
+  nullprodukt: {
+    titel: 'Der Satz vom Nullprodukt',
+    text: [
+      'Wenn ein Produkt null ist, muss einer der Faktoren null sein. Aus (x + 1) · (x − 3) = 0 folgt also: x + 1 = 0 ODER x − 3 = 0 — und damit x = −1 oder x = 3. Man liest die Lösungen ab, ohne zu rechnen.',
+      'Aufgepasst: Das ist NICHT die Aussage „null mal irgendwas ist null". Die ist trivial und hilft niemandem. Gemeint ist die Umkehrung — dass ein Produkt gar nicht anders null werden KANN.',
+      'Und die ist nicht selbstverständlich. Beim Rechnen mit Restklassen modulo 12 gilt 3 · 4 = 12 = 0, und weder die 3 noch die 4 ist null. Dort stimmt der Satz also nicht. Dass er bei den gewöhnlichen Zahlen gilt, ist eine Eigenschaft DIESER Zahlen — deshalb heißt er Satz und nicht Bemerkung.',
+      'Der Satz gilt nur gegen NULL. Bei (x + 1) · (x − 3) = 5 darf man nicht „x + 1 = 5 oder x − 3 = 5" schreiben — das ist der klassische Fehler. Fünf lässt sich auf unendlich viele Arten in ein Produkt zerlegen, null nur so, dass ein Faktor null ist. Steht rechts nicht null, muss man ausmultiplizieren.',
+      'Ein Zahlenfaktor kann nie null werden und fällt weg: Bei 3 · (x − 2) = 0 bleibt nur x − 2 = 0 übrig, denn die 3 ist nun einmal nicht null.',
+      'Praktisch bringt der Satz zweierlei: Man spart den Umweg über die pq-Formel — und man löst damit auch Gleichungen höheren Grades. (x + 1)(x − 3)(x + 5) = 0 hat drei Lösungen, und man sieht sie sofort.',
+    ],
+    formel: 'a · b = 0  ⟺  a = 0  oder  b = 0',
+    beispiel: '(x + 1)(x − 3) = 0 → x = −1 oder x = 3. Ausmultipliziert wäre es x² − 2x − 3 = 0 und man bräuchte die pq-Formel für dasselbe Ergebnis.',
+    mehr: ['ausklammern', 'pqFormel', 'loesungsmenge'],
+  },
+
   pqFormel: {
     titel: 'Die pq-Formel',
     text: [

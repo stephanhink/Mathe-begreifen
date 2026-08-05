@@ -1249,6 +1249,50 @@ Er lässt sich nur ausrechnen, wenn man sagt, was statt H₀ gelten soll.
 weil α ja auch ohne Zusatzangabe dasteht — deshalb steht der Hinweis
 bei jeder Ausgabe dabei.
 
+### Der Satz vom Nullprodukt — und was er NICHT ist
+Nicht „null mal irgendwas ist null" (trivial), sondern die Umkehrung:
+
+> **Ist `a · b = 0`, dann ist `a = 0` oder `b = 0`.**
+
+Ein Produkt kann nur null werden, wenn schon ein Faktor null ist. Das
+klingt selbstverständlich und ist es nicht: In den Restklassen modulo 12
+gilt `3 · 4 = 12 = 0`, und weder 3 noch 4 ist null. Dass der Satz bei
+den gewöhnlichen Zahlen gilt, ist eine Eigenschaft DIESER Zahlen — kein
+logischer Selbstläufer. Deshalb steht das Beispiel auch im Erklärtext.
+
+#### Die Reihenfolge im Code ist entscheidend
+Die Prüfung auf ein Nullprodukt steht in `loese()` **vor** dem
+Aufräumen. Stünde sie danach, hätte `multipliziereAus()` die Faktoren
+längst weggerechnet — und genau das war vorher der Mangel:
+`(x + 1)(x − 3) = 0` wurde ausmultipliziert und dann über die pq-Formel
+zurückgeholt, obwohl die Antwort schon dastand.
+
+#### Der Schritt formt nicht um, er liest anders
+Der Nullprodukt-Schritt lässt die Gleichung **unverändert** stehen. Das
+ist kein Versehen: Der Satz ist eine Lesart, keine Umformung. Damit
+bleibt die tragende Invariante („jeder Schritt erhält die Lösungsmenge")
+an dieser Stelle trivial erfüllt, statt an einem Schritt zu scheitern,
+der aus einer Gleichung mehrere macht.
+
+#### Was er zusätzlich kann
+Nicht nur der kürzere Weg — auch ein größerer Umfang:
+`(x + 1)(x − 3)(x + 5) = 0` ist vom **Grad 3** und wurde vorher
+abgelehnt. Jetzt fällt es in einer Zeile. Vier Fälle sind eigens
+bedacht:
+
+| | |
+|---|---|
+| Zahlenfaktor | `3(x − 2) = 0` — die 3 kann nie null werden und fällt weg, mit Ansage |
+| doppelte Lösung | `(x − 2)(x − 2) = 0` hat EINE Lösung. Die Lösungsmenge ist eine Menge |
+| Faktor ohne reelle Nullstelle | `(x² + 1)(x − 3) = 0` ergibt nur 3 — der Bildschirm zeigt trotzdem, dass der andere Faktor geprüft wurde |
+| rechts steht nicht null | `(x + 1)(x − 3) = 5` — dann gilt der Satz NICHT, und es wird ausmultipliziert. Der klassische Fehler wäre „x + 1 = 5 oder x − 3 = 5" |
+
+> Beim Anpassen der alten Prüfung ist mir ein eigener Fehler
+> unterlaufen: Ich habe die Lösungen als **Text** sortiert. Das
+> typografische Minus „−" steht im Zeichensatz hinter der Ziffer 3, also
+> ergab die Sortierung „3; −1". Sortiert wird jetzt numerisch über
+> `auswerte`.
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1323,7 +1367,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **3238 Prüfungen**
+- Zusammen **3265 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1507,9 +1551,6 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
 - `gleichung.js` kann Gleichungen ersten und zweiten Grades mit einer
   Variablen; Ungleichungen und Gleichungssysteme stehen daneben in
   eigenen Dateien. Noch offen: Gleichungen dritten Grades
-- Der Satz vom Nullprodukt wird noch nicht als eigener Weg gezeigt:
-  (x + 1)(x − 3) = 0 wird ausmultipliziert und dann über pq gelöst,
-  obwohl man die Lösungen direkt ablesen könnte
 - Bruchterme kürzen. Dieselbe Definitionsbereichs-Frage wie bei den
   Wurzeln, nur schärfer: (x²−1)/(x−1) ist x+1, aber nur für x ≠ 1
 - **Der Lernpfad reicht jetzt von Klasse 5 bis 13.** Der Weg dorthin,

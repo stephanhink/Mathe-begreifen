@@ -26,6 +26,7 @@ import {
   quotient,
   wurzel,
   betrag,
+  auswerte,
   alsText as termAlsText,
 } from '../utils/term.js';
 import {
@@ -219,11 +220,134 @@ pruefung('Quadratische Gleichungen', () => {
 
   // x · x ist genauso quadratisch wie x², auch wenn es nicht so aussieht.
   gleichText('x · x = 4', loese(gleichung(produkt(x, x), zahl(4))).art, 'mehrere');
-  // Und ein Produkt zweier Klammern auch.
+  // Und ein Produkt zweier Klammern auch — aber seit dem Satz vom
+  // Nullprodukt geht die App dort einen anderen, kürzeren Weg. Die
+  // Lösungen kommen jetzt in der Reihenfolge der FAKTOREN statt aus der
+  // pq-Formel. Dieselbe Menge, andere Reihenfolge.
   const produktform = loese(
     gleichung(produkt(summe(x, zahl(1)), summe(x, zahl(-3))), zahl(0))
   );
-  gleichText('(x + 1)(x − 3) = 0', produktform.loesungen.map(termAlsText).join('; '), '3; −1');
+  gleichText('(x + 1)(x − 3) = 0', produktform.loesungen.map(termAlsText).join('; '), '−1; 3');
+  wahr('und zwar über das Nullprodukt', produktform.nullprodukt === true);
+});
+
+pruefung('Der Satz vom Nullprodukt', () => {
+  // Nicht "null mal irgendwas ist null" — das ist die triviale Richtung.
+  // Sondern: Ist ein Produkt null, MUSS ein Faktor null sein. Damit
+  // liest man die Lösungen ab, statt auszumultiplizieren und über die
+  // Wurzel zurückzurechnen.
+  // Numerisch sortieren, nicht als Text. Das typografische Minus „−"
+  // steht im Zeichensatz HINTER der Ziffer 3 — eine Textsortierung
+  // ergäbe „3; −1" und hätte nichts mit der Größe zu tun.
+  const sortiert = (loesungen) =>
+    [...loesungen].sort((a, b) => auswerte(a) - auswerte(b)).map(termAlsText).join('; ');
+  const mengeVon = (g) => sortiert(loese(g).loesungen);
+  const klammer = (versatz) => summe(x, zahl(versatz));
+
+  gleichText(
+    'zwei Faktoren',
+    mengeVon(gleichung(produkt(klammer(1), klammer(-3)), zahl(0))),
+    '−1; 3'
+  );
+
+  // DREI Faktoren — das ist Grad 3, und den hat die App vorher
+  // abgelehnt. Der Satz löst ihn in einer Zeile.
+  const dritterGrad = loese(
+    gleichung(produkt(klammer(1), klammer(-3), klammer(5)), zahl(0))
+  );
+  gleichText('drei Faktoren gehen jetzt', dritterGrad.art, 'mehrere');
+  gleichText('und liefern drei Lösungen', sortiert(dritterGrad.loesungen), '−5; −1; 3');
+
+  // Ein Zahlenfaktor kann nie null werden und fällt weg.
+  const mitZahl = loese(gleichung(produkt(zahl(3), klammer(-2)), zahl(0)));
+  gleichText('3(x − 2) = 0 hat eine Lösung', mitZahl.art, 'eindeutig');
+  gleichText('nämlich 2', termAlsText(mitZahl.loesungen[0]), '2');
+  wahr(
+    'und der Schritt sagt, dass die 3 wegfällt',
+    mitZahl.schritte[0].operation.includes('kann nie null werden'),
+    mitZahl.schritte[0].operation
+  );
+
+  // Doppelte Lösungen werden zusammengefasst — die Lösungsmenge ist eine
+  // MENGE. (x − 2)(x − 2) = 0 hat eine Lösung, nicht zwei.
+  const doppelt = loese(gleichung(produkt(klammer(-2), klammer(-2)), zahl(0)));
+  gleichText('(x − 2)² als Produkt', doppelt.art, 'eindeutig');
+  gleichText('eine Lösung', doppelt.loesungen.length, 1);
+
+  // Ein Faktor ohne reelle Nullstelle trägt nichts bei — und darf das
+  // Ergebnis auch nicht kaputtmachen.
+  const ohneNullstelle = loese(
+    gleichung(produkt(summe(potenz(x, zahl(2)), zahl(1)), klammer(-3)), zahl(0))
+  );
+  gleichText('(x² + 1)(x − 3) = 0', ohneNullstelle.art, 'eindeutig');
+  gleichText('nur die 3', termAlsText(ohneNullstelle.loesungen[0]), '3');
+
+  // Auch andersherum aufgeschrieben.
+  gleichText(
+    '0 = (x + 1)(x − 3)',
+    mengeVon(gleichung(zahl(0), produkt(klammer(1), klammer(-3)))),
+    '−1; 3'
+  );
+
+  // Und der Satz gilt NUR gegen null. Steht rechts etwas anderes, wird
+  // ganz normal ausmultipliziert — wer hier "x + 1 = 5 oder x − 3 = 5"
+  // rechnet, macht den klassischen Fehler.
+  const gegenFuenf = loese(gleichung(produkt(klammer(1), klammer(-3)), zahl(5)));
+  wahr('gegen 5 kein Nullprodukt', gegenFuenf.nullprodukt !== true);
+  gleichText('sondern ausmultipliziert', sortiert(gegenFuenf.loesungen), '−2; 4');
+});
+
+pruefung('Das Nullprodukt findet dieselben Lösungen wie der lange Weg', () => {
+  // Die Probe, die zählt: Beide Wege müssen dieselbe Menge liefern. Der
+  // kurze Weg darf bequemer sein, aber nicht anders.
+  const naechste = wuerfel(startwertFuer('nullprodukt'));
+  let verglichen = 0;
+  let fehler = null;
+
+  for (let i = 0; i < 120 && fehler === null; i++) {
+    const a = naechste(13) - 6;
+    const b = naechste(13) - 6;
+    const alsProdukt = gleichung(
+      produkt(summe(x, zahl(a)), summe(x, zahl(b))),
+      zahl(0)
+    );
+    // Derselbe Inhalt, aber ausmultipliziert: x² + (a+b)x + ab = 0.
+    const glieder = [potenz(x, zahl(2))];
+    if (a + b !== 0) {
+      glieder.push(produkt(zahl(a + b), x));
+    }
+    if (a * b !== 0) {
+      glieder.push(zahl(a * b));
+    }
+    const ausmultipliziert = gleichung(
+      glieder.length === 1 ? glieder[0] : summe(...glieder),
+      zahl(0)
+    );
+
+    const kurz = loese(alsProdukt);
+    const lang = loese(ausmultipliziert);
+
+    const nachGroesse = (l) =>
+      [...l].sort((p, q) => auswerte(p) - auswerte(q)).map(termAlsText).join('; ');
+    const mengeKurz = nachGroesse(kurz.loesungen ?? []);
+    const mengeLang = nachGroesse(lang.loesungen ?? []);
+
+    verglichen++;
+    if (mengeKurz !== mengeLang) {
+      fehler =
+        `(x + ${a})(x + ${b}) = 0: über das Nullprodukt {${mengeKurz}}, ` +
+        `ausmultipliziert {${mengeLang}}`;
+    }
+    // Und die Probe gegen die URSPRÜNGLICHE Gleichung muss stimmen.
+    for (const l of kurz.loesungen ?? []) {
+      if (!probe(alsProdukt, l).stimmt) {
+        fehler = `(x + ${a})(x + ${b}) = 0: ${termAlsText(l)} besteht die Probe nicht`;
+      }
+    }
+  }
+
+  wahr('beide Wege liefern dieselbe Menge', fehler === null, fehler ?? undefined);
+  wahr('und wurden verglichen', verglichen >= 100, `nur ${verglichen}`);
 });
 
 pruefung('Irrationale Lösungen bleiben exakt', () => {
