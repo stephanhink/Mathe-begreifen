@@ -1543,14 +1543,33 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
   Jedes neue Thema braucht einen Eintrag in `lernpfad.js` UND einen
   Generator in `aufgaben.js`, sonst schlägt die Prüfung fehl. Genau dieses
   Geländer hält den Graphen beim Wachsen ehrlich.
-- ~~Kurzbeschreibung austauschen~~ **erledigt** (2026-08-04). Offen ist
-  das Update selbst: `npm run build:android` (versionCode zählt auf 4)
-  und die neue Fassung in der Play Console eintragen. Die Fassung mit „Ableitung" und
-  „Abitur" liegt dort unter „Für später" fertig bereit — vorher wäre sie
-  eine Werbung für etwas, das es nicht gibt.
-- Warten auf die Freigabe durch Google. Danach: Bewertungen und Abstürze
-  im Auge behalten, und die erste Rückmeldung echter Schüler abwarten,
-  bevor größere Umbauten anfangen.
+- **Version 1.1.0 ist gebaut und liegt bereit** (2026-08-05):
+  `build-1785910798394.aab`, versionCode 4, signiert, als einzige
+  Berechtigung INTERNET — am Artefakt geprüft. Dazu die getauschte
+  Store-Beschreibung und `docs/neuerungen.md` mit den
+  Versionshinweisen (483 bzw. 500 von 500 Zeichen).
+
+  **Eingereicht wird erst nach der laufenden Prüfung von 1.0.0.** Das
+  ist die Entscheidung des Betreibers, nicht eine technische Not.
+- Zwei Prüfungen laufen bei Google getrennt, und sie blockieren
+  einander nicht:
+  - Die **Freigabeprüfung** entscheidet, ob eine Version veröffentlicht
+    wird. Sie dauert üblicherweise Tage.
+  - **„Von Lehrkräften empfohlen"** ist ein eigenes Programm. Es läuft
+    nach der Veröffentlichung, hat einen eigenen Zeitplan und hält
+    weder die App noch spätere Updates auf. Bleibt es aus, fehlt nur
+    das Abzeichen — es gibt keine Ablehnung und keine Folge.
+
+  Wer beides für dasselbe hält, wartet unnötig lange mit dem nächsten
+  Update. Im Zweifel den Status in der Play Console nachsehen; Googles
+  Abläufe ändern sich.
+- Nach der Veröffentlichung: Bewertungen und Abstürze im Auge behalten,
+  und die erste Rückmeldung echter Schüler abwarten, bevor größere
+  Umbauten anfangen.
+- Kür, keine Pflicht: Die Screenshots zeigen den Stand von 1.0.0. Alles
+  darauf gibt es weiterhin genau so, sie sind also nicht falsch — aber
+  die Oberstufe ist darauf nicht zu sehen. Neue aufnehmen ginge mit dem
+  Weg aus dem Abschnitt „Screenshots" weiter oben.
 
 `EXPO_TOKEN` steht hier bewusst NICHT mehr — der Cloud-Build-Workflow bleibt
 ungenutzt, siehe Workflow-Abschnitt. Das ist eine Entscheidung, kein
