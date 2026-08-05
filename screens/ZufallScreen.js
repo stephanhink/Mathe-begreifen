@@ -580,9 +580,12 @@ function Fehlerkasten({ text }) {
 const styles = StyleSheet.create({
   umschalter: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
   reiter: {
-    flexGrow: 1,
+    // KEIN flexGrow. Mit fünf Reitern bricht die Zeile um, und der
+    // einzelne in der zweiten Zeile zöge sich sonst über die ganze
+    // Breite — das sieht aus wie ein Versehen, nicht wie ein Reiter.
+    // Ohne Wachsen sind alle so breit wie ihr Wort und stehen links.
     paddingVertical: 9,
-    paddingHorizontal: 8,
+    paddingHorizontal: 14,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: farben.trenner,

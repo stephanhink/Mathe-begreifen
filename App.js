@@ -7,8 +7,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 // also bis unter Status- und Gestenleiste — ohne echte Insets würde die
 // Tab-Leiste unten darunter rutschen.
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { farben } from './utils/konstanten';
+import { setzeHintergrund } from './utils/speicher';
 import RechnerScreen from './screens/RechnerScreen';
 import LueckenScreen from './screens/LueckenScreen';
 import ZahlenScreen from './screens/ZahlenScreen';
@@ -41,6 +43,17 @@ const TABS = [
   { key: 'geometrie', label: 'Geom.', Screen: GeometrieScreen },
   { key: 'zufall', label: 'Zufall', Screen: ZufallScreen },
 ];
+
+// Den echten Speicher anmelden — EINMAL beim Laden des Moduls, nicht in
+// einem Effekt. Der Lückenfinder liest den Stand schon beim ersten
+// Rendern; ein Effekt käme zu spät.
+//
+// Ohne diese Zeile lief speicher.js auf seinem Rückfall im
+// Arbeitsspeicher. Der Lernstand war dann nach dem Schließen der App
+// weg — obwohl fortschritt.js, speicher.js und der Bildschirm alle
+// richtig arbeiteten und jede Prüfung grün war. Es fehlte schlicht die
+// Verbindung, und niemand hat danach gefragt.
+setzeHintergrund(AsyncStorage);
 
 export default function App() {
   const [activeTab, setActiveTab] = useState(TABS[0].key);

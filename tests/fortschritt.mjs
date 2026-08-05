@@ -5,6 +5,7 @@
 // vorspulen kann — deshalb nimmt jede Funktion in fortschritt.js das
 // Datum von außen entgegen und fragt nie selbst nach der Uhrzeit.
 
+import { readFileSync } from 'node:fs';
 import { pruefung, wahr, zahl as zahlIst, gleich as gleichText, wirft } from './pruefer.mjs';
 import {
   leererStand,
@@ -264,4 +265,38 @@ pruefung('Das heutige Datum', () => {
   wahr('und heute() ohne Argument liefert dasselbe Format', /^\d{4}-\d{2}-\d{2}$/.test(heute()));
   zahlIst('Tage dazwischen', tageDazwischen('2026-08-03', '2026-08-10'), 7);
   zahlIst('auch über einen Monatswechsel', tageDazwischen('2026-08-30', '2026-09-02'), 3);
+});
+
+
+pruefung('Die App meldet einen echten Speicher an', () => {
+  // Der Fehler, den keine Prüfung finden konnte, weil er zwischen den
+  // Dateien lag: fortschritt.js rechnete richtig, speicher.js legte
+  // richtig ab, der Bildschirm rief richtig auf — und trotzdem war der
+  // Lernstand nach dem Schließen weg. Es fehlte die eine Zeile, die
+  // AsyncStorage anmeldet. speicher.js lief auf seinem Rückfall im
+  // Arbeitsspeicher.
+  //
+  // Aufgefallen ist es beim Fotografieren, nach dreizehn beantworteten
+  // Aufgaben: "Noch nichts geübt".
+  //
+  // Deshalb hier eine Prüfung am Quelltext. Sie ist grob, aber sie
+  // findet genau diese Sorte Lücke — eine Verbindung, die niemand
+  // hergestellt hat.
+  const app = readFileSync(new URL('../App.js', import.meta.url), 'utf8');
+
+  wahr(
+    'setzeHintergrund wird aufgerufen',
+    /setzeHintergrund\s*\(/.test(app),
+    'App.js meldet keinen Speicher an — dann läuft alles im Arbeitsspeicher und ist beim Schließen weg'
+  );
+  wahr(
+    'und zwar mit AsyncStorage',
+    /setzeHintergrund\s*\(\s*AsyncStorage\s*\)/.test(app),
+    'der Rückfall im Arbeitsspeicher überlebt das Schließen der App nicht'
+  );
+  wahr(
+    'AsyncStorage ist auch importiert',
+    app.includes("from '@react-native-async-storage/async-storage'"),
+    'ohne Import ist der Aufruf wirkungslos'
+  );
 });

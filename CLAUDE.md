@@ -1383,6 +1383,45 @@ definierte Komponente muss im selben Bauteil auch verwendet werden.**
 > echten Dateien — eine Prüfung zu belegen ist kein Grund, den
 > Arbeitsstand anzufassen.
 
+### Der Lernstand wurde nie gespeichert
+Der schwerste Fund dieser Sitzung, und er lag **zwischen** den Dateien:
+`fortschritt.js` rechnete richtig, `speicher.js` legte richtig ab, der
+Bildschirm rief richtig auf — und trotzdem war der Lernstand nach dem
+Schließen der App weg. Es fehlte die eine Zeile, die AsyncStorage
+anmeldet:
+
+```js
+setzeHintergrund(AsyncStorage);
+```
+
+`speicher.js` lief auf seinem Rückfall im Arbeitsspeicher. Jede Prüfung
+war grün, weil die Prüfungen genau diesen Rückfall benutzen — dafür ist
+er gebaut.
+
+**Aufgefallen ist es beim Fotografieren**, nach dreizehn beantworteten
+Aufgaben: „Noch nichts geübt." Seit der ersten Veröffentlichung war das
+so; die Datenschutzerklärung beschreibt den gespeicherten Eintrag, den
+es nie gab.
+
+Dagegen steht jetzt eine Prüfung am Quelltext von `App.js`
+(`tests/fortschritt.mjs`). Sie ist grob — aber sie findet genau diese
+Sorte Lücke: **eine Verbindung, die niemand hergestellt hat.**
+
+> Beim Nachprüfen habe ich mich selbst getäuscht: Ich beantwortete eine
+> Aufgabe und drückte „Abbrechen" — der Stand blieb leer, und ich hielt
+> den Fix für wirkungslos. `verbucheAntwort` läuft aber erst beim
+> **Weiter**, nicht beim Prüfen. Die Kontrolle war falsch, nicht der Fix.
+
+### Screenshots: was `adb shell input text` NICHT kann
+Beim Durchspielen des Lückenfinders per `adb` sind drei Grenzen
+aufgefallen, die jedes Mal wieder Zeit kosten:
+
+| | |
+|---|---|
+| **Hochzahlen** | `12x² − 1` lässt sich nicht tippen — `input text` wirft eine NullPointerException. Antworten in `^`-Schreibweise umwandeln |
+| **ESC schließt nicht nur die Tastatur** | Ist keine offen, wirkt `keyevent 111` wie „Zurück" und **beendet die App**. Vorher `dumpsys input_method` auf `mInputShown=true` prüfen |
+| **Mehrzeilige Fragen** | Beim Gleichungssystem sitzt das Eingabefeld tiefer als bei einzeiligen Aufgaben; ein fester Abstand zur Zeile darüber trifft daneben |
+
 ## Bekannte Stolperfallen
 - `SafeAreaView` muss aus `react-native-safe-area-context` kommen, **nicht**
   aus `react-native` — die eingebaute Variante ist auf Android wirkungslos und
@@ -1459,7 +1498,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **3386 Prüfungen**
+- Zusammen **3389 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
