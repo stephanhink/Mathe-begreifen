@@ -10,7 +10,7 @@ findet es hier.
 
 ---
 
-## 1.1.0 — Die Oberstufe (versionCode 4)
+## 1.1.0 — Die Oberstufe (versionCode 5)
 
 ### Deutsch
 
@@ -24,8 +24,8 @@ von Klasse 5 bis zum Abitur.
 
 Und neu: „Wozu braucht man das?" Zinseszins zeigt, wo die
 Exponentialfunktion herkommt. Ein Cent, 30-mal verdoppelt, sind über
-10 Millionen Euro. Beim Optionspreis ist die naheliegende Rechnung
-falsch — die App sagt, warum.
+10 Millionen Euro. Und der Lernstand bleibt jetzt wirklich erhalten —
+beim Schließen ging er bisher verloren.
 ```
 
 ### English
@@ -40,8 +40,8 @@ year 5 up to the final exams.
 
 Also new: "What is this good for?" Compound interest shows where the
 exponential function comes from. One cent, doubled 30 times, is over
-10 million euros. And with option prices the obvious answer is wrong —
-the app explains why.
+10 million euros. And your progress is now actually saved — closing
+the app used to lose it.
 ```
 
 ---

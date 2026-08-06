@@ -18,6 +18,14 @@
 //   Optionspreis: DER NACHBAU MUSS IN BEIDEN FÄLLEN DASSELBE LIEFERN wie
 //     die Option. Das ist die Bedingung, aus der der Preis überhaupt
 //     folgt — und sie ist exakt prüfbar, weil in Brüchen gerechnet wird.
+//
+//   Dezibel: Der Pegel ist 10 · lg(I : I₀) — geprüft gegen Math.log10,
+//     also gegen etwas, das nichts von diesem Modul weiß. Dazu die
+//     Aussage, die die Skala ausmacht: JEDE VERZEHNFACHUNG BRINGT GENAU
+//     10 dB DAZU, exakt und ohne Toleranz.
+//
+//   pH: derselbe Bau mit dem Minus davor. −lg(c), und jede pH-Stufe ist
+//     genau ein Faktor 10 in der Konzentration.
 
 import { pruefung, wahr, gleich as gleichText, wirft } from './pruefer.mjs';
 import { wuerfel, startwertFuer } from './wuerfel.mjs';
@@ -28,6 +36,8 @@ import {
   verdopplung,
   zerfall,
   optionspreis,
+  dezibel,
+  phWert,
   zahlKurz,
   hochzahl,
 } from '../utils/anwendung.js';
@@ -291,6 +301,266 @@ pruefung('Was nicht geht, wird abgelehnt', () => {
   );
 });
 
+// ---------------------------------------------------------------------
+// Dezibel
+// ---------------------------------------------------------------------
+
+// Die tragende Prüfung als eigene Funktion, damit sie sich auch auf
+// einen absichtlich FALSCHEN Pegel loslassen lässt. Ohne diesen Griff
+// bliebe die Gegenprobe eine Behauptung: Eine Prüfung, die nichts
+// ablehnt, sieht genauso grün aus wie eine, die alles bestätigt.
+//
+// Verglichen wird gegen Math.log10 — etwas, das von diesem Modul nichts
+// weiß. Wäre der Faktor falsch, das Verhältnis verkehrt herum gebildet
+// oder der Logarithmus zur falschen Basis genommen, fiele es hier auf.
+function pegelWeichtAb(pegelVon) {
+  const naechste = wuerfel(startwertFuer('anwendung-dezibel'));
+  let geprueft = 0;
+
+  for (let i = 0; i < 200; i++) {
+    // Glatte Zehnerpotenzen und krumme Verhältnisse gemischt — sonst
+    // träfe die Prüfung nur den exakten Zweig.
+    const verhaeltnis = i % 3 === 0 ? 10 ** naechste(13) : naechste(100000) + 1;
+
+    const wert = pegelVon(verhaeltnis);
+    const erwartet = 10 * Math.log10(verhaeltnis);
+    geprueft++;
+
+    if (Math.abs(wert - erwartet) > 1e-9 * Math.max(1, Math.abs(erwartet))) {
+      return {
+        geprueft,
+        fehler: `bei I : I₀ = ${verhaeltnis}: ${wert} dB statt 10 · lg = ${erwartet} dB`,
+      };
+    }
+  }
+  return { geprueft, fehler: null };
+}
+
+pruefung('Der Pegel ist 10 · lg(I : I₀)', () => {
+  const lauf = pegelWeichtAb((verhaeltnis) => dezibel({ verhaeltnis }).pegel);
+
+  wahr('der Pegel stimmt mit 10 · lg überein', lauf.fehler === null, lauf.fehler ?? undefined);
+  wahr('und zwar oft genug', lauf.geprueft >= 150, `nur ${lauf.geprueft}`);
+
+  // Gegenprobe: derselbe Lauf gegen den SCHALLDRUCKpegel (20 statt 10).
+  // Der ist eine andere Größe, heißt aber auch dB — genau der
+  // Verwechslungsfall aus dem Vorbehalt. Die Prüfung muss ihn finden,
+  // mit Zahlen.
+  const gegenprobe = pegelWeichtAb((verhaeltnis) => 20 * Math.log10(verhaeltnis));
+  wahr(
+    'ein falscher Faktor wird gefunden',
+    gegenprobe.fehler !== null,
+    'der Faktor 20 fiel nicht auf — dann prüft diese Prüfung nichts'
+  );
+  wahr(
+    'und die Meldung nennt die Stelle',
+    (gegenprobe.fehler ?? '').includes('I : I₀'),
+    gegenprobe.fehler ?? undefined
+  );
+});
+
+pruefung('Jede Verzehnfachung bringt genau 10 dB dazu', () => {
+  // Das ist die Aussage, die die Skala überhaupt erst zur Skala macht —
+  // und bei Zehnerpotenzen ist sie exakt prüfbar, ohne jede Toleranz.
+  for (let k = 0; k <= 12; k++) {
+    const unten = dezibel({ verhaeltnis: 10 ** k });
+    const oben = dezibel({ verhaeltnis: 10 ** (k + 1) });
+
+    wahr(`10${hochzahl(k)} ist exakt`, unten.exakt);
+    wahr(
+      `10${hochzahl(k)} ergibt ${10 * k} dB`,
+      bruchGleich(unten.pegelBruch, bruch(10 * k)),
+      bruchAlsText(unten.pegelBruch)
+    );
+    wahr(
+      `eine Verzehnfachung mehr sind genau 10 dB mehr`,
+      bruchGleich(oben.pegelBruch, plus(unten.pegelBruch, bruch(10))),
+      `${bruchAlsText(unten.pegelBruch)} → ${bruchAlsText(oben.pegelBruch)}`
+    );
+  }
+
+  // Auch dort, wo der Pegel krumm ist, gilt der Abstand exakt 10 —
+  // nur lässt er sich dann nicht mehr als Bruch hinschreiben.
+  const leise = dezibel({ verhaeltnis: 2 });
+  const lauter = dezibel({ verhaeltnis: 20 });
+  wahr('krummer Fall: der Abstand bleibt 10 dB', Math.abs(lauter.pegel - leise.pegel - 10) < 1e-9);
+  wahr('und der krumme Wert wird als gerundet ausgewiesen', leise.gerundet && !leise.exakt);
+  wahr('mit Hinweis, warum', leise.hinweis.includes('keine Zehnerpotenz'), leise.hinweis);
+  wahr('die Leiter spannt zwölf Zehnerpotenzen', leise.leiter.length === 13);
+});
+
+pruefung('Der Schallpegel an echten Zahlen', () => {
+  // I₀ = 10⁻¹² W/m² ist die Hörschwelle — der Nullpunkt der Skala, nicht
+  // die Stille.
+  const hoerschwelle = dezibel({ intensitaet: 1e-12 });
+  gleichText('die Hörschwelle ist 0 dB', hoerschwelle.pegel, 0);
+  gleichText('und das exakt', bruchAlsText(hoerschwelle.pegelBruch), '0');
+
+  const zimmer = dezibel({ intensitaet: 1e-8 });
+  gleichText('10⁻⁸ W/m² sind 40 dB', zimmer.pegel, 40);
+  gleichText('das Verhältnis steht als Zehnerpotenz da', zimmer.verhaeltnisText, '10⁴');
+
+  const schmerz = dezibel({ intensitaet: 1 });
+  gleichText('1 W/m² sind 120 dB', schmerz.pegel, 120);
+  wahr(
+    'zwischen Hörschwelle und Schmerzgrenze liegt der Faktor 10¹²',
+    schmerz.verhaeltnisText === '10¹²',
+    schmerz.verhaeltnisText
+  );
+
+  // Der Rechenweg hat benannte Schritte — die eiserne Regel gilt auch
+  // für die Anwendungen.
+  wahr('drei benannte Schritte', schmerz.schritte.length === 3);
+  wahr('jeder Schritt hat einen Namen', schmerz.schritte.every((s) => s.regel.length > 5));
+  wahr('das Verhältnis wird zuerst gebildet', schmerz.schritte[0].text.includes('I : I₀'));
+  wahr('und am Ende steht der Pegel', schmerz.schritte[2].text.includes('dB'));
+
+  wahr('die Einsicht nennt die Billion', schmerz.einsicht.includes('Billion'), schmerz.einsicht);
+  wahr(
+    'der Vorbehalt trennt Intensität und Schalldruck',
+    schmerz.vorbehalt.includes('20 · lg'),
+    schmerz.vorbehalt
+  );
+  wahr('und sagt nichts über Schädigung zu', schmerz.vorbehalt.includes('Schädigung'));
+});
+
+pruefung('Zur Stille gibt es keinen Pegel', () => {
+  // Ablehnen heißt: eine Zahl raten wäre schlimmer. Und der Fehler trägt
+  // das Kennzeichen, sonst müsste ihn jeder Aufrufer wie einen
+  // Rechenfehler behandeln.
+  wirft('Intensität 0', () => dezibel({ intensitaet: 0 }));
+  wirft('negative Intensität', () => dezibel({ intensitaet: -1 }));
+  wirft('Bezug 0', () => dezibel({ intensitaet: 1, bezug: 0 }));
+
+  let kennzeichen = false;
+  try {
+    dezibel({ intensitaet: 0 });
+  } catch (fehler) {
+    kennzeichen = fehler.undefiniert === true;
+  }
+  wahr('der Fehler ist als "gibt es nicht" gekennzeichnet', kennzeichen);
+});
+
+// ---------------------------------------------------------------------
+// Der pH-Wert
+// ---------------------------------------------------------------------
+
+// Dieselbe tragende Prüfung wie beim Dezibel, gegen dieselbe unabhängige
+// Quelle — und wieder mit dem Griff, um sie auf einen falschen Wert
+// loszulassen. Der springende Punkt ist hier das Vorzeichen: Ohne das
+// Minus stünden auf der Skala lauter negative Zahlen.
+function phWeichtAb(phVon) {
+  const naechste = wuerfel(startwertFuer('anwendung-ph'));
+  let geprueft = 0;
+
+  for (let i = 0; i < 200; i++) {
+    // 10 ** -4 ist in Gleitkomma NICHT 0,0001, sondern
+    // 0,00009999999999999999 — geteilt wird deshalb, statt negativ zu
+    // potenzieren. Eine Prüfung, die selbst krumme Zahlen erzeugt,
+    // prüft nicht das Modul, sondern Math.pow.
+    const stufe = naechste(11);
+    const konzentration =
+      i % 3 === 0 ? 1 / 10 ** stufe : (naechste(999) + 1) / 10 ** (stufe + 4);
+
+    const wert = phVon(konzentration);
+    const erwartet = -Math.log10(konzentration);
+    geprueft++;
+
+    if (Math.abs(wert - erwartet) > 1e-9 * Math.max(1, Math.abs(erwartet))) {
+      return { geprueft, fehler: `bei c = ${konzentration} mol/l: ${wert} statt −lg(c) = ${erwartet}` };
+    }
+  }
+  return { geprueft, fehler: null };
+}
+
+pruefung('Der pH-Wert ist −lg(c)', () => {
+  const lauf = phWeichtAb((konzentration) => phWert({ konzentration }).ph);
+
+  wahr('der pH-Wert stimmt mit −lg(c) überein', lauf.fehler === null, lauf.fehler ?? undefined);
+  wahr('und zwar oft genug', lauf.geprueft >= 150, `nur ${lauf.geprueft}`);
+
+  // Gegenprobe: das vergessene Minus — der Fehler, den beim ersten Mal
+  // fast jeder macht. Aus pH 7 würde −7.
+  const ohneMinus = phWeichtAb((konzentration) => Math.log10(konzentration));
+  wahr(
+    'ein vergessenes Minus wird gefunden',
+    ohneMinus.fehler !== null,
+    'das fehlende Minus fiel nicht auf — dann prüft diese Prüfung nichts'
+  );
+  wahr(
+    'und die Meldung nennt die Konzentration',
+    (ohneMinus.fehler ?? '').includes('mol/l'),
+    ohneMinus.fehler ?? undefined
+  );
+});
+
+pruefung('Eine pH-Stufe ist ein Faktor 10', () => {
+  // Der Satz, den fast jeder falsch im Kopf hat: pH 4 ist nicht "ein
+  // bisschen saurer" als pH 5, sondern ZEHNMAL so sauer. Exakt prüfbar.
+  for (let stufe = 0; stufe <= 13; stufe++) {
+    // Geteilt statt negativ potenziert — siehe oben, 10 ** -4 ist krumm.
+    const oben = phWert({ konzentration: 1 / 10 ** stufe });
+    const zehnfachVerduennt = phWert({ konzentration: 1 / 10 ** (stufe + 1) });
+
+    wahr(`c = 10⁻${stufe} ist exakt`, oben.exakt);
+    wahr(
+      `ergibt pH ${stufe}`,
+      bruchGleich(oben.phBruch, bruch(stufe)),
+      bruchAlsText(oben.phBruch)
+    );
+    wahr(
+      'zehnfach verdünnt heißt genau eine pH-Stufe höher',
+      bruchGleich(zehnfachVerduennt.phBruch, plus(oben.phBruch, bruch(1))),
+      `${bruchAlsText(oben.phBruch)} → ${bruchAlsText(zehnfachVerduennt.phBruch)}`
+    );
+  }
+
+  const neutral = phWert({ konzentration: 1e-7 });
+  gleichText('reines Wasser: pH 7', neutral.ph, 7);
+  gleichText('und das heißt neutral', neutral.einordnung, 'neutral');
+  gleichText('Magensäure bei 10⁻² mol/l', phWert({ konzentration: 0.01 }).einordnung, 'sauer');
+  gleichText('Seifenlauge bei 10⁻¹¹ mol/l', phWert({ konzentration: 1e-11 }).einordnung, 'basisch');
+
+  // Der Rechenweg macht das Minus zu einem eigenen, benannten Schritt —
+  // sonst fiele es vom Himmel.
+  wahr('drei benannte Schritte', neutral.schritte.length === 3);
+  wahr(
+    'das Minus ist ein eigener Schritt',
+    neutral.schritte[2].regel.includes('Vorzeichen'),
+    neutral.schritte[2].regel
+  );
+  gleichText('und am Ende steht der pH-Wert', neutral.schritte[2].text, 'pH = 7');
+  gleichText('die Konzentration steht als Zehnerpotenz da', neutral.konzentrationText, '10⁻⁷');
+  wahr('die Leiter geht von 0 bis 14', neutral.leiter.length === 15);
+});
+
+pruefung('Wo der pH-Wert krumm ist, sagt die App es', () => {
+  const essig = phWert({ konzentration: 0.0002 });
+  wahr('gerundet', essig.gerundet && !essig.exakt);
+  wahr('mit Hinweis, warum', essig.hinweis.includes('keine Zehnerpotenz'), essig.hinweis);
+  wahr('und das Ungefähr-Zeichen steht im Ergebnis', essig.phText.startsWith('≈'), essig.phText);
+  wahr('der Wert liegt zwischen 3 und 4', essig.ph > 3 && essig.ph < 4, String(essig.ph));
+
+  wirft('Konzentration 0', () => phWert({ konzentration: 0 }));
+  wirft('negative Konzentration', () => phWert({ konzentration: -1 }));
+
+  let kennzeichen = false;
+  try {
+    phWert({ konzentration: 0 });
+  } catch (fehler) {
+    kennzeichen = fehler.undefiniert === true;
+  }
+  wahr('der Fehler ist als "gibt es nicht" gekennzeichnet', kennzeichen);
+
+  wahr(
+    'der Vorbehalt nennt die Aktivität',
+    essig.vorbehalt.includes('Aktivität'),
+    essig.vorbehalt
+  );
+  wahr('und dass es pH unter 0 und über 14 gibt', essig.vorbehalt.includes('über 14'));
+  wahr('die Einsicht sagt: zehnmal so sauer', essig.einsicht.includes('ZEHNMAL'), essig.einsicht);
+});
+
 pruefung('Jede Anwendung sagt, was ihr Modell nicht weiß', () => {
   // Die zweite Regel dieses Kapitels. Ohne den Vorbehalt wäre die
   // Anwendung eine Behauptung über die Wirklichkeit — und genau das
@@ -300,6 +570,8 @@ pruefung('Jede Anwendung sagt, was ihr Modell nicht weiß', () => {
     verdopplung({ start: 1, schritte: 10 }),
     zerfall({ start: 100, halbwertszeit: 10, dauer: 30 }),
     optionspreis({ kurs: 100, hoch: 125, tief: 80, ausuebung: 100 }),
+    dezibel({ intensitaet: 1e-8 }),
+    phWert({ konzentration: 1e-7 }),
   ];
 
   for (const e of alle) {

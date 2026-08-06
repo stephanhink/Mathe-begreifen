@@ -173,7 +173,7 @@ und hier einen Eintrag ergänzen — mehr nicht.
 | Tab           | Inhalt                                                          |
 |---------------|-----------------------------------------------------------------|
 | Lücken        | Der Lückenfinder — adaptiver Einstieg, prominent ganz links      |
-| Zahlen        | Brüche, Prozent, Potenzen, Wurzeln, Logarithmus, Zehnerpotenzen  |
+| Zahlen        | Brüche, Prozent, Logarithmus                                    |
 | Terme         | Klammern, Binome, Faktorisieren, Bruchterme, Formeln umstellen   |
 | Gleichungen   | linear, quadratisch (pq & abc), Systeme, Ungleichungen           |
 | Funktionen    | linear, quadratisch, exponentiell, trigonometrisch → Ableitung, Integral |
@@ -1441,7 +1441,7 @@ Alle sieben Bildschirme stehen, 2126 Prüfungen, versionCode 3.
 Was steht:
 - Expo-Projekt SDK 57, Tab-Leiste, Ordnerstruktur
 - **Der Lückenfinder läuft** (Tab „Lücken", ganz links): `utils/lernpfad.js`
-  (Themengraph, 22 Themen), `utils/aufgaben.js` (ein Generator je Thema),
+  (Themengraph, 44 Themen), `utils/aufgaben.js` (ein Generator je Thema),
   `utils/luecken.js` (die adaptive Suche), `screens/LueckenScreen.js`
 - **Der Lernstand bleibt erhalten**: `utils/fortschritt.js` (Lernkartenkasten)
   und `utils/speicher.js` (Adapter auf AsyncStorage)
@@ -1463,7 +1463,7 @@ Was steht:
   Lösungsmenge, Probe, Info-Knöpfe. Der Screen rechnet nichts — er ruft
   `utils/` auf und stellt dar
 - `utils/parser.js` — getippten Text einlesen („3x + 5 = 14")
-- `utils/wissen.js` — 33 Erklärtexte für die Info-Knöpfe
+- `utils/wissen.js` — 51 Erklärtexte für die Info-Knöpfe
 - `utils/bruch.js` — exakte Bruchrechnung
 - `utils/term.js` — Terme darstellen, exakt auswerten, umformen mit
   benannten Schritten. Regeln: neutrale Elemente, Zahlen zusammenrechnen,
@@ -1498,7 +1498,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **3389 Prüfungen**
+- Zusammen **4076 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1714,7 +1714,7 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
   Generator in `aufgaben.js`, sonst schlägt die Prüfung fehl. Genau dieses
   Geländer hält den Graphen beim Wachsen ehrlich.
 - **Version 1.1.0 ist gebaut und liegt bereit** (2026-08-05):
-  `build-1785910798394.aab`, versionCode 4, signiert, als einzige
+  `build-1785928985351.aab`, versionCode 5, signiert, als einzige
   Berechtigung INTERNET — am Artefakt geprüft. Dazu die getauschte
   Store-Beschreibung und `docs/neuerungen.md` mit den
   Versionshinweisen (483 bzw. 500 von 500 Zeichen).

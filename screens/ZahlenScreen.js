@@ -6,7 +6,14 @@ import InfoButton from '../components/InfoButton';
 import ZahlenTasten from '../components/ZahlenTasten';
 import { farben } from '../utils/konstanten';
 import Wozu from '../components/Wozu';
-import { zinseszins, verdopplungszeit, verdopplung, zahlKurz } from '../utils/anwendung';
+import {
+  zinseszins,
+  verdopplungszeit,
+  verdopplung,
+  dezibel,
+  phWert,
+  zahlKurz,
+} from '../utils/anwendung';
 import { rechne, kuerze, alsKommazahl, wertAlsText } from '../utils/bruchrechnung';
 import {
   prozentwert,
@@ -99,6 +106,54 @@ function WozuZinseszins() {
   );
 }
 
+// Dezibel und pH sind die beiden Skalen, die der Zehnerlogarithmus
+// hervorbringt — die eine in der Physik, die andere in der Chemie
+// (dort die Brücke zur Schwester-App). Sie stehen deshalb hier und
+// nicht in einem eigenen Bereich: Die Anwendung sitzt da, wo ihre
+// Mathematik steht.
+function WozuLogarithmus() {
+  const laut = dezibel({ intensitaet: 1e-8 });
+  const schmerz = dezibel({ intensitaet: 1 });
+  const wasser = phWert({ konzentration: 1e-7 });
+  const magen = phWert({ konzentration: 0.01 });
+
+  return (
+    <>
+      <Wozu
+        titel="Dezibel — eine Billion, in 120 Schritte gefaltet"
+        thema="dezibel"
+        zeilen={[
+          'Hörschwelle: I₀ = 10⁻¹² W/m²  →  0 dB',
+          `Zimmerlautstärke: I = 10⁻⁸ W/m², also ${laut.verhaeltnisText}-mal so viel  →  ${laut.pegelText} dB`,
+          {
+            text: `Schmerzgrenze: I = 1 W/m², also ${schmerz.verhaeltnisText}-mal so viel  →  ${schmerz.pegelText} dB`,
+            stark: true,
+          },
+          'jede Verzehnfachung der Intensität:  genau 10 dB mehr',
+        ]}
+        einsicht={laut.einsicht}
+        vorbehalt={laut.vorbehalt}
+      />
+
+      <Wozu
+        titel="Der pH-Wert — derselbe Trick in der Chemie"
+        thema="phWert"
+        zeilen={[
+          `Magensäure: c(H⁺) = ${magen.konzentrationText} mol/l  →  pH ${magen.phText} (${magen.einordnung})`,
+          {
+            text: `reines Wasser: c(H⁺) = ${wasser.konzentrationText} mol/l  →  pH ${wasser.phText} (${wasser.einordnung})`,
+            stark: true,
+          },
+          ...wasser.schritte.map((s) => `${s.regel}:  ${s.text}`),
+          'eine pH-Stufe:  genau ein Faktor 10 in der Konzentration',
+        ]}
+        einsicht={wasser.einsicht}
+        vorbehalt={wasser.vorbehalt}
+      />
+    </>
+  );
+}
+
 const BEREICHE = [
   { key: 'brueche', label: 'Brüche' },
   { key: 'prozent', label: 'Prozent' },
@@ -128,6 +183,7 @@ export default function ZahlenScreen() {
       {bereich === 'prozent' ? <Prozent /> : null}
       {bereich === 'logarithmus' ? <Logarithmus /> : null}
       {bereich === 'prozent' ? <WozuZinseszins /> : null}
+      {bereich === 'logarithmus' ? <WozuLogarithmus /> : null}
     </ScreenGeruest>
   );
 }

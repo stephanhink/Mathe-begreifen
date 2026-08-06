@@ -235,6 +235,34 @@ export const THEMEN = {
     mehr: ['logarithmus', 'potenz', 'bruch'],
   },
 
+  dezibel: {
+    titel: 'Dezibel — warum Lautstärke logarithmisch gemessen wird',
+    text: [
+      'Dezibel ist keine Einheit für Schall, sondern für ein VERHÄLTNIS: Wie viel stärker ist dieser Schall als die Hörschwelle? 0 dB heißt nicht Stille, sondern „so leise wie die Hörschwelle".',
+      'Der Grund für die Skala ist eine Zahl: Zwischen der Hörschwelle (10⁻¹² W/m²) und der Schmerzgrenze (etwa 1 W/m²) liegt der Faktor 10¹² — eine Billion. Eine Skala von 1 bis 1 000 000 000 000 kann niemand lesen und auf kein Messgerät drucken.',
+      'Der Logarithmus zählt statt der Zahl ihre NULLEN. Aus 10¹² wird 12, mit zehn malgenommen 120 — und die ganze Spanne des Hörens passt in die Zahlen von 0 bis 120. Genau dafür gibt es ihn: L = 10 · lg(I : I₀).',
+      'Daraus folgt die Regel, an der man die Skala erkennt: Jede VERZEHNFACHUNG der Intensität bringt genau 10 dB dazu. 20 dB mehr sind das Hundertfache, 30 dB mehr das Tausendfache. Wer 60 dB und 70 dB für „fast gleich" hält, unterschätzt den Unterschied um den Faktor 10.',
+      'Was das Modell nicht weiß: Das Ohr empfindet nicht linear — 10 dB mehr klingen nur etwa doppelt so laut. Der Schalldruckpegel wird mit 20 · lg gerechnet und ist eine andere Größe, obwohl auch er dB heißt. Und über Schädigung sagt die Zahl allein nichts: Dafür zählt auch die Dauer.',
+    ],
+    formel: 'L = 10 · lg(I : I₀)     I₀ = 10⁻¹² W/m²',
+    beispiel: 'I = 10⁻⁸ W/m²: das Verhältnis ist 10⁴, lg(10⁴) = 4, also L = 40 dB.',
+    mehr: ['logarithmus', 'phWert', 'potenz'],
+  },
+
+  phWert: {
+    titel: 'Der pH-Wert — derselbe Trick in der Chemie',
+    text: [
+      'Der pH-Wert sagt, wie sauer eine Lösung ist. Er ist nichts anderes als der Zehnerlogarithmus der Konzentration der Wasserstoff-Ionen, mit einem Minus davor: pH = −lg(c).',
+      'Das Problem ist dasselbe wie beim Dezibel. Die Konzentration reicht von etwa 1 mol/l bis 10⁻¹⁴ mol/l — vierzehn Zehnerpotenzen. Mit „0,0000001 mol/l" kann niemand arbeiten; mit „pH 7" schon.',
+      'Warum das Minus? Weil alle diese Konzentrationen kleiner als 1 sind und ihre Logarithmen deshalb negativ. lg(10⁻⁷) ist −7. Das Minus dreht das um, damit auf der Skala positive Zahlen stehen. Es fällt nicht vom Himmel, es ist ein reiner Bequemlichkeitsschritt.',
+      'Und daraus folgt der Satz, den fast jeder falsch im Kopf hat: Jede pH-Stufe ist ein Faktor 10. pH 4 ist ZEHNMAL so sauer wie pH 5 und hundertmal so sauer wie pH 6 — nicht „ein bisschen saurer".',
+      'Was das Modell nicht weiß: Die Formel gilt für verdünnte wässrige Lösungen; chemisch genau steht dort die Aktivität und nicht die Konzentration. Dass 7 neutral ist, gilt bei 25 °C. Und pH-Werte unter 0 oder über 14 gibt es wirklich, auch wenn die Skala im Schulbuch dort aufhört.',
+    ],
+    formel: 'pH = −lg(c(H⁺))     c in mol/l',
+    beispiel: 'c(H⁺) = 10⁻³ mol/l: lg(10⁻³) = −3, also pH = −(−3) = 3 — sauer.',
+    mehr: ['logarithmus', 'dezibel', 'potenz'],
+  },
+
   zinseszins: {
     titel: 'Zinseszins — wo die Exponentialfunktion herkommt',
     text: [
