@@ -398,8 +398,19 @@ function Ergebnis({ zustand, stand, nochmal, zurUebersicht, vergessen }) {
 
   return (
     <ScreenGeruest titel="Das Ergebnis" untertitel={`${a.gefragt} Aufgaben`}>
-      {a.berichte.length > 0 ? (
-        a.berichte.map((b) => <Lueckenkasten key={b.luecke} bericht={b} />)
+      {/* Eine Hauptdiagnose, prominent — und darunter, deutlich leiser,
+          was sonst noch auffiel.
+
+          Vorher standen hier mehrere gleich große Kästen mit je einem
+          Satz „Dein Problem ist …". Drei Hauptsätze sind aber kein
+          Befund mehr, sondern Rauschen: Der Schüler weiß danach nicht,
+          wo er anfangen soll. Die Reihenfolge entscheidet
+          utils/luecken.js, nicht dieser Bildschirm. */}
+      {a.haupt ? (
+        <>
+          <Hauptbefund bericht={a.haupt} />
+          {a.nebenbefunde.length > 0 ? <Nebenbefunde berichte={a.nebenbefunde} /> : null}
+        </>
       ) : (
         <View style={styles.ergebnisKasten}>
           <Text style={styles.ergebnisTitel}>{zeilen[0]}</Text>
@@ -452,11 +463,15 @@ function Ergebnis({ zustand, stand, nochmal, zurUebersicht, vergessen }) {
   );
 }
 
-function Lueckenkasten({ bericht }) {
+// Die Hauptdiagnose: der eine Punkt, an dem angefangen wird. Sie steht
+// oben, sie ist der größte Kasten, und sie ist die einzige, die den Satz
+// „Dein Problem ist …" sagen darf.
+function Hauptbefund({ bericht }) {
   const thema = holeThema(bericht.luecke);
 
   return (
     <View style={styles.lueckeKasten}>
+      <Text style={styles.hauptEtikett}>Hier fängt es an</Text>
       <Text style={styles.lueckeText}>{bericht.text}</Text>
 
       <View style={styles.hilfeZeile}>
@@ -474,6 +489,35 @@ function Lueckenkasten({ bericht }) {
           ))}
         </>
       ) : null}
+    </View>
+  );
+}
+
+// Was sonst noch auffiel. Es wird genannt — verschwiegen wird nichts,
+// gemessen ist gemessen —, aber es steht ausdrücklich daneben und nicht
+// gleichrangig: kleinerer Kasten, leisere Farbe, keine zweite Diagnose.
+function Nebenbefunde({ berichte }) {
+  return (
+    <View style={styles.nebenKasten}>
+      <Text style={styles.nebenUeberschrift}>Nebenbefunde</Text>
+      <Text style={styles.nebenEinleitung}>
+        Auch das ging schief. Zuerst zählt aber der Punkt oben — von dort führt der Weg.
+      </Text>
+
+      {berichte.map((b) => {
+        const thema = holeThema(b.luecke);
+        return (
+          <View key={b.luecke} style={styles.nebenEintrag}>
+            <Text style={styles.nebenText}>{b.text}</Text>
+            {thema.wissen ? (
+              <View style={styles.hilfeZeile}>
+                <Text style={styles.hilfeLabel}>Erklärung dazu</Text>
+                <InfoButton thema={thema.wissen} />
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -622,10 +666,49 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 18,
   },
+  hauptEtikett: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: farben.warnung,
+    marginBottom: 8,
+  },
   lueckeText: {
-    fontSize: 16,
+    fontSize: 17,
     color: farben.text,
-    lineHeight: 24,
+    lineHeight: 26,
+  },
+
+  // Die Nebenbefunde stehen bewusst ohne farbigen Hintergrund da: nur
+  // ein Rahmen. Der eine gefüllte Kasten auf der Seite ist die
+  // Hauptdiagnose — daran erkennt man sie schon, bevor man liest.
+  nebenKasten: {
+    borderWidth: 1,
+    borderColor: farben.trenner,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 18,
+  },
+  nebenUeberschrift: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: farben.textLeise,
+    marginBottom: 4,
+  },
+  nebenEinleitung: {
+    fontSize: 13,
+    color: farben.textSehrLeise,
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  nebenEintrag: {
+    marginTop: 8,
+  },
+  nebenText: {
+    fontSize: 15,
+    color: farben.text,
+    lineHeight: 22,
   },
   lueckeTitel: {
     fontSize: 17,

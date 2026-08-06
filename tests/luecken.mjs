@@ -18,6 +18,7 @@ import {
   alleVoraussetzungen,
   voraussetzungenVon,
   spitzen,
+  wegNachOben,
 } from '../utils/lernpfad.js';
 import {
   starte,
@@ -163,6 +164,194 @@ pruefung('Zwei Lücken in verschiedenen Zweigen', () => {
   wahr('die Brüche sind dabei', a.luecken.includes('bruchKuerzen'));
   wahr('die Terme auch', a.luecken.includes('termZusammenfassen'));
   zahlIst('und der Bericht hat zwei Absätze', a.berichte.length, 2);
+});
+
+// ---------------------------------------------------------------------
+// Die Rangfolge: eine Hauptdiagnose, der Rest sind Nebenbefunde
+// ---------------------------------------------------------------------
+//
+// Mehrere gleichrangige Sätze "Dein Problem ist …" sind kein Befund
+// mehr, sondern Rauschen. Geprüft wird deshalb nicht nur, DASS die
+// Lücken gefunden werden, sondern in welcher Reihenfolge sie dastehen.
+
+pruefung('Die unterste Lücke ist die Hauptdiagnose', () => {
+  // Beide Lücken sind echt und liegen in verschiedenen Zweigen — aber
+  // "Gleichartige Glieder zusammenfassen" steht eine Stufe über dem
+  // festen Boden, "Brüche kürzen" zwei. Unten wird angefangen.
+  const { zustand } = sitzung(schueler(['bruchKuerzen', 'termZusammenfassen']));
+  const a = auswertung(zustand);
+
+  gleichText('die tiefere Lücke steht oben', a.haupt.luecke, 'termZusammenfassen');
+  wahr('und sie ist als Hauptdiagnose gekennzeichnet', a.haupt.istHaupt === true);
+  gleichText('genau ein Nebenbefund', String(a.nebenbefunde.length), '1');
+  gleichText('und zwar die höher liegende Lücke', a.nebenbefunde[0].luecke, 'bruchKuerzen');
+  wahr('der Nebenbefund gilt nicht als Hauptdiagnose', a.nebenbefunde[0].istHaupt === false);
+
+  wahr(
+    'der Haupttext ist der Satz, um den es geht',
+    a.haupt.text.includes('Dein Problem ist')
+  );
+  wahr(
+    'der Nebenbefund steht ausdrücklich daneben',
+    a.nebenbefunde[0].text.startsWith('Außerdem aufgefallen:')
+  );
+  wahr(
+    'und er sagt nicht noch einmal "dein Problem ist"',
+    !a.nebenbefunde[0].text.includes('Dein Problem ist')
+  );
+
+  // Nebenbefund heißt nicht Nebensache: Er muss eine echte, gemessene
+  // Lücke sein — sonst wäre er eine Vermutung im Bericht.
+  for (const n of a.nebenbefunde) {
+    wahr(`${n.luecke}: ist eine echte Lücke`, a.luecken.includes(n.luecke));
+    wahr(`${n.luecke}: ging tatsächlich schief`, zustand.ergebnisse[n.luecke] === false);
+  }
+
+  // Der ganze Bericht in Sätzen: erst die Zählung, dann die
+  // Hauptdiagnose, dann die Nebenbefunde — in dieser Reihenfolge.
+  const zeilen = alsBericht(zustand);
+  gleichText('der Bericht beginnt mit der Hauptdiagnose', zeilen[1], a.haupt.text);
+  gleichText('und endet mit dem Nebenbefund', zeilen[2], a.nebenbefunde[0].text);
+});
+
+pruefung('Bei genau einer Lücke gibt es keine Nebenbefunde', () => {
+  const { zustand } = sitzung(schueler(['potenzgesetzMal']));
+  const a = auswertung(zustand);
+
+  gleichText('die Lücke ist die Hauptdiagnose', a.haupt.luecke, 'potenzgesetzMal');
+  zahlIst('nichts daneben', a.nebenbefunde.length, 0);
+  wahr('haupt ist der erste Bericht', a.berichte[0] === a.haupt);
+
+  // Die Begründung in Zahlen: Wer die Potenzgesetze nicht kann,
+  // scheitert auch an allem darüber — und genau das soll der Bericht
+  // sagen können, statt es zu behaupten.
+  wahr('mehr als ein Fehler wurde beobachtet', a.fehler.length > 1);
+  gleichText(
+    'alle Fehler gehen auf diese eine Lücke zurück',
+    String(a.haupt.erklaerteFehler.length),
+    String(a.fehler.length)
+  );
+  wahr('und der Text sagt es', a.haupt.text.includes('gehen darauf zurück'));
+});
+
+pruefung('Ohne Lücke gibt es auch keine Hauptdiagnose', () => {
+  const { zustand } = sitzung(() => true);
+  const a = auswertung(zustand);
+
+  wahr('haupt ist null statt eines erfundenen Befunds', a.haupt === null);
+  zahlIst('und es steht nichts daneben', a.nebenbefunde.length, 0);
+  wahr('der Bericht kommt trotzdem zustande', alsBericht(zustand).length >= 2);
+});
+
+pruefung('Die gezählten Fehler gehen wirklich auf die Lücke zurück', () => {
+  // Die Zahl im Bericht ("4 der 6 Fehler gehen darauf zurück") ist eine
+  // Behauptung über den Graphen. Also wird sie am Graphen nachgeprüft:
+  // Jeder mitgezählte Fehler muss die Lücke selbst sein oder über ihr
+  // liegen — und er muss tatsächlich schiefgegangen sein.
+  //
+  // Geprüft wird ausdrücklich auch mit ZWEI Lücken in verschiedenen
+  // Zweigen. Mit nur einer Lücke liegt jeder beobachtete Fehler ohnehin
+  // über ihr — eine Zählung, die einfach alle Fehler mitnimmt, käme
+  // damit durch. Genau das war mein erster Anlauf, und die Gegenprobe
+  // hat es gezeigt.
+  let fehler = null;
+
+  const faelle = [];
+  for (const luecke of alleThemen()) {
+    faelle.push([luecke]);
+    if (luecke !== 'termZusammenfassen') {
+      faelle.push([luecke, 'termZusammenfassen']);
+    }
+  }
+
+  for (const luecken of faelle) {
+    const luecke = luecken.join(' + ');
+    const { zustand } = sitzung(schueler(luecken));
+    const a = auswertung(zustand);
+
+    for (const b of a.berichte) {
+      if (b.erklaerteFehler[0] !== b.luecke) {
+        fehler = `${luecke}: die Lücke selbst fehlt in der Zählung von "${b.luecke}"`;
+        break;
+      }
+      for (const id of b.erklaerteFehler) {
+        if (zustand.ergebnisse[id] !== false) {
+          fehler = `${luecke}: "${id}" wird mitgezählt, ging aber gar nicht schief`;
+        } else if (id !== b.luecke && wegNachOben(b.luecke, id).length === 0) {
+          fehler = `${luecke}: "${id}" wird mitgezählt, liegt aber nicht über "${b.luecke}"`;
+        }
+      }
+      if (b.erklaerteFehler.length > a.fehler.length) {
+        fehler = `${luecke}: mehr erklärte Fehler als beobachtete`;
+      }
+    }
+    if (fehler) {
+      break;
+    }
+  }
+
+  wahr('die Zählung stimmt für jede mögliche Lücke', fehler === null, fehler ?? undefined);
+});
+
+pruefung('Zufällige Schüler: die Rangfolge hält', () => {
+  // Dieselben Sitzungen wie oben, andere Frage: Steht die unterste
+  // Lücke vorn, und sind die Nebenbefunde allesamt echte Lücken?
+  const naechste = wuerfel(startwertFuer('rangfolge'));
+  const themen = alleThemen();
+  let fehler = null;
+
+  // Wie hoch liegt ein Thema über dem festen Boden? Hier bewusst noch
+  // einmal ausgerechnet statt aus luecken.js importiert — eine Prüfung,
+  // die die geprüfte Rechnung übernimmt, prüft nichts.
+  const hoehe = (id) => {
+    const voraus = voraussetzungenVon(id);
+    return voraus.length === 0 ? 0 : 1 + Math.max(...voraus.map(hoehe));
+  };
+
+  for (let i = 0; i < 200 && fehler === null; i++) {
+    const anzahl = naechste(3) + 1;
+    const luecken = [];
+    for (let k = 0; k < anzahl; k++) {
+      const kandidat = themen[naechste(themen.length)];
+      if (!luecken.includes(kandidat)) {
+        luecken.push(kandidat);
+      }
+    }
+
+    const kann = schueler(luecken);
+    const { zustand } = sitzung(kann);
+    const a = auswertung(zustand);
+    const wo = `bei Lücken [${luecken.join(', ')}]`;
+
+    if (a.haupt === null) {
+      fehler = `${wo} wurde keine Hauptdiagnose gestellt`;
+      break;
+    }
+    if (!a.luecken.includes(a.haupt.luecke)) {
+      fehler = `${wo} ist die Hauptdiagnose "${a.haupt.luecke}" gar keine gemeldete Lücke`;
+      break;
+    }
+    const tiefste = Math.min(...a.luecken.map(hoehe));
+    if (hoehe(a.haupt.luecke) !== tiefste) {
+      fehler =
+        `${wo} steht "${a.haupt.luecke}" (Höhe ${hoehe(a.haupt.luecke)}) vorn, ` +
+        `obwohl eine Lücke tiefer liegt (Höhe ${tiefste})`;
+      break;
+    }
+    for (const n of a.nebenbefunde) {
+      if (!a.luecken.includes(n.luecke) || kann(n.luecke)) {
+        fehler = `${wo} ist der Nebenbefund "${n.luecke}" keine echte Lücke`;
+      }
+      if (n.luecke === a.haupt.luecke) {
+        fehler = `${wo} steht "${n.luecke}" doppelt: als Hauptdiagnose und als Nebenbefund`;
+      }
+    }
+    if (!fehler && a.nebenbefunde.length + 1 !== a.berichte.length) {
+      fehler = `${wo} gehen Hauptdiagnose und Nebenbefunde nicht auf`;
+    }
+  }
+
+  wahr('kein Fehlurteil in 200 Sitzungen', fehler === null, fehler ?? undefined);
 });
 
 pruefung('Die Suche bleibt kurz genug', () => {

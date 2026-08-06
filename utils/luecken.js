@@ -177,6 +177,50 @@ export function istFertig(zustand) {
 // Auswertung
 // ---------------------------------------------------------------------
 
+// Wie viele Stufen liegt ein Thema über dem festen Boden? Ein Thema
+// ohne Voraussetzung steht auf 0; darüber zählt der LÄNGSTE Weg nach
+// unten, denn eine Kette ist so tief wie ihr tiefstes Glied.
+//
+// Gebraucht wird das für die Rangfolge der Lücken: Die unterste ist die
+// Hauptdiagnose. Der Wert hängt allein am Graphen, nicht am Schüler —
+// deshalb darf er zwischengespeichert werden.
+const hoehen = new Map();
+
+function hoeheUeberBoden(id) {
+  if (hoehen.has(id)) {
+    return hoehen.get(id);
+  }
+  const voraus = voraussetzungenVon(id);
+  const hoehe = voraus.length === 0 ? 0 : 1 + Math.max(...voraus.map(hoeheUeberBoden));
+  hoehen.set(id, hoehe);
+  return hoehe;
+}
+
+// Die Rangfolge der Lücken. Sie ist der Grund, warum aus mehreren
+// Befunden trotzdem EINE Diagnose wird:
+//
+//   1. Die unterste Lücke zuerst. Was weiter unten steht, trägt mehr —
+//      und dort anzufangen ist der einzige Weg, der nach oben führt.
+//   2. Bei gleicher Höhe: die Lücke, auf die MEHR beobachtete Fehler
+//      zurückgehen. Sie erklärt mehr von dem, was heute schiefging.
+//   3. Danach die niedrigere Klassenstufe, zuletzt der Name — damit
+//      dieselbe Sitzung immer denselben Bericht ergibt. Eine Diagnose,
+//      die zweimal anders ausfällt, ist keine.
+function rangfolge(a, b) {
+  if (a.hoehe !== b.hoehe) {
+    return a.hoehe - b.hoehe;
+  }
+  if (a.erklaerteFehler.length !== b.erklaerteFehler.length) {
+    return b.erklaerteFehler.length - a.erklaerteFehler.length;
+  }
+  const klasseA = holeThema(a.luecke).klasse;
+  const klasseB = holeThema(b.luecke).klasse;
+  if (klasseA !== klasseB) {
+    return klasseA - klasseB;
+  }
+  return a.luecke < b.luecke ? -1 : a.luecke > b.luecke ? 1 : 0;
+}
+
 // Eine Lücke ist ein Thema, das schiefging und unter dem fester Boden
 // liegt: Alle direkten Voraussetzungen wurden abgefragt und saßen — oder
 // es gibt gar keine.
@@ -184,6 +228,21 @@ export function istFertig(zustand) {
 // Das ist der Unterschied zu "6 von 15 richtig". Wer bei der pq-Formel
 // scheitert UND bei den Potenzgesetzen, hat nicht zwei Probleme,
 // sondern eines: die Potenzgesetze. Das andere ist die Folge.
+//
+// ---------------------------------------------------------------------
+// Eine Hauptdiagnose, der Rest sind Nebenbefunde
+// ---------------------------------------------------------------------
+//
+// Findet die Suche mehrere Lücken, standen sie hier zunächst
+// gleichrangig nebeneinander — und der Schüler las drei Sätze "Dein
+// Problem ist …". Drei Hauptsätze sind kein Befund mehr, sondern
+// Rauschen; genau davon wollte diese App wegkommen.
+//
+// Deshalb wird sortiert: Die HAUPTDIAGNOSE ist die unterste Lücke im
+// Graphen — der tiefste Punkt, auf den die beobachteten Fehler
+// zurückgehen. Alles andere erscheint als Nebenbefund. Verschwiegen
+// wird nichts: Was gemessen wurde, steht weiterhin da, nur eben nach
+// Gewicht geordnet.
 export function auswertung(zustand) {
   const { ergebnisse } = zustand;
   const falsch = Object.keys(ergebnisse).filter((id) => !ergebnisse[id]);
@@ -209,7 +268,11 @@ export function auswertung(zustand) {
 
   // Zu jeder Lücke: das höchste abgefragte Thema, das daran hängt und
   // ebenfalls schiefging. Das ist der Satz "Dein Problem ist nicht X".
-  const berichte = luecken.map((luecke) => {
+  //
+  // Dazu die Fehler, die auf diese Lücke zurückgehen — sie selbst
+  // eingerechnet, denn auch sie ist ein beobachteter Fehler. Diese Zahl
+  // ist die Begründung dafür, WARUM ausgerechnet sie oben steht.
+  const roh = luecken.map((luecke) => {
     const daraufAufbauendeFehler = falsch
       .filter((id) => id !== luecke && wegNachOben(luecke, id).length > 0)
       .sort((a, b) => THEMEN[b].klasse - THEMEN[a].klasse);
@@ -219,9 +282,27 @@ export function auswertung(zustand) {
       luecke,
       obenGescheitert: oben,
       weg: oben ? wegNachOben(luecke, oben) : [luecke],
-      text: berichtstext(luecke, oben),
+      hoehe: hoeheUeberBoden(luecke),
+      erklaerteFehler: [luecke, ...daraufAufbauendeFehler],
     };
   });
+
+  roh.sort(rangfolge);
+
+  // Erst jetzt, wo die Rangfolge feststeht, bekommt jeder Befund seinen
+  // Satz: Die Hauptdiagnose spricht Klartext, die Nebenbefunde stehen
+  // daneben und sagen ausdrücklich, wie sie zur Hauptdiagnose stehen.
+  const berichte = roh.map((b, i) => ({
+    ...b,
+    istHaupt: i === 0,
+    text:
+      i === 0
+        ? hauptText(b, falsch.length)
+        : nebenText(b, roh[0].luecke),
+  }));
+
+  const haupt = berichte[0] ?? null;
+  const nebenbefunde = berichte.slice(1);
 
   // Drei Kategorien, streng getrennt — und die Trennung ist der Grund,
   // warum man dieser App glauben kann:
@@ -234,7 +315,15 @@ export function auswertung(zustand) {
   return {
     luecken,
     unklar,
+    // Alle Fehler dieser Sitzung — der Nenner für "3 der 5 Fehler gehen
+    // darauf zurück".
+    fehler: falsch,
+    // `berichte` steht weiterhin da, jetzt aber sortiert: Der erste
+    // Eintrag ist die Hauptdiagnose. Wer nur einen Satz zeigen will,
+    // nimmt `haupt`.
     berichte,
+    haupt,
+    nebenbefunde,
     sicher: richtig,
     uebersprungen,
     gefragt: zustand.verlauf.length,
@@ -244,9 +333,9 @@ export function auswertung(zustand) {
   };
 }
 
-function berichtstext(luecke, oben) {
-  const name = (id) => holeThema(id).titel;
+const name = (id) => holeThema(id).titel;
 
+function berichtstext(luecke, oben) {
   if (!oben) {
     return (
       `Hier liegt eine Lücke: ${name(luecke)}. ` +
@@ -263,6 +352,38 @@ function berichtstext(luecke, oben) {
     (dazwischen.length > 0
       ? ` Von dort führt der Weg über ${dazwischen.join(', ')} nach oben.`
       : ' Von dort führt der Weg direkt nach oben.')
+  );
+}
+
+// Die Hauptdiagnose — derselbe Satz wie bisher, dazu die Begründung in
+// Zahlen: Wie viel von dem, was heute schiefging, geht auf diese eine
+// Lücke zurück? Ohne sie stünde da eine Behauptung; mit ihr kann man
+// nachzählen.
+function hauptText(bericht, anzahlFehler) {
+  const satz = berichtstext(bericht.luecke, bericht.obenGescheitert);
+  const erklaert = bericht.erklaerteFehler.length;
+
+  if (anzahlFehler < 2) {
+    return satz;
+  }
+  if (erklaert === anzahlFehler) {
+    return `${satz} Alle ${anzahlFehler} Fehler dieser Sitzung gehen darauf zurück.`;
+  }
+  return `${satz} ${erklaert} der ${anzahlFehler} Fehler dieser Sitzung gehen darauf zurück.`;
+}
+
+// Ein Nebenbefund. Er wird genannt, aber nicht als zweiter Hauptsatz —
+// und er sagt dazu, wie er zur Hauptdiagnose steht. Denn beides kommt
+// vor: ein ganz eigener Zweig, oder etwas, das über der Hauptlücke
+// liegt und sich beim Aufräumen von unten vielleicht miterledigt.
+function nebenText(bericht, hauptLuecke) {
+  const eigenerZweig = wegNachOben(hauptLuecke, bericht.luecke).length === 0;
+
+  return (
+    `Außerdem aufgefallen: ${name(bericht.luecke)}. ` +
+    (eigenerZweig
+      ? `Das hängt nicht an „${name(hauptLuecke)}" — es ist ein eigener Zweig und bleibt danach zu tun.`
+      : `Das liegt über „${name(hauptLuecke)}"; fang unten an, dann sieh noch einmal hierher.`)
   );
 }
 
@@ -293,7 +414,11 @@ export function alsBericht(zustand) {
     return zeilen;
   }
 
-  for (const b of a.berichte) {
+  // Zuerst die Hauptdiagnose, dann — deutlich abgesetzt — was sonst
+  // noch auffiel. Vorher standen hier mehrere gleichrangige Sätze
+  // "Dein Problem ist …", und damit war keiner mehr eine Antwort.
+  zeilen.push(a.haupt.text);
+  for (const b of a.nebenbefunde) {
     zeilen.push(b.text);
   }
   return zeilen;
