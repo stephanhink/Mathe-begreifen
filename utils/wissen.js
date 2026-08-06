@@ -207,6 +207,34 @@ export const THEMEN = {
     mehr: ['wurzelAusQuadrat', 'wurzel'],
   },
 
+  logarithmus: {
+    titel: 'Logarithmus',
+    text: [
+      'Der Logarithmus fragt nach dem Exponenten. log₂(8) heißt ausgesprochen: „2 hoch was ist 8?" — und die Antwort ist 3.',
+      'An 2³ = 8 lassen sich drei Fragen stellen, und jede hat ihren eigenen Namen. Was ist 2³? Das ist die Potenz. Welche Zahl hoch 3 ist 8? Das ist die Wurzel. 2 hoch WAS ist 8? Das ist der Logarithmus. Etwas Neues kommt also nicht dazu — es ist dieselbe Gleichung, nur von der dritten Seite gelesen.',
+      'Die Zahl unten heißt Basis, die Zahl in der Klammer Numerus. Für die Basis 10 schreibt man kurz lg, für die Basis e (2,718…) schreibt man ln. Nur deshalb stehen auf dem Taschenrechner genau diese beiden Tasten und keine für log₂.',
+      'Der Numerus muss positiv sein: Eine Potenz einer positiven Basis ist immer positiv, egal welchen Exponenten man nimmt. Deshalb gibt es log(0) und log(−4) nicht — das ist keine Lücke im Verfahren, sondern eine Frage ohne Antwort. Diese App rät dafür keine Zahl.',
+      'Nicht jeder Logarithmus ist eine schöne Zahl. lg(2) lässt sich nicht als Bruch schreiben, genau wie √2 — jede Kommazahl dafür ist gerundet, und die App sagt es dazu. Exakt wird es, wenn beide Zahlen Potenzen derselben Zahl sind: log₈(4) ist genau 2/3, weil 8 = 2³ und 4 = 2² ist.',
+    ],
+    formel: 'log_b(a) = x    bedeutet    bˣ = a',
+    beispiel: 'log₂(32) = 5, denn 2⁵ = 32.   Und log₂(1/8) = −3, denn 2⁻³ = 1/8.',
+    mehr: ['logarithmusgesetze', 'potenz', 'wurzel'],
+  },
+
+  logarithmusgesetze: {
+    titel: 'Die Logarithmusgesetze',
+    text: [
+      'Aus Malnehmen wird Addieren: log(a · c) ist log(a) + log(c). Aus Teilen wird Subtrahieren, aus Potenzieren wird Malnehmen. Jede Rechnung wird eine Stufe einfacher.',
+      'Die Gesetze fallen nicht vom Himmel — sie sind die Potenzgesetze von der anderen Seite gelesen. Beim Malnehmen von Potenzen mit gleicher Basis werden die Exponenten addiert. Der Logarithmus IST der Exponent, also werden die Logarithmen addiert. Genau deshalb muss man erst die Potenzgesetze sicher können.',
+      'Der häufigste Fehler ist, log(a · c) als log(a) · log(c) zu lesen. Man sieht sofort, dass das nicht geht: lg(2) + lg(5) ist genau 1, weil 2 · 5 = 10 ist. lg(2) · lg(5) ist dagegen rund 0,21 — etwas völlig anderes.',
+      'Daran hängt auch die schönste Eigenschaft: Die Einzelwerte lg(2) und lg(5) sind beide krumm und lassen sich nur gerundet hinschreiben. Ihre Summe ist trotzdem exakt 1. Die Regel gilt, auch wenn man die Teile gar nicht aufschreiben kann.',
+      'Dafür wurde der Logarithmus erfunden, dreihundert Jahre vor dem Taschenrechner: Wer eine Tabelle mit Logarithmen hatte, konnte große Zahlen malnehmen, indem er sie addierte.',
+    ],
+    formel: 'log(a · c) = log a + log c    log(a : c) = log a − log c    log(aⁿ) = n · log a',
+    beispiel: 'log₂(8 · 4) = log₂(8) + log₂(4) = 3 + 2 = 5.   Und wirklich: 8 · 4 = 32 = 2⁵.',
+    mehr: ['logarithmus', 'potenz', 'bruch'],
+  },
+
   zinseszins: {
     titel: 'Zinseszins — wo die Exponentialfunktion herkommt',
     text: [

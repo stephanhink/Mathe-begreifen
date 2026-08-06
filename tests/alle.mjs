@@ -16,6 +16,9 @@ import './wissen.mjs';
 // Aufgaben, dann die Suche — in dieser Reihenfolge bauen sie
 // aufeinander auf.
 import './lernpfad.mjs';
+// Der Logarithmus steht vor den Aufgaben, weil zwei Generatoren ihre
+// Musterlösung von dort holen. Schlägt er fehl, sieht man das zuerst.
+import './logarithmus.mjs';
 import './ableitung.mjs';
 import './integral.mjs';
 import './vektor.mjs';

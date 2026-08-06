@@ -44,8 +44,15 @@
 //   wissen           ID in utils/wissen.js — der Text dazu
 //
 // Die Reihenfolge in dieser Datei ist von unten nach oben sortiert:
-// Grundlagen zuerst. Das ist nur Lesbarkeit — verbindlich ist allein
-// das Feld `voraussetzungen`.
+// Grundlagen zuerst. Für die ABHÄNGIGKEITEN ist allein das Feld
+// `voraussetzungen` verbindlich — die Reihenfolge ist dafür egal.
+//
+// Sie ist aber NICHT bloß Lesbarkeit, wie hier lange stand: Der
+// Lückenfinder fragt die Spitzen des Graphen in genau dieser Reihenfolge
+// ab (`spitzen()` gibt sie in Schlüsselreihenfolge zurück), und das
+// Fragenkontingent ist endlich. Wer weit hinten steht, hat für den
+// Abstieg keine Frage mehr übrig. Siehe den Kasten ganz unten bei
+// `wurzelTeilweise`.
 
 export const THEMEN = {
   // -----------------------------------------------------------------
@@ -180,12 +187,9 @@ export const THEMEN = {
     wissen: 'wurzel',
   },
 
-  wurzelTeilweise: {
-    titel: 'Teilweise die Wurzel ziehen',
-    klasse: 9,
-    voraussetzungen: ['wurzelZiehen'],
-    wissen: 'wurzel',
-  },
+  // (`wurzelTeilweise` gehört hierher und steht trotzdem ganz unten in
+  // dieser Datei — warum, steht dort. Der Logarithmus gehört ebenfalls
+  // hierher und steht aus demselben Grund hinter den Termen.)
 
   // -----------------------------------------------------------------
   // Terme
@@ -224,6 +228,48 @@ export const THEMEN = {
     klasse: 8,
     voraussetzungen: ['ausmultiplizieren'],
     wissen: 'ausklammern',
+  },
+
+  // -----------------------------------------------------------------
+  // Logarithmus
+  // -----------------------------------------------------------------
+  //
+  // Fachlich gehört dieser Block zu den Potenzen weiter oben — dort
+  // steht ein Verweis darauf. Er steht hier, weil die Reihenfolge in
+  // dieser Datei zugleich die Fragereihenfolge des Lückenfinders ist
+  // (siehe der Kasten ganz unten): Stünde `logarithmusgesetze` VOR
+  // `ausklammern`, verbrauchte sein Abstieg die Fragen, mit denen sonst
+  // der Terme-Zweig erreicht wird — und `termZusammenfassen` ist über
+  // keinen anderen Weg zu finden. Genau das hat die Prüfung mit den zwei
+  // Lücken in verschiedenen Zweigen gemeldet.
+
+  // Der Logarithmus ist die dritte Frage an dieselbe Gleichung: Aus
+  // 2³ = 8 wird "was ist 2³" (Potenz), "welche Zahl hoch 3 ist 8"
+  // (Wurzel) und "2 hoch WAS ist 8" (Logarithmus). Deshalb hängt er
+  // unmittelbar an der Potenzdefinition und nicht an den Gleichungen.
+  //
+  // Die negativen Exponenten stehen bewusst mit darunter: log₂(1/8) ist
+  // −3, und wer x⁻ⁿ für ein negatives Ergebnis hält, bekommt hier
+  // regelmäßig ein Vorzeichen falsch. Wer daran scheitert, hat kein
+  // Problem mit dem Logarithmus, sondern eine Ebene tiefer — genau die
+  // Unterscheidung, für die es den Lückenfinder gibt.
+  logarithmusBestimmen: {
+    titel: 'Einen Logarithmus bestimmen',
+    klasse: 10,
+    voraussetzungen: ['potenzDefinition', 'negativeExponenten'],
+    wissen: 'logarithmus',
+  },
+
+  // Und die Gesetze stehen auf den Potenzgesetzen, nicht nur auf dem
+  // Logarithmus darunter: log(a · c) = log a + log c IST das Gesetz
+  // c^m · c^n = c^(m+n), von der anderen Seite gelesen. Wer nicht weiß,
+  // dass beim Malnehmen die Exponenten addiert werden, kann das hier nur
+  // auswendig lernen.
+  logarithmusgesetze: {
+    titel: 'Mit den Logarithmusgesetzen rechnen',
+    klasse: 10,
+    voraussetzungen: ['logarithmusBestimmen', 'potenzgesetzMal'],
+    wissen: 'logarithmusgesetze',
   },
 
   // -----------------------------------------------------------------
@@ -414,6 +460,44 @@ export const THEMEN = {
     klasse: 8,
     voraussetzungen: ['ungleichungEinfach', 'ganzeZahlenMultiplizieren'],
     wissen: 'ungleichung',
+  },
+
+  // -----------------------------------------------------------------
+  // Zuletzt: das Blatt, das am wenigsten verrät
+  // -----------------------------------------------------------------
+  //
+  // Fachlich gehört `wurzelTeilweise` nach oben zu den Wurzeln, und dort
+  // steht auch ein Verweis darauf. Hier unten steht es, weil die
+  // Reihenfolge dieser Datei eben doch mehr ist als Lesbarkeit: Der
+  // Lückenfinder fragt die Spitzen des Graphen in genau dieser
+  // Reihenfolge ab, und danach ist das Fragenkontingent aufgebraucht.
+  //
+  // Beim Eintragen des Logarithmus ist das aufgefallen. Mit 14 Spitzen
+  // bei 15 Fragen bleibt für den LETZTEN Zweig genau ein Abstieg übrig.
+  // Vorher stand `ungleichungMitDreh` am Ende — und darunter liegt
+  // `ungleichungEinfach`, das über keinen anderen Zweig erreichbar ist.
+  // Für dessen Diagnose braucht es drei Fragen; die Lücke wurde nicht
+  // mehr gefunden, und die Prüfung hat es gemeldet.
+  //
+  // Die Regel, die daraus folgt und diese Stelle sortiert:
+  //
+  //   Zweige, die sonst niemand erreicht, kommen ZUERST.
+  //   Blätter über schon abgedecktem Boden kommen ZULETZT.
+  //
+  // `wurzelTeilweise` ist genau so ein Blatt: eine einzige Voraussetzung
+  // (`wurzelZiehen`), und die fragen die quadratische Gleichung, das
+  // Umstellen mit Potenz, der Pythagoras und die Ableitung mit Wurzel
+  // ohnehin ab. Eine Frage danach verrät deshalb am wenigsten — sie darf
+  // den vordersten Platz nicht belegen.
+  //
+  // Wer hier ein Thema ergänzt oder verschiebt: `tests/luecken.mjs`
+  // spielt für JEDES Thema einen Schüler durch, dem genau dieses fehlt.
+  // Passt die Reihenfolge nicht mehr, sagt sie es.
+  wurzelTeilweise: {
+    titel: 'Teilweise die Wurzel ziehen',
+    klasse: 9,
+    voraussetzungen: ['wurzelZiehen'],
+    wissen: 'wurzel',
   },
 };
 

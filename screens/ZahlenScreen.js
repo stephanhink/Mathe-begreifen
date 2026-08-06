@@ -16,8 +16,18 @@ import {
   grundwertAusVeraendert,
   alsProzentText,
 } from '../utils/prozent';
+import {
+  logarithmus,
+  produktregel,
+  quotientenregel,
+  potenzregel,
+  basiswechsel,
+  naeherungText,
+} from '../utils/logarithmus';
+import { ausText as bruchAusText } from '../utils/bruch';
 
-// Der Zahlen-Bildschirm: Brüche und Prozente, beides mit Rechenweg.
+// Der Zahlen-Bildschirm: Brüche, Prozente und Logarithmen, alles mit
+// Rechenweg.
 //
 // Warum eigene Module dafür und nicht der Rechner? Weil term.js zwar
 // 1/2 + 1/3 ausrechnen kann, aber in einem Schritt. Der Schritt, an dem
@@ -92,13 +102,14 @@ function WozuZinseszins() {
 const BEREICHE = [
   { key: 'brueche', label: 'Brüche' },
   { key: 'prozent', label: 'Prozent' },
+  { key: 'logarithmus', label: 'Logarithmus' },
 ];
 
 export default function ZahlenScreen() {
   const [bereich, setBereich] = useState('brueche');
 
   return (
-    <ScreenGeruest titel="Zahlen" untertitel="Brüche und Prozente — mit Rechenweg">
+    <ScreenGeruest titel="Zahlen" untertitel="Brüche, Prozente und Logarithmen — mit Rechenweg">
       <View style={styles.umschalter}>
         {BEREICHE.map((b) => (
           <Pressable
@@ -113,8 +124,10 @@ export default function ZahlenScreen() {
         ))}
       </View>
 
-      {bereich === 'brueche' ? <Brueche /> : <Prozent />}
-      {bereich === 'brueche' ? null : <WozuZinseszins />}
+      {bereich === 'brueche' ? <Brueche /> : null}
+      {bereich === 'prozent' ? <Prozent /> : null}
+      {bereich === 'logarithmus' ? <Logarithmus /> : null}
+      {bereich === 'prozent' ? <WozuZinseszins /> : null}
     </ScreenGeruest>
   );
 }
@@ -433,10 +446,189 @@ function Zahlenfeld({ beschriftung, wert, setWert, merkeFeld }) {
 }
 
 // --------------------------------------------------------------------
+// Logarithmus
+// --------------------------------------------------------------------
+//
+// Fünf Fragen, und die erste ist die Definition selbst: „b hoch was ist
+// a?". Die drei Gesetze stehen darunter als eigene Fragen, weil sie
+// eigene Fertigkeiten sind — im Lernpfad ebenso (logarithmusBestimmen
+// und logarithmusgesetze).
+//
+// Der Basiswechsel steht dabei, weil er die Frage beantwortet, die beim
+// ersten Blick auf den Taschenrechner kommt: Wo ist die log₂-Taste? Es
+// gibt keine, und man braucht auch keine.
+const LOG_FRAGEN = [
+  {
+    key: 'wert',
+    label: 'log_b(a) — b hoch was ist a?',
+    felder: ['Basis b', 'Numerus a'],
+    anfang: ['2', '32'],
+    rechne: (b, a) => logarithmus(b, a),
+  },
+  {
+    key: 'produkt',
+    label: 'log_b(a · c) — die Produktregel',
+    felder: ['Basis b', 'a', 'c'],
+    anfang: ['2', '8', '4'],
+    rechne: (b, a, c) => produktregel(b, a, c),
+  },
+  {
+    key: 'quotient',
+    label: 'log_b(a : c) — die Quotientenregel',
+    felder: ['Basis b', 'a', 'c'],
+    anfang: ['10', '50', '5'],
+    rechne: (b, a, c) => quotientenregel(b, a, c),
+  },
+  {
+    key: 'potenz',
+    label: 'log_b(aⁿ) — die Potenzregel',
+    felder: ['Basis b', 'a', 'Exponent n'],
+    anfang: ['2', '8', '3'],
+    rechne: (b, a, n) => potenzregel(b, a, n),
+  },
+  {
+    key: 'wechsel',
+    label: 'log_b(a) über lg ausrechnen — der Basiswechsel',
+    felder: ['Basis b', 'Numerus a'],
+    anfang: ['2', '7'],
+    rechne: (b, a) => basiswechsel(b, a, 10),
+  },
+];
+
+function Logarithmus() {
+  const feld = useAktivesFeld();
+  const [frageKey, setFrageKey] = useState('wert');
+  const frage = LOG_FRAGEN.find((f) => f.key === frageKey);
+  const [werte, setWerte] = useState(frage.anfang);
+
+  function wechsle(neu) {
+    const f = LOG_FRAGEN.find((x) => x.key === neu);
+    setFrageKey(neu);
+    setWerte(f.anfang);
+  }
+
+  const setzeFeld = (i) => (text) =>
+    setWerte((alt) => alt.map((w, k) => (k === i ? text : w)));
+
+  const ergebnis = useMemo(() => {
+    const zahlen = frage.felder.map((_, i) => logZahl(werte[i]));
+    if (zahlen.some((w) => w === null)) {
+      return { fehler: 'Bitte in jedes Feld eine Zahl schreiben — ein Bruch wie 1/8 geht auch.' };
+    }
+    try {
+      return { weg: frage.rechne(...zahlen) };
+    } catch (fehler) {
+      // Ablehnen heißt nicht abstürzen: log(0), die Basis 1 und ein
+      // negativer Numerus haben keine Antwort, und die Meldung aus
+      // logarithmus.js sagt auch, warum.
+      return { fehler: fehler.message };
+    }
+  }, [werte, frageKey]);
+
+  const weg = ergebnis.weg;
+  // "ungefähr 0,666667" hilft bei 2/3 und ist bei 5 nur Beiwerk.
+  const nebenbei =
+    weg && weg.exakt && weg.ergebnis && weg.ergebnis.n !== 1
+      ? `ungefähr ${naeherungText(weg.naeherung)}`
+      : null;
+
+  return (
+    <View>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.abschnitt}>Was ist gesucht?</Text>
+        <InfoButton thema="logarithmus" />
+      </View>
+
+      {LOG_FRAGEN.map((f) => (
+        <Pressable
+          key={f.key}
+          style={[styles.frageZeile, frageKey === f.key && styles.frageZeileAktiv]}
+          onPress={() => wechsle(f.key)}
+        >
+          <Text style={[styles.frageText, frageKey === f.key && styles.frageTextAktiv]}>
+            {f.label}
+          </Text>
+        </Pressable>
+      ))}
+
+      <View style={styles.eingabeReihe}>
+        {frage.felder.map((beschriftung, i) => (
+          <Zahlenfeld
+            key={beschriftung}
+            beschriftung={beschriftung}
+            wert={werte[i] ?? ''}
+            setWert={setzeFeld(i)}
+            merkeFeld={feld.merkeFeld}
+          />
+        ))}
+      </View>
+
+      <ZahlenTasten
+        aufTaste={feld.anhaengen}
+        aufLoeschen={feld.letztesWeg}
+        aktiv={feld.aktiv}
+      />
+
+      {ergebnis.fehler ? (
+        <Hinweiskasten text={ergebnis.fehler} />
+      ) : (
+        <>
+          <Rechenweg
+            anfang={weg.anfang}
+            schritte={weg.schritte}
+            ergebnis={weg.ergebnisText}
+            nebenbei={nebenbei}
+            formel={weg.formel}
+            roh
+          />
+          {weg.hinweis ? <Hinweiskasten text={weg.hinweis} /> : null}
+        </>
+      )}
+
+      <LogGesetze />
+    </View>
+  );
+}
+
+// Die drei Gesetze stehen immer da, egal welche Frage gerade offen ist
+// — und darunter der Fehler, den fast jeder einmal macht. Ihn nur zu
+// vermeiden reicht nicht: Man muss ihn einmal gesehen haben.
+function LogGesetze() {
+  return (
+    <View style={styles.unterAbschnitt}>
+      <View style={styles.zeileMitKnopf}>
+        <Text style={styles.abschnitt}>Die Logarithmusgesetze</Text>
+        <InfoButton thema="logarithmusgesetze" />
+      </View>
+
+      <Text style={styles.formel}>log(a · c) = log a + log c</Text>
+      <Text style={styles.formel}>log(a : c) = log a − log c</Text>
+      <Text style={styles.formel}>log(aⁿ) = n · log a</Text>
+
+      <View style={styles.hinweisKasten}>
+        <Text style={styles.hinweisText}>
+          Sie fallen nicht vom Himmel: Beim Malnehmen von Potenzen mit gleicher Basis werden die
+          Exponenten addiert. Der Logarithmus IST der Exponent — also werden die Logarithmen
+          addiert. Aus Malnehmen wird Addieren, aus Teilen Subtrahieren, aus Potenzieren
+          Malnehmen.
+        </Text>
+      </View>
+
+      <Falle text="log(a · c) ist NICHT log a · log c. Man sieht es sofort: lg(2) + lg(5) ist genau 1, weil 2 · 5 = 10 ist. lg(2) · lg(5) ist dagegen rund 0,21." />
+    </View>
+  );
+}
+
+// --------------------------------------------------------------------
 // Gemeinsames
 // --------------------------------------------------------------------
 
-function Rechenweg({ anfang, schritte, ergebnis, nebenbei, formel, thema }) {
+// `roh` heißt: Die Zeilen bekommen kein "=" davor. Bei Brüchen und
+// Prozenten ist jede Zeile die Fortsetzung derselben Rechnung, beim
+// Logarithmus dagegen eine eigene Gleichung ("2^x = 32") — davor ein
+// Gleichheitszeichen zu setzen ergäbe "= 2^x = 32" und wäre falsch
+// gelesen. Dasselbe Zeichen, zwei Bedeutungen, siehe CLAUDE.md.
+function Rechenweg({ anfang, schritte, ergebnis, nebenbei, formel, thema, roh }) {
   return (
     <View style={styles.wegKasten}>
       <View style={styles.zeileMitKnopf}>
@@ -450,7 +642,7 @@ function Rechenweg({ anfang, schritte, ergebnis, nebenbei, formel, thema }) {
       {schritte.map((s, i) => (
         <View key={i}>
           <Text style={styles.regel}>| {s.regel}</Text>
-          <Text style={styles.zeile}>= {s.text}</Text>
+          <Text style={styles.zeile}>{roh ? s.text : `= ${s.text}`}</Text>
         </View>
       ))}
 
@@ -492,6 +684,22 @@ function ganzeZahl(text) {
 function kommazahl(text) {
   const sauber = String(text).trim().replace('−', '-').replace(',', '.');
   return /^-?\d+(\.\d+)?$/.test(sauber) ? Number(sauber) : null;
+}
+
+// Beim Logarithmus darf auch ein Bruch dastehen: log₂(1/8) ist −3, und
+// das ist genau der Fall, an dem sich zeigt, ob die negativen
+// Exponenten sitzen. Deshalb geht das hier über bruch.ausText und nicht
+// über kommazahl().
+function logZahl(text) {
+  const sauber = String(text ?? '').trim().replace(/−/g, '-').replace(',', '.');
+  if (sauber === '') {
+    return null;
+  }
+  try {
+    return bruchAusText(sauber);
+  } catch {
+    return null;
+  }
 }
 
 const styles = StyleSheet.create({

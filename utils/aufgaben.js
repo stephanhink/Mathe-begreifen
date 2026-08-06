@@ -80,6 +80,17 @@ import {
 // Und die Musterlösung fürs Umstellen kommt von stelleUm(): Erst wird
 // die Formel wirklich umgestellt, dann werden die Zahlen eingesetzt.
 import { holeFormel, stelleUm } from './umstellen.js';
+// Dieselbe Regel beim Logarithmus: Die Lösung kommt aus logarithmus.js,
+// und zwar aus dem EXAKTEN Weg. Eine Aufgabe, deren Antwort gerundet
+// wäre, gehört nicht in den Lückenfinder — dort soll geprüft werden, ob
+// jemand den Exponenten findet, nicht ob er auf sechs Stellen tippt.
+import {
+  logarithmusExakt,
+  produktregel,
+  potenzregel,
+  schreibweise,
+  hochzahl as logHochzahl,
+} from './logarithmus.js';
 import { alleThemen, holeThema } from './lernpfad.js';
 
 const x = variable('x');
@@ -631,6 +642,98 @@ const GENERATOREN = {
         fehlerbild(
           produkt(zahl(rest), wurzel(zahl(heraus))),
           'Du hast die beiden Faktoren vertauscht. Aus der Wurzel kommt die Wurzel des Quadratfaktors heraus, der Rest bleibt drin.'
+        ),
+      ],
+    };
+  },
+
+  // Der Logarithmus fragt nach dem Exponenten. Gebaut wird die Aufgabe
+  // deshalb AUS dem Exponenten heraus: Erst steht k fest, dann wird
+  // b^k ausgerechnet und danach gefragt. Andersherum — eine Zahl würfeln
+  // und hoffen, dass sie eine Potenz ist — käme fast immer etwas heraus,
+  // das sich nur runden lässt.
+  logarithmusBestimmen(naechste) {
+    const basis = ausListe(naechste, [2, 3, 5, 10]);
+    const k = ausListe(naechste, [-3, -2, -1, 1, 2, 3, 4]);
+    const numerus = k < 0 ? bruch(1, basis ** -k) : bruch(basis ** k);
+    const numerusText = bruchAlsText(numerus);
+
+    return {
+      frage: `Bestimme: ${schreibweise(bruch(basis), numerus)}`,
+      art: 'zahl',
+      loesung: zahl(logarithmusExakt(basis, numerus)),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(1, k)),
+          `Du hast Basis und Numerus vertauscht. Gefragt ist „${basis} hoch was ist ${numerusText}?" — nicht „${numerusText} hoch was ist ${basis}?".`
+        ),
+        k > 0
+          ? fehlerbild(
+              zahl(basis ** (k - 1)),
+              `Du hast ${numerusText} durch ${basis} geteilt. Der Logarithmus fragt nicht, wie oft die Basis hineinpasst, sondern wie oft man sie mit sich selbst malnehmen muss.`
+            )
+          : fehlerbild(
+              zahl(-k),
+              `Das Minus fehlt: ${numerusText} ist ${basis} hoch ${zahlText(k)}, denn ein Kehrwert bedeutet einen negativen Exponenten. Ein positiver Exponent ergäbe ${basis ** -k}.`
+            ),
+      ],
+      hinweis:
+        k < 0
+          ? 'Ein Bruch als Numerus bedeutet einen negativen Exponenten — der Logarithmus ist dann kleiner als null.'
+          : undefined,
+    };
+  },
+
+  // Die Gesetze in beiden Richtungen, in denen sie im Unterricht
+  // vorkommen: zwei Logarithmen zusammenziehen (Produktregel) und einen
+  // Exponenten nach vorn holen (Potenzregel). Beide Male kommt die
+  // Musterlösung aus logarithmus.js — der Generator rechnet nicht selbst.
+  logarithmusgesetze(naechste) {
+    const basis = ausListe(naechste, [2, 3, 5, 10]);
+    const m = naechste(3) + 1;
+
+    if (naechste(2) === 0) {
+      const n = naechste(3) + 1;
+      const links = bruch(basis ** m);
+      const rechts = bruch(basis ** n);
+      return {
+        frage:
+          `Fasse mit den Logarithmusgesetzen zusammen und rechne aus: ` +
+          `${schreibweise(bruch(basis), links)} + ${schreibweise(bruch(basis), rechts)}`,
+        art: 'zahl',
+        loesung: zahl(produktregel(basis, links, rechts).ergebnis),
+        fehlerbilder: [
+          fehlerbild(
+            zahl(m * n),
+            'Du hast die beiden Logarithmen malgenommen. Malgenommen werden die Numeri, addiert die Logarithmen: log(a) + log(c) ist log(a · c).'
+          ),
+          fehlerbild(
+            zahl(m - n),
+            'Du hast subtrahiert. Subtrahiert wird, wenn die Numeri geteilt werden — beim Malnehmen werden die Logarithmen addiert.'
+          ),
+        ],
+      };
+    }
+
+    // Bei der Potenzregel muss der Exponent mindestens 2 sein: "8¹"
+    // schreibt niemand hin, und die Aufgabe wäre keine.
+    const n = naechste(3) + 2;
+    const a = bruch(basis ** m);
+    return {
+      frage: `Bestimme mit den Logarithmusgesetzen: ${schreibweise(
+        bruch(basis),
+        `${basis ** m}${logHochzahl(n)}`
+      )}`,
+      art: 'zahl',
+      loesung: zahl(potenzregel(basis, a, n).ergebnis),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(m + n),
+          `Du hast den Exponenten addiert. Bei log(aⁿ) kommt das n als FAKTOR nach vorn: ${n} · log(a), also ${n} mal denselben Logarithmus.`
+        ),
+        fehlerbild(
+          zahl(m ** n),
+          'Du hast den Logarithmus selbst potenziert. Nach vorn kommt der Exponent als Faktor, nicht als Hochzahl: log(aⁿ) ist n · log(a) und nicht (log a)ⁿ.'
         ),
       ],
     };
