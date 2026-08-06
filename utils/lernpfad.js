@@ -95,6 +95,53 @@ export const THEMEN = {
   },
 
   // -----------------------------------------------------------------
+  // Prozentrechnung
+  // -----------------------------------------------------------------
+  //
+  // Prozent ist Bruchrechnung mit festem Nenner: p % sind p/100. Genau
+  // deshalb hängt die Kette hier und nicht an den Gleichungen — wer
+  // 19/100 nicht mit einer Zahl malnehmen kann, scheitert nicht an der
+  // Prozentrechnung, sondern eine Ebene tiefer.
+  //
+  // Vier Fertigkeiten, die man einzeln können oder nicht können kann:
+  // den Teil ausrechnen, rückwärts das Ganze oder den Satz finden, einen
+  // Wert verändern — und zuletzt die Veränderung zurückrechnen. Die
+  // letzte ist die, an der fast alle scheitern (siehe wissen.js,
+  // "prozentFalle"), und sie steht deshalb ganz oben und nicht mitten
+  // in einem Sammelthema.
+
+  prozentGrundaufgabe: {
+    titel: 'Den Prozentwert berechnen',
+    klasse: 7,
+    voraussetzungen: ['bruchMultiplizieren'],
+    wissen: 'prozent',
+  },
+
+  prozentRueckwaerts: {
+    titel: 'Grundwert und Prozentsatz berechnen',
+    klasse: 7,
+    voraussetzungen: ['prozentGrundaufgabe', 'bruchDividieren'],
+    wissen: 'prozent',
+  },
+
+  // Der Wachstumsfaktor ist 1 + p/100 — eine Bruchaddition. Deshalb
+  // steht bruchAddieren hier als Voraussetzung und nicht bloß das
+  // Prozentthema darunter.
+  prozentVeraenderung: {
+    titel: 'Einen Wert um Prozent verändern',
+    klasse: 8,
+    voraussetzungen: ['prozentGrundaufgabe', 'bruchAddieren'],
+    wissen: 'prozent',
+  },
+
+  prozentZurueck: {
+    titel: 'Den Wert vor der Veränderung zurückrechnen',
+    klasse: 8,
+    voraussetzungen: ['prozentVeraenderung', 'prozentRueckwaerts'],
+    wissen: 'prozentFalle',
+  },
+
+  // -----------------------------------------------------------------
   // Potenzen und Wurzeln
   // -----------------------------------------------------------------
 
@@ -216,6 +263,36 @@ export const THEMEN = {
     klasse: 9,
     voraussetzungen: ['gleichungMitKlammern', 'binomischeFormeln', 'wurzelZiehen'],
     wissen: 'pqFormel',
+  },
+
+  // -----------------------------------------------------------------
+  // Formeln umstellen
+  // -----------------------------------------------------------------
+  //
+  // Das Physik-Scharnier: Wer eine Formel nicht umstellen kann, kann
+  // eine Formelsammlung nur in einer Richtung benutzen.
+  //
+  // Es steht bewusst über gleichungMitBruechen und nicht daneben. Der
+  // erste Schritt bei v = s : t nach t ist "beide Seiten mal t" — genau
+  // der Schritt, den man beim Lösen einer Bruchgleichung lernt. Neu ist
+  // nur, dass am Ende keine Zahl steht, sondern ein anderer Buchstabe.
+
+  formelUmstellen: {
+    titel: 'Eine Formel nach einer Größe umstellen',
+    klasse: 8,
+    voraussetzungen: ['gleichungMitBruechen'],
+    wissen: 'formelUmstellen',
+  },
+
+  // Sobald die gesuchte Größe im Quadrat steht, kommt eine Wurzel ins
+  // Spiel — und mit ihr der Vorbehalt, dass es auch die negative Lösung
+  // gäbe. Deshalb ein eigenes Thema: Wer hier scheitert, hat kein
+  // Problem mit dem Umstellen, sondern mit der Wurzel.
+  formelMitPotenz: {
+    titel: 'Eine Formel mit Potenz umstellen',
+    klasse: 9,
+    voraussetzungen: ['formelUmstellen', 'wurzelZiehen'],
+    wissen: 'formelUmstellen',
   },
 
   // Ungleichungen hängen an den Gleichungen — bis auf eine Regel, und

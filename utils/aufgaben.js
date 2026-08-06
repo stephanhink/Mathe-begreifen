@@ -65,6 +65,21 @@ import {
   alsText as systemAlsText,
   loese as loeseSystem,
 } from './system.js';
+// Die Musterlösung für die Prozentaufgaben kommt aus prozent.js selbst,
+// nicht aus der Hand — dieselbe Regel wie bei der Ableitung. Läuft der
+// Rechner im Zahlen-Bildschirm anders als die Übungsaufgabe, fällt es
+// sofort auf, statt dass beide getrennt vor sich hin rechnen.
+import {
+  prozentwert,
+  grundwert,
+  prozentsatz,
+  veraendere,
+  grundwertAusVeraendert,
+  alsProzentText,
+} from './prozent.js';
+// Und die Musterlösung fürs Umstellen kommt von stelleUm(): Erst wird
+// die Formel wirklich umgestellt, dann werden die Zahlen eingesetzt.
+import { holeFormel, stelleUm } from './umstellen.js';
 import { alleThemen, holeThema } from './lernpfad.js';
 
 const x = variable('x');
@@ -153,6 +168,31 @@ function ohneNull(naechste, bis) {
 function ausListe(naechste, liste) {
   return liste[naechste(liste.length)];
 }
+
+// Prozentzahlen und Grundwerte, aus denen jede der vier Prozentaufgaben
+// ganzzahlig aufgeht: Der Grundwert ist ein Vielfaches von 20, der
+// Prozentsatz eines von 5 — dann ist G · p/100 immer eine ganze Zahl.
+// Bei den Veränderungen sind es dieselben Vielfachen, damit auch der
+// Rückweg über 100 ± p wieder glatt herauskommt.
+const PROZENTSAETZE = [5, 10, 15, 20, 25, 30, 40, 50, 60, 75];
+const VERAENDERUNGEN = [5, 10, 15, 20, 25, 50];
+
+function grundwertZahl(naechste) {
+  return (naechste(15) + 2) * 20;
+}
+
+// Formeln aus FORMELN (utils/umstellen.js), die alle dieselbe Gestalt
+// haben: Die gesuchte Größe ergibt sich als `oben : unten`. Bei F = m · a
+// muss man dafür durch m teilen, bei v = s : t erst mit t malnehmen und
+// dann durch v teilen — beide Male derselbe Gedanke, und beide Male
+// dieselben zwei typischen Fehler.
+const UMSTELLFAELLE = [
+  { id: 'geschwindigkeit', ziel: 't', oben: 's', unten: 'v' },
+  { id: 'dichte', ziel: 'V', oben: 'm', unten: 'd' },
+  { id: 'kraft', ziel: 'a', oben: 'F', unten: 'm' },
+  { id: 'ohm', ziel: 'R', oben: 'U', unten: 'I' },
+  { id: 'rechteck', ziel: 'b', oben: 'A', unten: 'a' },
+];
 
 // ---------------------------------------------------------------------
 // Die Generatoren
@@ -303,6 +343,145 @@ const GENERATOREN = {
           'Du hast einfach malgenommen. Beim Teilen muss der zweite Bruch zuerst umgedreht werden — Zähler und Nenner tauschen.'
         ),
       ],
+    };
+  },
+
+  // -------------------------------------------------------------------
+  // Prozentrechnung
+  // -------------------------------------------------------------------
+  //
+  // Die Zahlen sind auch hier gebaut, nicht gewürfelt: Der Grundwert ist
+  // ein Vielfaches von 20, der Prozentsatz ein Vielfaches von 5. Damit
+  // geht jede der vier Aufgaben ganzzahlig auf, und geprüft wird die
+  // Prozentrechnung statt das Bruchrechnen.
+  prozentGrundaufgabe(naechste) {
+    const p = ausListe(naechste, PROZENTSAETZE);
+    const g = grundwertZahl(naechste);
+    const e = prozentwert(g, p);
+
+    return {
+      frage: `Wie viel sind ${p} % von ${g}?`,
+      art: 'zahl',
+      loesung: zahl(e.ergebnis),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(g * p)),
+          `Der Prozentsatz wurde als ganze Zahl genommen. Prozent heißt „von hundert": ${p} % sind ${p}/100, und dieses Hundertstel darf nicht verschwinden.`
+        ),
+        fehlerbild(
+          zahl(grundwert(g, p).ergebnis),
+          `Du hast geteilt statt malgenommen — das ist die Rechnung für den Grundwert. Gesucht ist hier der Teil, und ${p} % von etwas sind weniger als das Ganze.`
+        ),
+      ],
+    };
+  },
+
+  // Die beiden anderen Grundaufgaben. Sie stehen zusammen in einem
+  // Thema, weil beide dieselbe Fertigkeit verlangen: die Formel nach der
+  // gesuchten Größe aufzulösen statt sie nur einzusetzen.
+  prozentRueckwaerts(naechste) {
+    const p = ausListe(naechste, PROZENTSAETZE);
+    const g = grundwertZahl(naechste);
+    const w = prozentwert(g, p).ergebnis;
+    const wText = alsProzentText(w);
+
+    if (naechste(2) === 0) {
+      return {
+        frage: `${wText} von ${g} — wie viel Prozent sind das?`,
+        art: 'zahl',
+        loesung: zahl(prozentsatz(w, g).ergebnis),
+        fehlerbilder: [
+          fehlerbild(
+            zahl(bruch(w.z, w.n * g)),
+            'Das ist der Anteil, noch nicht der Prozentsatz. Prozent heißt „von hundert" — der Anteil muss zum Schluss noch mit 100 malgenommen werden.'
+          ),
+          fehlerbild(
+            zahl(prozentsatz(g, w).ergebnis),
+            `Zähler und Nenner stehen vertauscht. Geteilt wird durch den Grundwert, also durch das Ganze (${g}) — nicht durch den Teil.`
+          ),
+        ],
+        hinweis: 'Gesucht ist die Zahl vor dem Prozentzeichen.',
+      };
+    }
+
+    return {
+      frage: `${wText} sind ${p} % — wie groß ist das Ganze?`,
+      art: 'zahl',
+      loesung: zahl(grundwert(w, p).ergebnis),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(prozentwert(w, p).ergebnis),
+          `Du hast ${p} % von ${wText} berechnet. ${wText} sind aber schon die ${p} % — gesucht ist das Ganze, und das ist größer als ein Teil davon.`
+        ),
+        fehlerbild(
+          zahl(bruch(w.z, w.n * p)),
+          `Durch ${p} zu teilen ergibt ein Prozent des Ganzen. Davon gibt es hundert Stück, also fehlt noch der Schritt „mal 100".`
+        ),
+      ],
+    };
+  },
+
+  prozentVeraenderung(naechste) {
+    const g = grundwertZahl(naechste);
+    const p = ausListe(naechste, VERAENDERUNGEN);
+    const rauf = naechste(2) === 0;
+    const satz = rauf ? p : -p;
+
+    return {
+      frage: `${g} € werden um ${p} % ${rauf ? 'teurer' : 'billiger'}. Wie viel kostet es danach?`,
+      art: 'zahl',
+      loesung: zahl(veraendere(g, satz).ergebnis),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(prozentwert(g, p).ergebnis),
+          `Das ist die Veränderung selbst, nicht der neue Preis. Die ${p} % kommen zu den ${g} € ${rauf ? 'dazu' : 'weg'} — der alte Preis steht ja weiterhin da.`
+        ),
+        fehlerbild(
+          zahl(veraendere(g, -satz).ergebnis),
+          rauf
+            ? `Teurer heißt mehr: Nach dem Aufschlag sind es ${100 + p} % des alten Preises, nicht ${100 - p} %.`
+            : `Billiger heißt weniger: Nach dem Rabatt sind es ${100 - p} % des alten Preises, nicht ${100 + p} %.`
+        ),
+      ],
+    };
+  },
+
+  // Die Aufgabe, an der fast alle scheitern — und der Grund, warum sie
+  // ein eigenes Thema ist und nicht ein Sonderfall der Zeile darunter.
+  prozentZurueck(naechste) {
+    const alt = grundwertZahl(naechste);
+    const p = ausListe(naechste, VERAENDERUNGEN);
+    const rauf = naechste(2) === 0;
+    const satz = rauf ? p : -p;
+    const neu = veraendere(alt, satz).ergebnis;
+    const neuText = alsProzentText(neu);
+    const e = grundwertAusVeraendert(neu, satz);
+    const anteil = rauf ? 100 + p : 100 - p;
+
+    return {
+      frage:
+        `Nach ${p} % ${rauf ? 'Aufschlag' : 'Rabatt'} kostet ein Artikel ${neuText} €. ` +
+        'Wie viel hat er vorher gekostet?',
+      art: 'zahl',
+      loesung: zahl(e.ergebnis),
+      fehlerbilder: [
+        // Der Klassiker, und den Wert dazu liefert prozent.js selbst.
+        ...(e.falle
+          ? [
+              fehlerbild(
+                zahl(e.falle.wert),
+                rauf
+                  ? `Du hast ${p} % vom NEUEN Preis abgezogen. Die ${p} % beziehen sich aber auf den ALTEN: Der neue Preis ist ${anteil} % des alten, also wird durch ${anteil} geteilt und mit 100 malgenommen.`
+                  : `Du hast ${p} % auf den NEUEN Preis aufgeschlagen. Die ${p} % Rabatt beziehen sich aber auf den ALTEN: Der neue Preis ist ${anteil} % des alten, also wird durch ${anteil} geteilt und mit 100 malgenommen.`
+              ),
+            ]
+          : []),
+        fehlerbild(
+          zahl(veraendere(neu, satz).ergebnis),
+          `Du hast noch einmal ${rauf ? 'aufgeschlagen' : 'abgezogen'} statt zurückgerechnet. Gesucht ist der Preis VOR der Veränderung — die Rechnung muss also rückwärts laufen.`
+        ),
+      ],
+      hinweis: 'Der Prozentsatz gilt für den alten Preis, nicht für den neuen.',
     };
   },
 
@@ -653,6 +832,86 @@ const GENERATOREN = {
         ),
       ],
       hinweis: 'Es gibt zwei Lösungen. Schreibe beide, getrennt durch ein Semikolon.',
+    };
+  },
+
+  // -------------------------------------------------------------------
+  // Formeln umstellen
+  // -------------------------------------------------------------------
+  //
+  // Gefragt ist eine Zahl und nicht die umgestellte Formel — nicht aus
+  // Bequemlichkeit, sondern weil die Antwort sonst zwei Buchstaben
+  // enthielte und wertgleich() zwei Terme mit verschiedenen Variablen
+  // nicht vergleichen kann. Umgestellt werden muss trotzdem: Ohne den
+  // Schritt kommt man an die Zahl nicht heran, und genau die
+  // Umstellfehler stehen als Fehlerbilder darunter.
+  //
+  // Die Musterlösung entsteht in zwei Schritten aus umstellen.js: erst
+  // stelleUm(), dann einsetzen. Rechnet das Modul falsch, ist auch die
+  // Aufgabe falsch — und die Prüfung in tests/umstellen.mjs rechnet für
+  // jede Formel die Gegenprobe.
+  formelUmstellen(naechste) {
+    const fall = ausListe(naechste, UMSTELLFAELLE);
+    const formel = holeFormel(fall.id);
+    const unten = naechste(8) + 2;                // 2 bis 9
+    const wert = naechste(11) + 2;                // 2 bis 12
+    const oben = unten * wert;
+
+    const um = stelleUm(formel.formel, fall.ziel);
+    const loesung = auswerteExakt(um.ergebnis.rechts, {
+      [fall.oben]: bruch(oben),
+      [fall.unten]: bruch(unten),
+    });
+
+    return {
+      frage:
+        `Für die ${formel.titel} gilt ${formel.text}. Stelle nach ${fall.ziel} ` +
+        `(${formel.groessen[fall.ziel]}) um und berechne ${fall.ziel} für ` +
+        `${fall.oben} = ${oben} und ${fall.unten} = ${unten}.`,
+      art: 'zahl',
+      loesung: zahl(loesung),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(oben * unten)),
+          `Malgenommen statt geteilt: Damit ${fall.unten} auf der anderen Seite verschwindet, muss man beide Seiten DURCH ${fall.unten} teilen. Malnehmen bringt es ein zweites Mal herein.`
+        ),
+        fehlerbild(
+          zahl(bruch(unten, oben)),
+          `Der Bruch steht umgekehrt. Geteilt wird durch ${fall.unten} (${formel.groessen[fall.unten]}), und geteilt wird ${fall.oben} (${formel.groessen[fall.oben]}) — nicht andersherum.`
+        ),
+      ],
+    };
+  },
+
+  // s = ½ · g · t² nach t. Hier kommt zum Umstellen die Wurzel dazu, und
+  // mit ihr der Vorbehalt, dass es rechnerisch auch die negative Lösung
+  // gäbe — bei einer Fallzeit natürlich nicht.
+  formelMitPotenz(naechste) {
+    const formel = holeFormel('fallweg');
+    const t = naechste(5) + 2;                    // 2 bis 6
+    const g = (naechste(5) + 1) * 2;              // 2, 4, 6, 8, 10
+    const s = (g * t * t) / 2;
+
+    const um = stelleUm(formel.formel, 't');
+    const loesung = auswerteExakt(um.ergebnis.rechts, { s: bruch(s), g: bruch(g) });
+
+    return {
+      frage:
+        `Für den ${formel.titel} gilt ${formel.text}. Stelle nach t (Zeit) um und ` +
+        `berechne t für s = ${s} und g = ${g}.`,
+      art: 'zahl',
+      loesung: zahl(loesung),
+      fehlerbilder: [
+        fehlerbild(
+          zahl(bruch(2 * s, g)),
+          'Das ist t², nicht t. Nach dem Teilen steht t² allein da — der letzte Schritt fehlt noch: auf beiden Seiten die Wurzel ziehen.'
+        ),
+        fehlerbild(
+          wurzel(zahl(bruch(s, g))),
+          'Das ½ ist unterschlagen worden. Auf der Seite von t steht ½ · g, also muss durch ½ · g geteilt werden — unter der Wurzel steht deshalb 2 · s : g.'
+        ),
+      ],
+      hinweis: 'Die negative Wurzel zählt hier nicht — eine Fallzeit ist positiv.',
     };
   },
 

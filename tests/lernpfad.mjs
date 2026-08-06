@@ -106,6 +106,70 @@ pruefung('Der Weg nach oben', () => {
   zahlIst('nach unten gibt es keinen Weg', wegNachOben('quadratischeGleichung', 'potenzDefinition').length, 0);
 });
 
+pruefung('Prozentrechnung hängt an den Brüchen, nicht an den Gleichungen', () => {
+  // Prozent ist Bruchrechnung mit festem Nenner: p % sind p/100. Wer die
+  // Prozentaufgabe nicht kann, soll deshalb nach unten zu den Brüchen
+  // geschickt werden — und ausdrücklich NICHT zu den Gleichungen. Der
+  // Lückenfinder kann nur den Weg gehen, der hier steht.
+  const kette = ['prozentGrundaufgabe', 'prozentVeraenderung', 'prozentZurueck'];
+  for (const id of kette) {
+    wahr(`${id}: steht im Graphen`, Boolean(holeThema(id)));
+  }
+
+  const weg = wegNachOben('bruchMultiplizieren', 'prozentZurueck');
+  wahr('von den Brüchen führt ein Weg bis zur Prozentfalle', weg.length >= 3, weg.join(' → '));
+
+  const unten = alleVoraussetzungen('prozentZurueck');
+  wahr('darunter liegt das Multiplizieren von Brüchen', unten.includes('bruchMultiplizieren'));
+  wahr('und das Dividieren, für die Rückwärtsaufgaben', unten.includes('bruchDividieren'));
+  wahr('und das Addieren, wegen des Faktors 1 + p/100', unten.includes('bruchAddieren'));
+  wahr('bis hinunter zu den negativen Zahlen', unten.includes('ganzeZahlenAddieren'));
+
+  // Die Trennung, um die es geht: keine Gleichung unter der
+  // Prozentrechnung. Sonst hieße die Diagnose "dein Problem sind die
+  // Gleichungen", wo in Wahrheit der Bruch fehlt.
+  for (const id of unten) {
+    wahr(`prozentZurueck setzt keine Gleichung voraus (${id})`, !id.startsWith('gleichung'));
+  }
+
+  // Die Falle steht oben, nicht mittendrin: Sie ist die schwerste der
+  // vier und darf keine Voraussetzung der leichteren sein.
+  zahlIst('auf die Prozentfalle baut nichts mehr auf', baut_auf('prozentZurueck').length, 0);
+});
+
+pruefung('Formeln umstellen steht über den Bruchgleichungen', () => {
+  // Der erste Schritt bei v = s : t nach t ist "beide Seiten mal t" —
+  // genau der Schritt aus der Bruchgleichung. Neu ist nur, dass am Ende
+  // ein Buchstabe steht statt einer Zahl.
+  wahr(
+    'formelUmstellen setzt die Bruchgleichung voraus',
+    voraussetzungenVon('formelUmstellen').includes('gleichungMitBruechen')
+  );
+  wahr(
+    'und mittelbar das Lösen mit x auf beiden Seiten',
+    alleVoraussetzungen('formelUmstellen').includes('gleichungMehrschrittig')
+  );
+
+  // Die Potenzstufe hängt an der Wurzel — wer dort scheitert, hat kein
+  // Problem mit dem Umstellen, sondern mit dem Wurzelziehen.
+  wahr(
+    'formelMitPotenz setzt das Wurzelziehen voraus',
+    voraussetzungenVon('formelMitPotenz').includes('wurzelZiehen')
+  );
+  const weg = wegNachOben('gleichungEinschrittig', 'formelMitPotenz');
+  wahr('von der ersten Gleichung führt ein Weg bis dorthin', weg.length >= 4, weg.join(' → '));
+
+  // Und es hängt nicht an der Prozentrechnung: zwei getrennte Zweige.
+  wahr(
+    'kein Prozentthema unter dem Umstellen',
+    !alleVoraussetzungen('formelMitPotenz').some((id) => id.startsWith('prozent'))
+  );
+  wahr(
+    'und kein Umstellen unter der Prozentrechnung',
+    !alleVoraussetzungen('prozentZurueck').some((id) => id.startsWith('formel'))
+  );
+});
+
 pruefung('Die Kette, um die es geht', () => {
   // Der Fall aus dem Konzept: Wer an der quadratischen Gleichung
   // scheitert, hat womöglich ein Problem mit den Potenzgesetzen. Dieser

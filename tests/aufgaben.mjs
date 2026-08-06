@@ -12,8 +12,22 @@
 
 import { pruefung, wahr, zahl as zahlIst, gleich as gleichText, wirft } from './pruefer.mjs';
 import { wuerfel, startwertFuer } from './wuerfel.mjs';
-import { bruch } from '../utils/bruch.js';
-import { zahl, variable, summe, produkt, potenz, alsText as termAlsText } from '../utils/term.js';
+import {
+  bruch,
+  mal as malBruch,
+  gleich as bruchGleich,
+  alsText as bruchAlsText,
+} from '../utils/bruch.js';
+import {
+  zahl,
+  variable,
+  summe,
+  produkt,
+  potenz,
+  wurzel,
+  auswerteExakt,
+  alsText as termAlsText,
+} from '../utils/term.js';
 import { istGleichung } from '../utils/gleichung.js';
 import { alleThemen } from '../utils/lernpfad.js';
 import {
@@ -372,6 +386,224 @@ pruefung('Bei zwei Lösungen zählt jede einzeln', () => {
   const ganz = pruefeAntwort(aufgabe, '7; 5');
   wahr('beide falsch', !ganz.richtig);
   wahr('ohne Trostpflaster', !ganz.grund.includes('die andere stimmt aber'));
+});
+
+// ---------------------------------------------------------------------
+// Prozentrechnung und Formeln umstellen
+// ---------------------------------------------------------------------
+//
+// Beide Generatoren holen ihre Musterlösung aus dem Fachmodul
+// (prozent.js, umstellen.js). Damit kann die Aufgabe nicht vom Rechner
+// im Bildschirm abweichen — aber sie kann mit ihm gemeinsam falsch
+// liegen. Deshalb wird hier NICHT noch einmal dasselbe Modul gefragt,
+// sondern die Probe aus dem Unterricht gerechnet, in ganzen Zahlen:
+//
+//   Prozentwert:    W · 100 = G · p
+//   Prozentsatz:    p · G   = W · 100
+//   Grundwert:      G · p   = W · 100
+//   Veränderung:    neu · 100 = G · (100 ± p)
+//   Rückwärts:      alt · (100 ± p) = neu · 100
+//   Umstellen:      Ergebnis · unten = oben
+//   Fallweg:        t² · g = 2 · s
+//
+// Jede dieser Zeilen ist die Formel selbst, rückwärts gelesen. Rechnet
+// prozent.js oder umstellen.js falsch, geht sie nicht auf.
+const PROBEN = {
+  prozentGrundaufgabe(frage, l) {
+    const t = /^Wie viel sind (\d+) % von (\d+)\?$/.exec(frage);
+    if (!t) {
+      return `unerwarteter Fragetext: ${frage}`;
+    }
+    const [p, g] = [Number(t[1]), Number(t[2])];
+    return bruchGleich(malBruch(l, bruch(100)), bruch(g * p))
+      ? null
+      : `${frage} → ${bruchAlsText(l)}: ${bruchAlsText(l)} · 100 ist nicht ${g} · ${p}`;
+  },
+
+  prozentRueckwaerts(frage, l) {
+    const satz = /^(\d+) von (\d+) — wie viel Prozent sind das\?$/.exec(frage);
+    if (satz) {
+      const [w, g] = [Number(satz[1]), Number(satz[2])];
+      return bruchGleich(malBruch(l, bruch(g)), bruch(w * 100))
+        ? null
+        : `${frage} → ${bruchAlsText(l)}: p · G ist nicht W · 100`;
+    }
+    const ganzes = /^(\d+) sind (\d+) % — wie groß ist das Ganze\?$/.exec(frage);
+    if (ganzes) {
+      const [w, p] = [Number(ganzes[1]), Number(ganzes[2])];
+      return bruchGleich(malBruch(l, bruch(p)), bruch(w * 100))
+        ? null
+        : `${frage} → ${bruchAlsText(l)}: G · p ist nicht W · 100`;
+    }
+    return `unerwarteter Fragetext: ${frage}`;
+  },
+
+  prozentVeraenderung(frage, l) {
+    const t = /^(\d+) € werden um (\d+) % (teurer|billiger)\. /.exec(frage);
+    if (!t) {
+      return `unerwarteter Fragetext: ${frage}`;
+    }
+    const [g, p] = [Number(t[1]), Number(t[2])];
+    const anteil = t[3] === 'teurer' ? 100 + p : 100 - p;
+    return bruchGleich(malBruch(l, bruch(100)), bruch(g * anteil))
+      ? null
+      : `${frage} → ${bruchAlsText(l)}: neu · 100 ist nicht ${g} · ${anteil}`;
+  },
+
+  prozentZurueck(frage, l) {
+    const t = /^Nach (\d+) % (Aufschlag|Rabatt) kostet ein Artikel (\d+) €\. /.exec(frage);
+    if (!t) {
+      return `unerwarteter Fragetext: ${frage}`;
+    }
+    const p = Number(t[1]);
+    const neu = Number(t[3]);
+    const anteil = t[2] === 'Aufschlag' ? 100 + p : 100 - p;
+    // Die Probe, die diese Aufgabe ausmacht: Verändert man den alten
+    // Wert wieder um p %, muss der genannte neue Wert herauskommen.
+    return bruchGleich(malBruch(l, bruch(anteil)), bruch(neu * 100))
+      ? null
+      : `${frage} → ${bruchAlsText(l)}: alt · ${anteil} ist nicht ${neu} · 100`;
+  },
+
+  formelUmstellen(frage, l) {
+    const t = /für ([a-zA-Z]) = (\d+) und ([a-zA-Z]) = (\d+)\.$/.exec(frage);
+    if (!t) {
+      return `unerwarteter Fragetext: ${frage}`;
+    }
+    const [oben, unten] = [Number(t[2]), Number(t[4])];
+    return bruchGleich(malBruch(l, bruch(unten)), bruch(oben))
+      ? null
+      : `${frage} → ${bruchAlsText(l)}: Ergebnis · ${unten} ist nicht ${oben}`;
+  },
+
+  formelMitPotenz(frage, l) {
+    const t = /für s = (\d+) und g = (\d+)\.$/.exec(frage);
+    if (!t) {
+      return `unerwarteter Fragetext: ${frage}`;
+    }
+    const [s, g] = [Number(t[1]), Number(t[2])];
+    return bruchGleich(malBruch(malBruch(l, l), bruch(g)), bruch(2 * s))
+      ? null
+      : `${frage} → ${bruchAlsText(l)}: t² · ${g} ist nicht 2 · ${s}`;
+  },
+};
+
+pruefung(`Die Probe für Prozent und Umstellen geht auf (je ${DURCHGAENGE} Stück)`, () => {
+  for (const [id, probe] of Object.entries(PROBEN)) {
+    const naechste = wuerfel(startwertFuer(`probe-${id}`));
+    let fehler = null;
+    let krumme = 0;
+
+    for (let i = 0; i < DURCHGAENGE && fehler === null; i++) {
+      const a = erzeugeAufgabe(id, naechste);
+      const wert = auswerteExakt(a.loesung, {});
+      // Die Zahlen sind gebaut, nicht gewürfelt: Wer an Prozenten
+      // scheitert, soll nicht am Bruchrechnen scheitern.
+      if (wert.n !== 1) {
+        krumme++;
+      }
+      fehler = probe(a.frage, wert);
+    }
+
+    wahr(`${id}: die Probe geht auf`, fehler === null, fehler ?? undefined);
+    zahlIst(`${id}: keine krummen Lösungen`, krumme, 0);
+  }
+});
+
+pruefung('Die neuen Fehlerbilder sind die benannten Fehler', () => {
+  // Ein Fehlerbild ohne nachgerechnete Ursache ist nur eine Zahl, die
+  // nicht die Lösung ist. Hier wird verlangt, dass genau der benannte
+  // Denkfehler dahintersteht.
+  const naechste = wuerfel(startwertFuer('neue-fehlerbilder'));
+  // Ein Fehlerbild darf auch irrational sein — beim Fallweg ist eines
+  // davon eine Wurzel. Für den Vergleich in Brüchen bleiben die anderen;
+  // das irrationale wird unten eigens geprüft.
+  const werte = (a) =>
+    (a.fehlerbilder ?? []).flatMap((b) => {
+      try {
+        return [auswerteExakt(b.wert, {})];
+      } catch (fehler) {
+        return fehler.irrational ? [] : [null];
+      }
+    });
+  const dabei = (liste, soll) => liste.some((w) => w !== null && bruchGleich(w, soll));
+
+  for (let i = 0; i < 30; i++) {
+    {
+      const a = erzeugeAufgabe('prozentGrundaufgabe', naechste);
+      const [, p, g] = /^Wie viel sind (\d+) % von (\d+)\?$/.exec(a.frage).map(Number);
+      wahr(
+        `${a.frage}: der Prozentsatz als ganze Zahl gelesen ergibt ${g * p}`,
+        dabei(werte(a), bruch(g * p))
+      );
+    }
+    {
+      const a = erzeugeAufgabe('formelUmstellen', naechste);
+      const t = /für ([a-zA-Z]) = (\d+) und ([a-zA-Z]) = (\d+)\.$/.exec(a.frage);
+      const [oben, unten] = [Number(t[2]), Number(t[4])];
+      const w = werte(a);
+      wahr(`${a.frage}: mal statt geteilt`, dabei(w, bruch(oben * unten)));
+      wahr(`${a.frage}: Kehrwert statt Division`, dabei(w, bruch(unten, oben)));
+    }
+    {
+      const a = erzeugeAufgabe('formelMitPotenz', naechste);
+      const [, s, g] = /für s = (\d+) und g = (\d+)\.$/.exec(a.frage).map(Number);
+      // Die Wurzel vergessen heißt: bei t² stehen bleiben.
+      wahr(`${a.frage}: die Wurzel vergessen`, dabei(werte(a), bruch(2 * s, g)));
+      // Und das ½ übersehen heißt: nur durch g teilen. Das ist meistens
+      // irrational — verglichen wird deshalb über wertgleich, nicht in
+      // Brüchen.
+      wahr(
+        `${a.frage}: das ½ übersehen`,
+        (a.fehlerbilder ?? []).some((b) => wertgleich(b.wert, wurzel(zahl(bruch(s, g)))))
+      );
+    }
+    {
+      const a = erzeugeAufgabe('prozentZurueck', naechste);
+      const t = /^Nach (\d+) % (Aufschlag|Rabatt) kostet ein Artikel (\d+) €\. /.exec(a.frage);
+      const p = Number(t[1]);
+      const neu = Number(t[3]);
+      // Die Prozentfalle: p % vom NEUEN Wert abgezogen (beim Rabatt:
+      // daraufgeschlagen). Genau die Rechnung, die fast alle machen.
+      const falle = t[2] === 'Aufschlag' ? bruch(neu * (100 - p), 100) : bruch(neu * (100 + p), 100);
+      wahr(`${a.frage}: die Prozentfalle steht als Fehlerbild da`, dabei(werte(a), falle));
+    }
+  }
+});
+
+pruefung(`Jedes neue Fehlerbild wird erkannt (je ${DURCHGAENGE} Stück)`, () => {
+  // Die bestehende Prüfung tut das für eine einzige erzeugte Aufgabe je
+  // Thema. Bei den Prozentaufgaben hängt der Text aber an den gezogenen
+  // Zahlen — und ein Bild, das nur bei bestimmten Zahlen danebengeht,
+  // fiele so nicht auf.
+  for (const id of Object.keys(PROBEN)) {
+    const naechste = wuerfel(startwertFuer(`erkannt-${id}`));
+    let fehler = null;
+
+    for (let i = 0; i < DURCHGAENGE && fehler === null; i++) {
+      const a = erzeugeAufgabe(id, naechste);
+      for (const bild of a.fehlerbilder ?? []) {
+        const eingabe = termAlsText(bild.wert);
+        const geprueft = pruefeAntwort(a, eingabe);
+        if (geprueft.richtig) {
+          fehler = `"${a.frage}": das Fehlerbild ${eingabe} gilt als richtig`;
+        } else if (geprueft.erkannt !== true) {
+          fehler = `"${a.frage}": ${eingabe} wird nicht als bekannter Fehler erkannt (${geprueft.grund})`;
+        } else if (geprueft.grund.length <= 40) {
+          fehler = `"${a.frage}": die Diagnose zu ${eingabe} erklärt nichts: ${geprueft.grund}`;
+        }
+        if (fehler) {
+          break;
+        }
+      }
+      // Und die Musterlösung bleibt richtig.
+      if (fehler === null && !pruefeAntwort(a, a.loesungText).richtig) {
+        fehler = `"${a.frage}": die Musterlösung ${a.loesungText} wird abgelehnt`;
+      }
+    }
+
+    wahr(`${id}: alle Fehlerbilder werden benannt`, fehler === null, fehler ?? undefined);
+  }
 });
 
 pruefung('Die Zahlen sind gebaut, nicht gewürfelt', () => {
