@@ -1,0 +1,49 @@
+# GitHub Pages — Deploy der Datenschutz-Seite.
+#
+# Warum dieser Workflow existiert: Die Datenschutzerklärung wird über
+# GitHub Pages ausgeliefert (docs/, der Link steht im Play Store). Bis
+# zum 2026-08-06 lief das über den Legacy-Build von GitHub selbst — ohne
+# einsehbare Logs, und zweimal innerhalb eines Tages mit „Timeout
+# reached, aborting!" abgebrochen, obwohl sich an docs/ nichts geändert
+# hatte. Dieser Workflow baut dieselbe Seite (Jekyll, wie vorher) in der
+# Actions-Umgebung: mit lesbaren Logs, einem Job-Timeout in
+# Stunden statt Minuten, und dem offiziellen deploy-pages-Mechanismus.
+#
+# Der Workflow ersetzt die Legacy-Quelle: Repo-Einstellungen → Pages →
+# Source = „GitHub Actions". Sonst baut GitHub zusätzlich weiter den
+# alten Weg.
+
+name: Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Pages einrichten
+        uses: actions/configure-pages@v5
+      - name: Mit Jekyll bauen
+        uses: actions/jekyll-build-pages@v1
+      - name: Artefakt hochladen
+        uses: actions/upload-pages-artifact@v3
+      - name: Auf GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
