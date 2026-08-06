@@ -205,6 +205,9 @@ const UMSTELLFAELLE = [
 //   term      optional: der Term, der umgeformt werden soll. Wer ihn
 //             unverändert abschreibt, hat die Aufgabe nicht gelöst —
 //             das prüft pruefeAntwort.
+//   termZaehlt  optional: bei art 'zahl' gilt auch ein wertgleicher TERM
+//             als richtig, nicht nur die ausgerechnete Zahl. Siehe die
+//             Begründung bei den Prozentaufgaben.
 
 const GENERATOREN = {
   ganzeZahlenAddieren(naechste) {
@@ -354,14 +357,25 @@ const GENERATOREN = {
   // ein Vielfaches von 20, der Prozentsatz ein Vielfaches von 5. Damit
   // geht jede der vier Aufgaben ganzzahlig auf, und geprüft wird die
   // Prozentrechnung statt das Bruchrechnen.
+  //
+  // Alle vier tragen `termZaehlt`. Wer auf "Wie viel sind 19 % von 125?"
+  // den Term 125 · 19/100 hinschreibt, HAT die Prozentrechnung
+  // verstanden — das Ausrechnen ist eine eigene Fertigkeit (Teilen), und
+  // die fragt der Lernpfad weiter unten ab. Der Lückenfinder soll Lücken
+  // finden, nicht Kopfrechnen messen; eine hier abgewiesene richtige
+  // Struktur schickte den Schüler in die falsche Tiefe.
   prozentGrundaufgabe(naechste) {
     const p = ausListe(naechste, PROZENTSAETZE);
     const g = grundwertZahl(naechste);
     const e = prozentwert(g, p);
+    // "1,19" — der Wachstumsfaktor, wie er in den beiden Fehlerbildern
+    // darunter dasteht.
+    const faktorText = alsProzentText(bruch(100 + p, 100));
 
     return {
       frage: `Wie viel sind ${p} % von ${g}?`,
       art: 'zahl',
+      termZaehlt: true,
       loesung: zahl(e.ergebnis),
       fehlerbilder: [
         fehlerbild(
@@ -371,6 +385,19 @@ const GENERATOREN = {
         fehlerbild(
           zahl(grundwert(g, p).ergebnis),
           `Du hast geteilt statt malgenommen — das ist die Rechnung für den Grundwert. Gesucht ist hier der Teil, und ${p} % von etwas sind weniger als das Ganze.`
+        ),
+        // Die beiden Verwechslungen, die man am Term sofort sieht:
+        // "${p} % von ${g}" ist nicht dasselbe wie "${g} um ${p} %
+        // erhöht". Seit ein Term als Antwort zählt, kommen sie auch als
+        // Term herein — und sollen dann benannt werden, nicht bloß als
+        // "Wert stimmt nicht" abprallen.
+        fehlerbild(
+          zahl(veraendere(g, p).ergebnis),
+          `Du hast mit dem Wachstumsfaktor ${faktorText} gerechnet — das wäre ${g} nach einer Erhöhung um ${p} %. Gefragt ist hier nur der Teil selbst: ${g} · ${p}/100.`
+        ),
+        fehlerbild(
+          zahl(grundwertAusVeraendert(g, p).ergebnis),
+          `Du hast durch den Wachstumsfaktor ${faktorText} geteilt — so rechnet man von einem um ${p} % vergrößerten Wert auf das Ganze zurück. Hier ist ${g} schon das Ganze, und gesucht sind ${p} % davon: ${g} · ${p}/100.`
         ),
       ],
     };
@@ -389,6 +416,7 @@ const GENERATOREN = {
       return {
         frage: `${wText} von ${g} — wie viel Prozent sind das?`,
         art: 'zahl',
+        termZaehlt: true,
         loesung: zahl(prozentsatz(w, g).ergebnis),
         fehlerbilder: [
           fehlerbild(
@@ -407,6 +435,7 @@ const GENERATOREN = {
     return {
       frage: `${wText} sind ${p} % — wie groß ist das Ganze?`,
       art: 'zahl',
+      termZaehlt: true,
       loesung: zahl(grundwert(w, p).ergebnis),
       fehlerbilder: [
         fehlerbild(
@@ -430,6 +459,7 @@ const GENERATOREN = {
     return {
       frage: `${g} € werden um ${p} % ${rauf ? 'teurer' : 'billiger'}. Wie viel kostet es danach?`,
       art: 'zahl',
+      termZaehlt: true,
       loesung: zahl(veraendere(g, satz).ergebnis),
       fehlerbilder: [
         fehlerbild(
@@ -463,6 +493,7 @@ const GENERATOREN = {
         `Nach ${p} % ${rauf ? 'Aufschlag' : 'Rabatt'} kostet ein Artikel ${neuText} €. ` +
         'Wie viel hat er vorher gekostet?',
       art: 'zahl',
+      termZaehlt: true,
       loesung: zahl(e.ergebnis),
       fehlerbilder: [
         // Der Klassiker, und den Wert dazu liefert prozent.js selbst.
@@ -1553,10 +1584,55 @@ export function pruefeAntwort(aufgabe, eingabe) {
     return { richtig: false, grund: 'Hier ist eine Zahl gesucht, kein Term mit Variablen.' };
   }
   if (aufgabe.art === 'zahl' && vereinfache(antwort).schritte.length > 0) {
-    return { richtig: false, grund: 'Das lässt sich noch weiter ausrechnen.' };
+    // Da steht ein TERM, keine Zahl — er ist aber wertgleich zur
+    // Lösung, sonst wären wir hier nicht angekommen.
+    //
+    // Bei den Prozentaufgaben zählt das: Wer "125 · 19/100" schreibt,
+    // hat die Prozentrechnung verstanden. Das Ausrechnen ist eine
+    // eigene Fertigkeit, und sie steht im Lernpfad eine Ebene tiefer —
+    // hier abgewiesen zu werden schickte den Lückenfinder in den
+    // falschen Zweig. Die ausgerechnete Zahl steht trotzdem in der
+    // Rückmeldung, denn zu Ende gerechnet ist die Aufgabe damit nicht.
+    if (!aufgabe.termZaehlt) {
+      return { richtig: false, grund: 'Das lässt sich noch weiter ausrechnen.' };
+    }
+    return { richtig: true, grund: wegStimmt(antwort) };
   }
 
   return { richtig: true };
+}
+
+// "Dein Weg stimmt: 125 · 19/100 = 23,75". Der Term steht so da, wie er
+// eingetippt wurde — der Renderer rechnet nicht —, und die Zahl daneben
+// kommt aus der exakten Auswertung.
+function wegStimmt(antwort) {
+  const text = termAlsText(antwort);
+  try {
+    return `Dein Weg stimmt: ${text} = ${ausgerechnetAlsText(auswerteExakt(antwort, {}))}`;
+  } catch {
+    // Irrational oder zu groß: dann bleibt der Weg richtig, nur die
+    // Zahl lässt sich nicht hinschreiben. Eine gerundete Zahl ohne
+    // Ansage wäre hier das Falsche.
+    return `Dein Weg stimmt: ${text}`;
+  }
+}
+
+// Eine ausgerechnete Zahl so hinschreiben, wie sie im Heft stünde: als
+// Dezimalzahl, wenn sie abbricht, sonst als Bruch. 23,75 liest sich
+// besser als 95/4 — aber 1/3 als "0,333333" wäre gerundet, und die App
+// rundet nicht stillschweigend.
+function ausgerechnetAlsText(wert) {
+  let nenner = wert.n;
+  while (nenner % 2 === 0) {
+    nenner /= 2;
+  }
+  while (nenner % 5 === 0) {
+    nenner /= 5;
+  }
+  if (nenner !== 1) {
+    return zahlText(bruchAlsText(wert));
+  }
+  return zahlText(String(wert.z / wert.n).replace('.', ','));
 }
 
 // Bei einem System ist die Antwort ein PAAR, und es genügt nicht, die

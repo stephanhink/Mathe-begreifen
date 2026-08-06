@@ -606,6 +606,244 @@ pruefung(`Jedes neue Fehlerbild wird erkannt (je ${DURCHGAENGE} Stück)`, () => 
   }
 });
 
+// ---------------------------------------------------------------------
+// Bei Prozent zählt der Weg, nicht nur die Zahl
+// ---------------------------------------------------------------------
+//
+// Wer auf "Wie viel sind 15 % von 140?" den Term 140 · 15/100
+// hinschreibt, hat die Prozentrechnung verstanden. Das Ausrechnen ist
+// eine eigene Fertigkeit und steht im Lernpfad weiter unten — der
+// Lückenfinder soll Lücken finden, nicht Kopfrechnen messen.
+//
+// Zu jedem Fragetext stehen hier die Schreibweisen, die denselben Weg
+// aufschreiben. Sie werden aus den Zahlen der Frage gebaut, nicht fest
+// eingetippt: So gilt die Prüfung für alle 100 erzeugten Aufgaben und
+// nicht nur für die eine, die ich zufällig gezogen habe.
+const dezimal = (n) => String(n).replace('.', ',');
+
+const WEGE = {
+  prozentGrundaufgabe(frage) {
+    const t = /^Wie viel sind (\d+) % von (\d+)\?$/.exec(frage);
+    if (!t) {
+      return { fehler: `unerwarteter Fragetext: ${frage}` };
+    }
+    const [p, g] = [Number(t[1]), Number(t[2])];
+    return {
+      wege: [
+        `${g} · ${p}/100`,
+        `${p}/100 · ${g}`,
+        `${g}/100 · ${p}`,
+        `${g} · ${dezimal(p / 100)}`,
+        `(${g} · ${p}) : 100`,
+      ],
+    };
+  },
+
+  prozentRueckwaerts(frage) {
+    const satz = /^(\d+) von (\d+) — wie viel Prozent sind das\?$/.exec(frage);
+    if (satz) {
+      const [w, g] = [Number(satz[1]), Number(satz[2])];
+      return { wege: [`${w}/${g} · 100`, `(${w} · 100) : ${g}`, `(${w} : ${g}) · 100`] };
+    }
+    const ganzes = /^(\d+) sind (\d+) % — wie groß ist das Ganze\?$/.exec(frage);
+    if (ganzes) {
+      const [w, p] = [Number(ganzes[1]), Number(ganzes[2])];
+      return { wege: [`${w} · 100/${p}`, `(${w} · 100) : ${p}`, `${w} : ${dezimal(p / 100)}`] };
+    }
+    return { fehler: `unerwarteter Fragetext: ${frage}` };
+  },
+
+  prozentVeraenderung(frage) {
+    const t = /^(\d+) € werden um (\d+) % (teurer|billiger)\. /.exec(frage);
+    if (!t) {
+      return { fehler: `unerwarteter Fragetext: ${frage}` };
+    }
+    const [g, p] = [Number(t[1]), Number(t[2])];
+    const rauf = t[3] === 'teurer';
+    const anteil = rauf ? 100 + p : 100 - p;
+    return {
+      wege: [
+        `${g} · ${anteil}/100`,
+        `${g} · ${dezimal(anteil / 100)}`,
+        // Der Weg, den man im Kopf geht: erst die Veränderung, dann
+        // dazu oder weg. Er ist genauso richtig wie der Faktor.
+        `${g} ${rauf ? '+' : '−'} ${g} · ${p}/100`,
+      ],
+    };
+  },
+
+  prozentZurueck(frage) {
+    const t = /^Nach (\d+) % (Aufschlag|Rabatt) kostet ein Artikel (\d+) €\. /.exec(frage);
+    if (!t) {
+      return { fehler: `unerwarteter Fragetext: ${frage}` };
+    }
+    const p = Number(t[1]);
+    const neu = Number(t[3]);
+    const anteil = t[2] === 'Aufschlag' ? 100 + p : 100 - p;
+    return {
+      wege: [
+        `(${neu} · 100) : ${anteil}`,
+        `${neu} · 100/${anteil}`,
+        `${neu} : ${dezimal(anteil / 100)}`,
+      ],
+    };
+  },
+};
+
+pruefung(`Ein wertgleicher Term ist bei Prozent eine Antwort (je ${DURCHGAENGE} Stück)`, () => {
+  for (const [id, wege] of Object.entries(WEGE)) {
+    const naechste = wuerfel(startwertFuer(`weg-${id}`));
+    let fehler = null;
+
+    for (let i = 0; i < DURCHGAENGE && fehler === null; i++) {
+      const a = erzeugeAufgabe(id, naechste);
+      const gefunden = wege(a.frage);
+      if (gefunden.fehler) {
+        fehler = gefunden.fehler;
+        break;
+      }
+      // Die Lösungen dieser vier Themen sind ganzzahlig — dafür sorgt
+      // die Prüfung "keine krummen Lösungen" weiter oben.
+      const ausgerechnet = bruchAlsText(auswerteExakt(a.loesung, {}));
+
+      for (const weg of gefunden.wege) {
+        const geprueft = pruefeAntwort(a, weg);
+        if (!geprueft.richtig) {
+          fehler = `"${a.frage}": der Weg "${weg}" wird abgewiesen: ${geprueft.grund}`;
+        } else if (!String(geprueft.grund ?? '').endsWith(`= ${ausgerechnet}`)) {
+          // Richtig ist der Weg, fertig ist er nicht. Die Zahl gehört
+          // in die Rückmeldung, sonst lernt man das Ausrechnen nie.
+          fehler =
+            `"${a.frage}": die Rückmeldung zu "${weg}" nennt die ausgerechnete Zahl ` +
+            `${ausgerechnet} nicht: ${geprueft.grund}`;
+        }
+        if (fehler) {
+          break;
+        }
+      }
+
+      // Die reine Zahl bleibt selbstverständlich richtig — und bekommt
+      // keine Weg-Rückmeldung, denn da ist nichts mehr auszurechnen.
+      if (fehler === null) {
+        const zahlantwort = pruefeAntwort(a, a.loesungText);
+        if (!zahlantwort.richtig) {
+          fehler = `"${a.frage}": die Zahl ${a.loesungText} wird abgewiesen: ${zahlantwort.grund}`;
+        } else if (zahlantwort.grund) {
+          fehler = `"${a.frage}": die Zahl ${a.loesungText} bekommt eine Weg-Rückmeldung: ${zahlantwort.grund}`;
+        }
+      }
+    }
+
+    wahr(`${id}: jeder wertgleiche Weg zählt`, fehler === null, fehler ?? undefined);
+  }
+});
+
+pruefung(`Die typischen Fehl-Terme bleiben scharf (je ${DURCHGAENGE} Stück)`, () => {
+  // Ein Term als Antwort darf die Diagnosen nicht aufweichen. Wer
+  // 140 · 1,15 schreibt, hat nicht "fast richtig" gerechnet, sondern
+  // "15 % von 140" mit "140 um 15 % erhöht" verwechselt — und genau das
+  // soll dastehen.
+  const naechste = wuerfel(startwertFuer('prozent-fehlterme'));
+  let fehler = null;
+
+  for (let i = 0; i < DURCHGAENGE && fehler === null; i++) {
+    const a = erzeugeAufgabe('prozentGrundaufgabe', naechste);
+    const [, p, g] = /^Wie viel sind (\d+) % von (\d+)\?$/.exec(a.frage).map(Number);
+    const faktor = dezimal(1 + p / 100);
+
+    const faelle = [
+      [`${g} · ${faktor}`, 'Wachstumsfaktor'],
+      [`${faktor} · ${g}`, 'Wachstumsfaktor'],
+      [`${g} : ${faktor}`, 'Wachstumsfaktor'],
+      [`${g} · ${100 + p}/100`, 'Wachstumsfaktor'],
+      [`${g} · ${p}`, 'von hundert'],
+      [`${g} · 100/${p}`, 'geteilt statt malgenommen'],
+    ];
+
+    for (const [eingabe, wort] of faelle) {
+      const geprueft = pruefeAntwort(a, eingabe);
+      // Zwei Denkfehler können bei bestimmten Zahlen dieselbe Zahl
+      // ergeben: Bei 10 % ist "mal 10" dasselbe wie "mal 100 geteilt
+      // durch 10". Dann lässt sich nicht entscheiden, welcher von
+      // beiden gemeint war — verlangt wird hier nur, was die App
+      // wissen KANN: dass es ein bekannter Fehler ist. Eine Diagnose zu
+      // fordern, die niemand herleiten kann, wäre eine Prüfung, die
+      // sich selbst belügt.
+      const treffer = (a.fehlerbilder ?? []).filter((b) =>
+        wertgleich(parseTerm(eingabe), b.wert)
+      );
+      if (geprueft.richtig) {
+        fehler = `"${a.frage}": "${eingabe}" gilt als richtig`;
+      } else if (geprueft.erkannt !== true) {
+        fehler = `"${a.frage}": "${eingabe}" wird nicht als bekannter Fehler erkannt (${geprueft.grund})`;
+      } else if (treffer.length === 1 && !geprueft.grund.includes(wort)) {
+        fehler = `"${a.frage}": "${eingabe}" bekommt die falsche Diagnose: ${geprueft.grund}`;
+      }
+      if (fehler) {
+        break;
+      }
+    }
+  }
+
+  wahr('jeder Fehl-Term wird abgewiesen und benannt', fehler === null, fehler ?? undefined);
+});
+
+pruefung('Die Rückmeldung rechnet den Weg aus', () => {
+  // 19 % von 125 — die Zahlen, an denen die Entscheidung besprochen
+  // wurde. Der Generator baut nur glatte Aufgaben; hier steht deshalb
+  // eine von Hand, denn 23,75 ist die Probe darauf, dass die Zahl als
+  // Dezimalzahl dasteht und nicht als 95/4.
+  const aufgabe = { art: 'zahl', termZaehlt: true, loesung: zahl(bruch(95, 4)), fehlerbilder: [] };
+
+  for (const weg of ['125 · 19/100', '19/100 · 125', '125/100 · 19', '125 · 0,19']) {
+    const geprueft = pruefeAntwort(aufgabe, weg);
+    wahr(`"${weg}" gilt als richtig`, geprueft.richtig, geprueft.grund);
+    gleichText(
+      `"${weg}": die Rückmeldung nennt Weg und Zahl`,
+      geprueft.grund,
+      `Dein Weg stimmt: ${termAlsText(parseTerm(weg))} = 23,75`
+    );
+  }
+
+  // Die ausgerechnete Zahl bleibt die selbstverständliche Antwort.
+  const zahlantwort = pruefeAntwort(aufgabe, '23,75');
+  wahr('23,75 ist richtig', zahlantwort.richtig);
+  wahr('und bekommt keine Weg-Rückmeldung', zahlantwort.grund === undefined);
+  wahr('95/4 ist dieselbe Zahl', pruefeAntwort(aufgabe, '95/4').richtig);
+
+  // Was sich nicht als Dezimalzahl hinschreiben lässt, bleibt ein
+  // Bruch. Stillschweigend auf 0,333333 zu runden wäre gerade in einer
+  // App, die exakt rechnet, das Falsche.
+  const drittel = { art: 'zahl', termZaehlt: true, loesung: zahl(bruch(1, 3)), fehlerbilder: [] };
+  const krumm = pruefeAntwort(drittel, '2/3 : 2');
+  wahr('2/3 : 2 gilt als richtig', krumm.richtig, krumm.grund);
+  wahr('und bleibt als Bruch stehen', krumm.grund.endsWith('= 1/3'), krumm.grund);
+
+  // Ohne termZaehlt gilt weiterhin das strenge Maß: Bei allen anderen
+  // Themen ist "6 + 6" keine Antwort auf eine Zahlenfrage.
+  const streng = { art: 'zahl', loesung: zahl(bruch(95, 4)), fehlerbilder: [] };
+  const abgewiesen = pruefeAntwort(streng, '125 · 19/100');
+  wahr('ohne termZaehlt zählt nur die Zahl', !abgewiesen.richtig);
+  wahr('und die Begründung sagt, was fehlt', abgewiesen.grund.includes('weiter ausrechnen'));
+});
+
+pruefung('Die vier Prozentthemen lassen den Weg gelten — und sonst keines', () => {
+  // Eine Liste, die auffällt, wenn sie wandert: Wer termZaehlt
+  // versehentlich an ein Thema hängt, in dem das Ausrechnen die Aufgabe
+  // IST, merkt es hier.
+  const naechste = wuerfel(startwertFuer('termZaehlt'));
+  const erwartet = [
+    'prozentGrundaufgabe',
+    'prozentRueckwaerts',
+    'prozentVeraenderung',
+    'prozentZurueck',
+  ];
+  const gefunden = alleThemen().filter(
+    (id) => erzeugeAufgabe(id, naechste).termZaehlt === true
+  );
+  gleichText('genau die vier Prozentthemen', gefunden.sort().join(', '), erwartet.sort().join(', '));
+});
+
 pruefung('Die Zahlen sind gebaut, nicht gewürfelt', () => {
   // Bei einer Gleichungsaufgabe soll eine handhabbare Lösung
   // herauskommen — sonst scheitert der Schüler am Bruchrechnen statt an
