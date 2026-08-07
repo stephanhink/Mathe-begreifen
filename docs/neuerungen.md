@@ -10,7 +10,14 @@ findet es hier.
 
 ---
 
-## 1.1.0 — Die Oberstufe (versionCode 5)
+## 1.1.0 — Die Oberstufe (versionCode 6)
+
+Zwischen dem ersten fertigen Paket (versionCode 5, 5. August) und dem
+eingereichten kamen noch der Logarithmus samt Dezibel und pH, das Kürzen
+von Bruchtermen, der Satz vom Nullprodukt und ein aufgeräumter Befund des
+Lückenfinders dazu. Hochgeladen wurde deshalb versionCode 6; die 5 hat nie
+jemand gesehen. Der Text unten ist entsprechend nachgezogen — er beschreibt
+das, was tatsächlich ausgeliefert wird.
 
 ### Deutsch
 
@@ -18,14 +25,14 @@ findet es hier.
 Die Oberstufe ist da.
 
 Neu: Ableitung und Integral — jede Regel mit Namen, die Tangente zum
-Anlegen. Dazu Vektorrechnung, Hypothesentests, Ungleichungen und
-Gleichungssysteme in allen drei Verfahren. Der Lückenfinder reicht jetzt
-von Klasse 5 bis zum Abitur.
+Anlegen. Dazu Vektorrechnung, Hypothesentests, Ungleichungen,
+Gleichungssysteme und Logarithmen samt Dezibel und pH. Der Lückenfinder
+reicht jetzt von Klasse 5 bis zum Abitur und nennt eine Hauptdiagnose
+statt einer Liste.
 
-Und neu: „Wozu braucht man das?" Zinseszins zeigt, wo die
-Exponentialfunktion herkommt. Ein Cent, 30-mal verdoppelt, sind über
-10 Millionen Euro. Und der Lernstand bleibt jetzt wirklich erhalten —
-beim Schließen ging er bisher verloren.
+Und neu: „Wozu braucht man das?" Ein Cent, 30-mal verdoppelt, sind über
+10 Millionen Euro. Der Lernstand bleibt jetzt wirklich erhalten — beim
+Schließen ging er bisher verloren.
 ```
 
 ### English
@@ -34,15 +41,17 @@ beim Schließen ging er bisher verloren.
 Upper secondary is here.
 
 New: differentiation and integration — every rule named, a tangent you
-can place anywhere. Plus vectors, significance tests, inequalities and
-simultaneous equations in all three methods. The gap finder now covers
-year 5 up to the final exams.
+can place anywhere. Plus vectors, significance tests, inequalities,
+simultaneous equations and logarithms with decibels and pH. The gap
+finder now covers year 5 up to the final exams and names one main
+diagnosis instead of a list.
 
-Also new: "What is this good for?" Compound interest shows where the
-exponential function comes from. One cent, doubled 30 times, is over
-10 million euros. And your progress is now actually saved — closing
-the app used to lose it.
+Also new: "What is this good for?" One cent, doubled 30 times, is over
+10 million euros. And your progress is now actually saved — closing the
+app used to lose it.
 ```
+
+493 bzw. 492 von 500 Zeichen.
 
 ---
 

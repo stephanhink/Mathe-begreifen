@@ -188,13 +188,24 @@ Die Physik-Anwendungen gehören **nicht** in einen eigenen Bereich, sondern
 sind das durchgehende Beispielmaterial — genau das `beispiel`-Feld aus
 `wissen.js`:
 
-- `v = s/t` nach `t` umstellen → bei „Formeln umstellen"
-- Kräftezerlegung an der schiefen Ebene → bei Trigonometrie
-- Halbwertszeit → bei Exponentialfunktionen
-- Dezibel und pH → beim Logarithmus (Brücke zur Chemie-App)
-- Lichtjahre, Atomdurchmesser → bei Zehnerpotenzen
-- Weg-Zeit-Diagramm → bei linearen Funktionen, Steigung = Geschwindigkeit
-- Beschleunigung als Ableitung der Geschwindigkeit → bei Ableitung
+**Diese Liste ist ein Vorhaben, keine Bestandsaufnahme.** Der Haken sagt,
+was tatsächlich im Code steht — Stand 2026-08-07. Wer etwas davon in den
+Store-Text schreibt, muss es vorher dort wiederfinden; zweimal ist genau
+das schiefgegangen (siehe „Offene Punkte").
+
+- ✅ `v = s/t` nach `t` umstellen → bei „Formeln umstellen"
+  (`umstellen.js:331`)
+- ⬜ Kräftezerlegung an der schiefen Ebene → bei Trigonometrie
+- ✅ Halbwertszeit → bei Exponentialfunktionen (`wissen.js`,
+  `anwendung.zerfall`)
+- ✅ Dezibel und pH → beim Logarithmus (`anwendung.dezibel`,
+  `anwendung.phWert`) — die Brücke zur Chemie-App
+- ⬜ Lichtjahre, Atomdurchmesser → bei Zehnerpotenzen. Die Konstante
+  liegt in `konstanten.js`, benutzt wird sie von niemandem
+- ⬜ Weg-Zeit-Diagramm → bei linearen Funktionen, Steigung =
+  Geschwindigkeit
+- ✅ Beschleunigung als Ableitung der Geschwindigkeit → bei Ableitung
+  (`wissen.js:318`)
 
 So lernt man nicht „Mathe für Physik" separat, sondern sieht bei jedem
 Werkzeug sofort, wofür es gut ist.
@@ -687,6 +698,25 @@ in Ordnung ist — ein blockierter Release wegen eines Umgebungsdetails.
 - Commits/Push über GitHub Desktop
 - Xcode nur für den finalen iOS-Build/App-Store-Upload
 - **Gebaut wird lokal** über `npm run build:android` — siehe Veröffentlichung
+
+### Zwei Bediener — eine Instanz zur Zeit
+An diesem Projekt arbeiten zwei Bediener: der Betreiber direkt in Claude Code
+(interaktiv im Terminal) und Hermes, das Claude Code im Print-Modus
+orchestriert. Es ist dieselbe App, aber getrennte Sessions — und sie sehen
+einander nicht. Deshalb gelten vier Regeln:
+
+1. **Es arbeitet immer nur eine Instanz zur Zeit.** Wer eine Runde beginnt,
+   kündigt sie an: Der Betreiber sagt es Hermes, Hermes kündigt Runden an.
+   Niemand startet parallel zur Arbeit des anderen.
+2. **`git status` ist der erste Schritt jeder Arbeit.** Uncommittete
+   Änderungen stammen vom jeweils anderen Bediener — erst klären, wessen sie
+   sind, dann übernehmen. Fremde uncommittete Änderungen werden nie
+   überschrieben.
+3. **`.claude/wip.md` (gitignored) hält fest, wer gerade woran arbeitet.**
+   Vor dem Start lesen, nach Abschluss aktualisieren. Der Stand darin ist
+   lokal und flüchtig — verbindlich ist der letzte Commit.
+4. **`--continue` setzt die zuletzt gestartete Session im Verzeichnis fort.**
+   Nur die eigene Session fortsetzen, nie die des anderen Bedieners.
 
 ### `.github/workflows/eas-build.yml` liegt brach — mit Absicht
 Der Workflow ist aus Chemie mitgekommen und wurde dort nie benutzt: kein
@@ -1435,8 +1465,9 @@ aufgefallen, die jedes Mal wieder Zeit kosten:
 
 ## Status
 
-Stand 2026-08-04: **Version 1.0.0 ist beim Play Store eingereicht.**
-Alle sieben Bildschirme stehen, 2126 Prüfungen, versionCode 3.
+Stand 2026-08-07: **Version 1.0.0 ist im Play Store live.** Alle sieben
+Bildschirme stehen, 4232 Prüfungen. Version 1.1.0 ist gebaut und wartet
+auf das Hochladen — siehe „Offene Punkte".
 
 Was steht:
 - Expo-Projekt SDK 57, Tab-Leiste, Ordnerstruktur
@@ -1498,7 +1529,7 @@ Was steht:
   Zeile, mit Angabe der ersten fehlerhaften Zeile
 - `components/MatheTastatur.js` — die Zeichen, die auf der Handytastatur
   fehlen (√ ² ³ · : ^)
-- Zusammen **4076 Prüfungen**
+- Zusammen **4232 Prüfungen**
 - Prüfrahmen, GitHub-Actions-Workflows, `eas.json`, `.gitignore` aus Chemie
   übernommen
 - **Eingereicht.** `docs/` enthält Datenschutzerklärung, Play-Store-Text
@@ -1713,14 +1744,37 @@ beide. Deshalb steht das hier notiert und nicht in einer Ideenliste.
   Jedes neue Thema braucht einen Eintrag in `lernpfad.js` UND einen
   Generator in `aufgaben.js`, sonst schlägt die Prüfung fehl. Genau dieses
   Geländer hält den Graphen beim Wachsen ehrlich.
-- **Version 1.1.0 ist gebaut und liegt bereit** (2026-08-05):
-  `build-1785928985351.aab`, versionCode 5, signiert, als einzige
-  Berechtigung INTERNET — am Artefakt geprüft. Dazu die getauschte
-  Store-Beschreibung und `docs/neuerungen.md` mit den
-  Versionshinweisen (483 bzw. 500 von 500 Zeichen).
+- **Version 1.1.0 ist gebaut und liegt zum Hochladen bereit**
+  (2026-08-07): `build-1786095714260.aab`, versionCode 6, versionName
+  1.1.0, signiert, als einzige Berechtigung INTERNET — alles am
+  Artefakt geprüft, nicht am Build-Log geglaubt. Dazu
+  `docs/neuerungen.md` mit den Versionshinweisen (493 bzw. 492 von 500
+  Zeichen).
 
-  **Eingereicht wird erst nach der laufenden Prüfung von 1.0.0.** Das
-  ist die Entscheidung des Betreibers, nicht eine technische Not.
+  **Der ältere `build-1785928985351.aab` (versionCode 5) ist überholt
+  und darf NICHT hochgeladen werden.** Er entstand am 5. August und
+  kennt sechs Commits nicht — darunter das ganze Logarithmus-Modul, das
+  Kürzen von Bruchtermen und den aufgeräumten Befund des Lückenfinders.
+  versionCode 5 hat deshalb nie jemand gesehen; im Store geht es
+  lückenlos von 3 auf 6, der Name von 1.0.0 auf 1.1.0.
+
+  > Daraus die Regel: **Ein gebauter AAB altert.** Zwischen Bauen und
+  > Einreichen lagen hier zwei Tage und sechs Commits. Wer nicht sofort
+  > hochlädt, baut vor dem Hochladen neu — sonst liefert er einen Stand
+  > aus, den er längst überholt hat, und die Versionshinweise
+  > beschreiben etwas anderes als das Paket.
+
+- **Vor 1.1.0 wurde der Store-Text gegen `utils/` geprüft** — und dabei
+  fielen zwei Zeilen, die nie im Code standen: die *schiefe Ebene* und
+  das *Weg-Zeit-Diagramm*. Beide stammten aus der Beispielliste hier in
+  `CLAUDE.md`, nicht aus der App; `grep` findet weder Kräftezerlegung
+  noch Hangabtrieb noch ein Weg-Zeit-Diagramm. Genau davor warnt
+  `docs/play-store-listing.md` selbst — und trotzdem sind sie beim
+  Abschreiben aus diesem Dokument hineingeraten.
+
+  Die Liste im Abschnitt „Physik-Mathematik" oben ist also ein
+  **Vorhaben, keine Bestandsaufnahme**. Wer daraus etwas in den Store
+  schreibt, muss es vorher im Code wiederfinden.
 - Zwei Prüfungen laufen bei Google getrennt, und sie blockieren
   einander nicht:
   - Die **Freigabeprüfung** entscheidet, ob eine Version veröffentlicht

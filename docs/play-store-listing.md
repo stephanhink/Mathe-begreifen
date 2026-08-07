@@ -56,9 +56,11 @@ bloß „falsch", sondern ab WELCHER ZEILE es nicht mehr stimmt — und warum.
 
 WAS DRIN IST
 Zahlen: Bruchrechnen mit sichtbarem Gleichnamigmachen — der Schritt, an dem
-es hakt und den ein Taschenrechner verschluckt. Dazu Prozent.
-Terme: Klammern, Binome, Ausklammern, Wurzeln, Formeln umstellen — mit den
-Vorbehalten, die eine Formelsammlung verschweigt (t ungleich 0).
+es hakt und den ein Taschenrechner verschluckt. Dazu Prozent und
+Logarithmen (Dezibel, pH).
+Terme: Klammern, Binome, Ausklammern, Wurzeln, Bruchterme kürzen, Formeln
+umstellen — mit den Vorbehalten, die eine Formelsammlung verschweigt
+(t ungleich 0).
 Gleichungen: linear und quadratisch, Ungleichungen (wo sich das Zeichen
 umdreht) und Gleichungssysteme in allen drei Verfahren.
 Funktionen: Nullstellen, Scheitelpunkt, Steigung, gezeichneter Graph.
@@ -71,7 +73,7 @@ Hypothesentests.
 
 Dazu die Mathematik, die man in der Physik braucht — nicht als eigenes
 Kapitel, sondern als durchgehendes Beispielmaterial: v = s/t umstellen, die
-schiefe Ebene, die Halbwertszeit, die Beschleunigung als Ableitung.
+Halbwertszeit, die Beschleunigung als Ableitung.
 
 DER INFO-KNOPF
 Neben jedem Fachbegriff sitzt ein kleines i. Ein Tippen genügt: erst die
@@ -89,7 +91,7 @@ fehlen beim Ableiten, ebenso die partielle Integration. Wo eine Regel nicht
 greift, sagt die App es und nennt den Grund — statt eine Formel anzuwenden,
 die dort gar nicht gilt.
 
-Die Rechenlogik ist maschinell geprüft: über dreitausend automatische
+Die Rechenlogik ist maschinell geprüft: über viertausend automatische
 Prüfungen, bevor eine Version gebaut wird. Darunter die, die alles tragen —
 jede Umformung muss wertgleich bleiben, jede Ableitung mit dem
 Differenzenquotienten übereinstimmen, und jede Stammfunktion abgeleitet
@@ -103,7 +105,7 @@ du kannst ihn jederzeit selbst löschen.
 
 HINWEIS
 Eine Lernhilfe für den Mathematikunterricht. Sie ersetzt weder den
-Unterricht noch die Erklärung durch eine Lehrkraft.
+Unterricht noch die Lehrkraft.
 
 ## Kategorie
 
@@ -214,6 +216,33 @@ Der Vermerk bleibt hier stehen, weil die Regel bleibt: **Was im Store
 versprochen wird, muss die App können.** Vor der nächsten Erweiterung der
 Beschreibung wieder gegen `utils/` prüfen, nicht gegen `CLAUDE.md`.
 
+## Erledigt: die Prüfung vor 1.1.0 (2026-08-07)
+
+Dazugekommen ist der **Logarithmus** — ein eigener Bereich im Zahlen-Tab
+(`utils/logarithmus.js`, `BEREICHE` in `ZahlenScreen.js`), mit Dezibel und
+pH als Anwendung. Ebenso das **Kürzen von Bruchtermen**
+(`utils/bruchterm.js`). Beides steht jetzt unter „Was drin ist".
+
+Weggefallen sind zwei Zeilen, die **nie im Code standen**: die *schiefe
+Ebene* und das *Weg-Zeit-Diagramm*. Sie stammten aus der Beispielliste des
+Konzepts, nicht aus `utils/` — `grep` findet weder Kräftezerlegung noch
+Hangabtrieb noch ein Weg-Zeit-Diagramm irgendwo in der App. Das ist genau
+der Fehler, vor dem der Absatz darüber warnt, und er ist beim Abschreiben
+aus `CLAUDE.md` entstanden.
+
+Gegenprobe für die zwei, die stehen blieben: `v = s : t` steht in
+`utils/umstellen.js:331`, die Beschleunigung als Ableitung der
+Geschwindigkeit in `utils/wissen.js:318`.
+
+Geprüft und weiterhin richtig: „Sinus, e-Funktion und Logarithmus fehlen
+beim Ableiten." Der neue Logarithmus-Bereich RECHNET mit Logarithmen, aber
+`utils/ableitung.js` kann sie nach wie vor nicht ableiten. Zwei
+verschiedene Aussagen — hier hätte man leicht die falsche gestrichen.
+
+Beide Beschreibungen liegen bei 3995 bzw. 3996 von 4000 Zeichen. Der Rand
+ist schmal: Wer etwas ergänzt, muss etwas streichen, und die Zeichen
+zählen, nicht schätzen.
+
 ---
 
 # Play Store listing: Mathe begreifen (English)
@@ -264,9 +293,11 @@ merely "wrong", but from WHICH LINE onwards it stops being true — and why.
 
 WHAT IS INCLUDED
 Numbers: fraction arithmetic with the common denominator made visible — the
-step where it goes wrong and the one a calculator swallows. Plus percentages.
-Terms: brackets, binomial formulas, factorizing, surds, rearranging formulas
-— including the caveats a formula book leaves out (t ≠ 0).
+step where it goes wrong and the one a calculator swallows. Plus percentages
+and logarithms (decibels, pH).
+Terms: brackets, binomial formulas, factorizing, surds, cancelling algebraic
+fractions, rearranging formulas — including the caveats a formula book
+leaves out (t ≠ 0).
 Equations: linear and quadratic, inequalities and simultaneous equations in
 all three standard methods.
 Functions: roots, vertex, gradient, plotted graph.
@@ -280,8 +311,7 @@ and significance tests.
 
 Alongside it, the mathematics you need in physics — not as a separate
 chapter but as the running supply of examples: rearranging v = s/t for t,
-resolving forces on an inclined plane, half-life, distance-time graphs,
-acceleration as a derivative.
+half-life, acceleration as a derivative.
 
 THE INFO BUTTON
 Next to every technical term sits a small i. One tap: first the answer in
@@ -298,7 +328,7 @@ logarithmic functions cannot be differentiated yet, and integration by parts
 is missing. Where a rule does not apply, the app says so and gives the
 reason — rather than applying a formula that does not hold there.
 
-The calculation logic is machine-verified: over three thousand automated
+The calculation logic is machine-verified: over four thousand automated
 checks run before any version is built. Among them the ones that carry
 everything — every transformation must preserve value, every derivative must
 agree with the difference quotient, and every antiderivative must

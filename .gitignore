@@ -36,6 +36,7 @@ yarn-error.*
 # persönliche Claude-Code-Einstellungen (settings.json gehört ins Repo,
 # settings.local.json ist rechnerspezifisch)
 .claude/settings.local.json
+.claude/wip.md
 
 # typescript
 *.tsbuildinfo
